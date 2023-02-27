@@ -61,7 +61,7 @@ expression : expression ('&&' | '<' | '+' | '-' | '*' | '/' ) expression
            | expression '.' ID '(' ( expression ( ',' expression )* )? ')'
            | 'new' 'int' '[' expression ']'
            | 'new' ID '(' ')'
-           | '!'
+           | '!' expression
            | '(' expression ')'
            | INT
            | 'true'
