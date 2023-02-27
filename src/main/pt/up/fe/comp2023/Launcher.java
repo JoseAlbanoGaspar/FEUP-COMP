@@ -47,16 +47,37 @@ public class Launcher {
         SpecsLogs.info("Executing with args: " + Arrays.toString(args));
 
         // Check if there is at least one argument
-        if (args.length != 1) {
+        /*if (args.length != 1) {
             throw new RuntimeException("Expected a single argument, a path to an existing input file.");
-        }
+        }*/
 
         // Create config
         Map<String, String> config = new HashMap<>();
-        config.put("inputFile", args[0]);
-        config.put("optimize", "false");
-        config.put("registerAllocation", "-1");
-        config.put("debug", "false");
+
+        int r = -1;
+        boolean oFlag = false;
+        boolean dFlag = false;
+        String inputFile = null;
+
+        for (String arg : args) {
+            if (arg.startsWith("-r="))
+                r = Integer.parseInt(arg.substring(3));
+            else if (arg.equals("-o"))
+                oFlag = true;
+            else if (arg.equals("-d"))
+                dFlag = true;
+            else if (arg.startsWith("-i="))
+                inputFile = arg.substring(3);
+        }
+
+        if (inputFile == null) {
+            throw new RuntimeException("Usage: jmm [-r=<num>] [-o] [-d] -i=<input file.jmm>");
+        }
+
+        config.put("inputFile", inputFile);
+        config.put("optimize", String.valueOf(oFlag));
+        config.put("registerAllocation", String.valueOf(r));
+        config.put("debug", String.valueOf(dFlag));
 
         return config;
     }
