@@ -50,3 +50,4 @@ During the development of your compiler you will update this file in order to se
 
 * Emanuel Gestosa up202005485@edu.fe.up.pt
 * José Gaspar     up202008561@edu.fe.up.pt
+* Lucas Sousa     up202004682@edu.fe.up.pt
