@@ -37,8 +37,8 @@ classDeclaration : 'class' ID ( 'extends' ID )? '{' ( varDeclaration )* ( method
 varDeclaration : type ID ';'
                ;
 
-methodDeclaration : 'public' type ID '(' ( type ID ( ',' type ID )* )? ')' '{' ( varDeclaration)* ( statement )* 'return' expression ';' '}'
-                  | 'public' 'static' 'void' 'main' '(' 'String' '[' ']' ID ')' '{' ( varDeclaration)* ( statement )* '}'
+methodDeclaration : ('public')? type ID '(' ( type ID ( ',' type ID )* )? ')' '{' ( varDeclaration)* ( statement )* 'return' expression ';' '}'
+                  | ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' ID ')' '{' ( varDeclaration)* ( statement )* '}'
                   ;
 
 type : 'int' '[' ']'
