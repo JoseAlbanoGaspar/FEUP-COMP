@@ -28,32 +28,32 @@ expression
 program : (importDeclaration)* classDeclaration EOF
         ;
 
-importDeclaration : 'import' ID ( '.' ID )* ';'
+importDeclaration : 'import' packageName=ID ( '.' packageName=ID )* ';'
                   ;
 
-classDeclaration : 'class' ID ( 'extends' ID )? '{' ( varDeclaration )* ( methodDeclaration )*'}'
+classDeclaration : 'class' name=ID ( 'extends' className=ID )? '{' ( varDeclaration )* ( methodDeclaration )*'}'
                  ;
 
-varDeclaration : type ID ';'
+varDeclaration : type var=ID ';'
                ;
 
-methodDeclaration : ('public')? type ID '(' ( type ID ( ',' type ID )* )? ')' '{' ( varDeclaration)* ( statement )* 'return' expression ';' '}'  #Method
-                  | ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' ID ')' '{' ( varDeclaration)* ( statement )* '}'                     #MainMethod
+methodDeclaration : ('public')? type name=ID '(' ( type arg=ID ( ',' type arg=ID )* )? ')' '{' ( varDeclaration)* ( statement )* 'return' expression ';' '}'  #Method
+                  | ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' arg=ID ')' '{' ( varDeclaration)* ( statement )* '}'                     #MainMethod
                   ;
 
 type : 'int' '[' ']'  #ArrayType
      | 'boolean'      #BoolType
      | 'int'          #IntType
      | 'String'       #StringType
-     | ID             #IDType
+     | typeName=ID             #IDType
      ;
 
 statement : '{' ( statement )* '}'  #BlockCode
           | 'if' '(' expression ')' statement 'else' statement  #If
           | 'while' '(' expression ')' statement  #While
           | expression ';'  #StatementExpression
-          | ID '=' expression ';'  #Assignment
-          | ID '[' expression ']' '=' expression ';'  #Array
+          | var=ID '=' expression ';'  #Assignment
+          | var=ID '[' expression ']' '=' expression ';'  #Array
           ;
 
 expression : '!' expression  #Negation
@@ -64,12 +64,12 @@ expression : '!' expression  #Negation
            | expression '&&' expression #LogicalAnd
            | expression '[' expression ']' #SquareBrackets
            | expression '.' 'length' #Length
-           | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #FunctionCall
+           | expression '.' methodName=ID '(' ( expression ( ',' expression )* )? ')' #FunctionCall
            | 'new' 'int' '[' expression ']'  #NewArray
-           | 'new' ID '(' ')' #NewClass
-           | INT   #Value
-           | 'true'  #Value
-           | 'false' #Value
-           | ID      #Value
-           | 'this'  #Value
+           | 'new' className=ID '(' ')' #NewClass
+           | value=INT   #Integer
+           | 'true'  #BoolTrue
+           | 'false' #BoolFalse
+           | value=ID      #Identifier
+           | 'this'  #This
            ;
