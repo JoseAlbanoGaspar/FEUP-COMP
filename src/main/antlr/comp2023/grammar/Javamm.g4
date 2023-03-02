@@ -31,15 +31,17 @@ program : (importDeclaration)* classDeclaration EOF
 importDeclaration : 'import' packageName=ID ( '.' packageName=ID )* ';'
                   ;
 
-classDeclaration : 'class' name=ID ( 'extends' className=ID )? '{' ( varDeclaration )* ( methodDeclaration )*'}'
+classDeclaration : 'class' name=ID ( 'extends' className=ID )? '{' ( varDeclaration )* ( instanceMethodDeclaration )* (mainMethodDeclaration)? (instanceMethodDeclaration)*'}'
                  ;
 
 varDeclaration : type var=ID ';'
                ;
 
-methodDeclaration : ('public')? type name=ID '(' ( type arg=ID ( ',' type arg=ID )* )? ')' '{' ( varDeclaration)* ( statement )* 'return' expression ';' '}'  #Method
-                  | ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' arg=ID ')' '{' ( varDeclaration)* ( statement )* '}'                     #MainMethod
-                  ;
+mainMethodDeclaration : ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' arg=ID ')' '{' ( varDeclaration)* ( statement )* '}'                     #MainMethod
+                      ;
+
+instanceMethodDeclaration :  ('public')? type name=ID '(' ( type arg=ID ( ',' type arg=ID )* )? ')' '{' ( varDeclaration)* ( statement )* 'return' expression ';' '}'  #Method
+                          ;
 
 type : 'int' '[' ']'  #ArrayType
      | 'boolean'      #BoolType
