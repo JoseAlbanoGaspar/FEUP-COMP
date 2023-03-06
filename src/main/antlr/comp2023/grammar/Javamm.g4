@@ -12,7 +12,7 @@ WS : [ \t\n\r\f]+ -> skip ;
 program : (importDeclaration)* classDeclaration EOF
         ;
 
-importDeclaration : 'import' packageName=ID ( '.' packageName=ID )* ';'
+importDeclaration : 'import' packageNames+=ID ( '.' packageNames+=ID )* ';'
                   ;
 
 classDeclaration : 'class' name=ID ( 'extends' superName=ID )? '{' ( varDeclaration )* ( instanceMethodDeclaration )* (mainMethodDeclaration)? (instanceMethodDeclaration)*'}'

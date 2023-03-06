@@ -50,6 +50,7 @@ public class Launcher {
         SimpleTable table = visitor.generateSymbolicTable();
         System.out.println(table.getClassName());
         System.out.println(table.getSuper());
+        System.out.println(table.getImports());
 
         // ... add remaining stages
 

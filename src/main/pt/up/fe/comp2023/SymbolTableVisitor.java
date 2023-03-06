@@ -5,10 +5,7 @@ import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
     protected List<String> imports = new ArrayList<String>();
@@ -176,6 +173,23 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
     }
 
     private Void dealWithImportDeclaration(JmmNode node, Void _void) {
+        List<?> list = new ArrayList<>();
+        if (node.getObject("packageNames").getClass().isArray()) {
+            list = Arrays.asList((Object[])node.getObject("packageNames"));
+        } else if (node.getObject("packageNames") instanceof Collection) {
+            list = new ArrayList<>((Collection<?>)node.getObject("packageNames"));
+        }
+
+        if (list.isEmpty()) return null;
+
+        StringBuilder pkg = new StringBuilder();
+        for (var imp : list) {
+            pkg.append(imp);
+            pkg.append(".");
+        }
+
+        imports.add(String.valueOf(pkg).substring(0, pkg.length() - 1));
+
         return null;
     }
 
