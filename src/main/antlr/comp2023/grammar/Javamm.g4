@@ -9,22 +9,6 @@ ID : [a-zA-Z_][a-zA-Z_0-9]* ;
 
 WS : [ \t\n\r\f]+ -> skip ;
 
-/*program
-    : statement+ EOF
-    ;
-
-statement
-    : expression ';'
-    | ID '=' INTEGER ';'
-    ;
-
-expression
-    : expression op=('*' | '/') expression #BinaryOp
-    | expression op=('+' | '-') expression #BinaryOp
-    | value=INTEGER #Integer
-    | value=ID #Identifier
-    ;*/
-
 program : (importDeclaration)* classDeclaration EOF
         ;
 
@@ -37,17 +21,15 @@ classDeclaration : 'class' name=ID ( 'extends' className=ID )? '{' ( varDeclarat
 varDeclaration : type var=ID ';'
                ;
 
-mainMethodDeclaration : ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' arg=ID ')' '{' ( varDeclaration)* ( statement )* '}'                     #MainMethod
+mainMethodDeclaration : ('public')? 'static' 'void' 'main' '(' type '[' ']' arg=ID ')' '{' ( varDeclaration)* ( statement )* '}'                     #MainMethod
                       ;
 
 instanceMethodDeclaration :  ('public')? type name=ID '(' ( type arg=ID ( ',' type arg=ID )* )? ')' '{' ( varDeclaration)* ( statement )* 'return' expression ';' '}'  #Method
                           ;
 
-type : 'int' '[' ']'  #ArrayType
+type locals[boolean isArray=false] : 'int' ('[' ']'{$isArray = true;})?  #IntType
      | 'boolean'      #BoolType
-     | 'int'          #IntType
-     | 'String'       #StringType
-     | typeName=ID             #IDType
+     | typeName=ID    #IDType
      ;
 
 statement : '{' ( statement )* '}'  #BlockCode
