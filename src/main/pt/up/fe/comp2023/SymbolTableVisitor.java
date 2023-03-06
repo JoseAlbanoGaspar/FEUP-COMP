@@ -162,6 +162,21 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
     }
 
     private Void dealWithVarDeclaration(JmmNode node, Void _void) {
+        String typeType = node.getChildren().get(0).getKind();
+        Type type = null;
+        switch (typeType) {
+            case "IDType":
+                type = new Type(node.getChildren().get(0).get("typeName"), (boolean)node.getChildren().get(0).getObject("isArray"));
+                break;
+            case "IntType":
+                type = new Type("int", (boolean)node.getChildren().get(0).getObject("isArray"));
+                break;
+            case "BoolType":
+                type = new Type("boolean", (boolean)node.getChildren().get(0).getObject("isArray"));
+                break;
+        }
+        Symbol field = new Symbol(type, node.get("var"));
+        this.fields.add(field);
 
         return null;
     }

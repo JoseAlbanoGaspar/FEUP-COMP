@@ -18,7 +18,7 @@ importDeclaration : 'import' packageNames+=ID ( '.' packageNames+=ID )* ';'
 classDeclaration : 'class' name=ID ( 'extends' superName=ID )? '{' ( varDeclaration )* ( instanceMethodDeclaration )* (mainMethodDeclaration)? (instanceMethodDeclaration)*'}'
                  ;
 
-varDeclaration : type var=ID ';'
+varDeclaration : t=type var=ID ';'
                ;
 
 mainMethodDeclaration : ('public')? 'static' 'void' 'main' '(' type '[' ']' arg=ID ')' '{' ( varDeclaration)* ( statement )* '}'                     #MainMethod

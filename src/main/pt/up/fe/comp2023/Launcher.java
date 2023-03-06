@@ -51,6 +51,7 @@ public class Launcher {
         System.out.println(table.getClassName());
         System.out.println(table.getSuper());
         System.out.println(table.getImports());
+        System.out.println(table.getFields());
 
         // ... add remaining stages
 
@@ -58,11 +59,6 @@ public class Launcher {
 
     private static Map<String, String> parseArgs(String[] args) {
         SpecsLogs.info("Executing with args: " + Arrays.toString(args));
-
-        // Check if there is at least one argument
-        /*if (args.length != 1) {
-            throw new RuntimeException("Expected a single argument, a path to an existing input file.");
-        }*/
 
         // Create config
         Map<String, String> config = new HashMap<>();
