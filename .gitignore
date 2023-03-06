@@ -6,7 +6,7 @@
 /generated/
 /run/
 gradle*
-
+inputfile.jmm
 # Class files
 **/*.class
 !libs-jmm/**/*.class
