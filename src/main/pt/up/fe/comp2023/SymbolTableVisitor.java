@@ -24,6 +24,12 @@ public class SymbolTableVisitor extends PreorderJmmVisitor {
     protected List<Symbol> LocalVariables;
     @Override
     protected void buildVisitor() {
-
+        addVisit("Program", this::dealWithProgram);
+        addVisit("Assignment", this::dealWithAssignment);
+        addVisit("Integer", this::dealWithInteger);
+        addVisit("Identifier", this::dealWithIdentifier);
+        addVisit("ExprStmt", this::dealWithExprStmt);
+        addVisit("BinaryOp", this::dealWithBinaryOp);
+        addVisit("Parenthesis", this::dealWithParenthesis);
     }
 }
