@@ -15,7 +15,7 @@ program : (importDeclaration)* classDeclaration EOF
 importDeclaration : 'import' packageName=ID ( '.' packageName=ID )* ';'
                   ;
 
-classDeclaration : 'class' name=ID ( 'extends' className=ID )? '{' ( varDeclaration )* ( instanceMethodDeclaration )* (mainMethodDeclaration)? (instanceMethodDeclaration)*'}'
+classDeclaration : 'class' name=ID ( 'extends' superName=ID )? '{' ( varDeclaration )* ( instanceMethodDeclaration )* (mainMethodDeclaration)? (instanceMethodDeclaration)*'}'
                  ;
 
 varDeclaration : type var=ID ';'

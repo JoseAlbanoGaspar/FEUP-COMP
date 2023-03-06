@@ -2,19 +2,23 @@ package pt.up.fe.comp2023;
 
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
+import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class SymbolTableVisitor extends PreorderJmmVisitor {
-    protected List<String> imports;
-    protected String className;
-    protected String _super;
-    protected List<Symbol> fields;
-    protected List<String> methods;
-    protected Type type;
-    protected List<Symbol> parameters;
-    protected List<Symbol> localVariables;
+public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
+    protected List<String> imports = new ArrayList<String>();
+    protected String className = "";
+    protected String _super = null;
+    protected List<Symbol> fields = new ArrayList<Symbol>();
+    protected List<String> methods = new ArrayList<String>();
+    protected Map<String, Type> returnTypes = new HashMap<String, Type>();
+    protected Map<String, List<Symbol>> parameters = new HashMap<String, List<Symbol>>();
+    protected Map<String, List<Symbol>> localVariables = new HashMap<String, List<Symbol>>();
     @Override
     protected void buildVisitor() {
         addVisit("Program", this::dealWithProgram);
@@ -51,99 +55,131 @@ public class SymbolTableVisitor extends PreorderJmmVisitor {
     }
 
     public SimpleTable generateSymbolicTable() {
-        return new SimpleTable(imports, className, _super, fields, methods, type, parameters, localVariables);
+        return new SimpleTable(imports, className, _super, fields, methods, returnTypes, parameters, localVariables);
     }
 
-    private Object dealWithThis(Object o, Object o1) {
+    private Void dealWithThis(JmmNode jmmnode, Void _void) {
+        return null;
     }
 
-    private Object dealWithIdentifier(Object o, Object o1) {
+    private Void dealWithIdentifier(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithBoolFalse(Object o, Object o1) {
+    private Void dealWithBoolFalse(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithBoolTrue(Object o, Object o1) {
+    private Void dealWithBoolTrue(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithInteger(Object o, Object o1) {
+    private Void dealWithInteger(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithNewClass(Object o, Object o1) {
+    private Void dealWithNewClass(JmmNode node, Void _void) { return null; }
+
+    private Void dealWithNewArray(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithNewArray(Object o, Object o1) {
+    private Void dealWithFunctionCall(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithFunctionCall(Object o, Object o1) {
+    private Void dealWithLength(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithLength(Object o, Object o1) {
+    private Void dealWithSquareBrackets(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithSquareBrackets(Object o, Object o1) {
+    private Void dealWithLogicalAnd(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithLogicalAnd(Object o, Object o1) {
+    private Void dealWithCompare(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithCompare(Object o, Object o1) {
+    private Void dealWithAdditive(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithAdditive(Object o, Object o1) {
+    private Void dealWithMultiplicative(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithMultiplicative(Object o, Object o1) {
+    private Void dealWithParenthesis(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithParenthesis(Object o, Object o1) {
+    private Void dealWithNegation(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithNegation(Object o, Object o1) {
+    private Void dealWithArray(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithArray(Object o, Object o1) {
+    private Void dealWithAssignment(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithAssignment(Object o, Object o1) {
+    private Void dealWithStatementExpression(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithStatementExpression(Object o, Object o1) {
+    private Void dealWithWhile(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithWhile(Object o, Object o1) {
+    private Void dealWithIf(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithIf(Object o, Object o1) {
+    private Void dealWithBlockCode(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithBlockCode(Object o, Object o1) {
+    private Void dealWithIDType(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithIDType(Object o, Object o1) {
+    private Void dealWithBoolType(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithBoolType(Object o, Object o1) {
+    private Void dealWithIntType(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithIntType(Object o, Object o1) {
+    private Void dealWithMethod(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithMethod(Object o, Object o1) {
+    private Void dealWithMainMethod(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithMainMethod(Object o, Object o1) {
+    private Void dealWithVarDeclaration(JmmNode node, Void _void) {
+
+        return null;
     }
 
-    private Object dealWithVarDeclaration(Object o, Object o1) {
+    private Void dealWithClassDeclaration(JmmNode node, Void _void) {
+        this.className = node.get("name");
+        this._super = node.get("superName");
+        return null;
     }
 
-    private Object dealWithClassDeclaration(Object o, Object o1) {
+    private Void dealWithImportDeclaration(JmmNode node, Void _void) {
+        return null;
     }
 
-    private Object dealWithImportDeclaration(Object o, Object o1) {
-    }
-
-    private Object dealWithProgram(Object o, Object o1) {
+    private Void dealWithProgram(JmmNode node, Void _void) {
+        return null;
     }
 }

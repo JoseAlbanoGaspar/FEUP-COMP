@@ -44,6 +44,13 @@ public class Launcher {
         }
         TestUtils.noErrors(parserResult.getReports());
 
+        // Generate Symbolic Table
+        SymbolTableVisitor visitor = new SymbolTableVisitor();
+        visitor.visit(parserResult.getRootNode(), null);
+        SimpleTable table = visitor.generateSymbolicTable();
+        System.out.println(table.getClassName());
+        System.out.println(table.getSuper());
+
         // ... add remaining stages
 
     }

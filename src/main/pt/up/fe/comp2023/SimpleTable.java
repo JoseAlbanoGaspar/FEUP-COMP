@@ -5,27 +5,30 @@ import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SimpleTable implements SymbolTable {
-    protected final List<String> imports;
-    protected final String className;
-    protected final String _super;
-    protected final List<Symbol> fields;
-    protected final List<String> methods;
-    protected final Type type;
-    protected final List<Symbol> parameters;
-    protected final List<Symbol> localVariables;
+    protected List<String> imports;
+    protected String className;
+    protected String _super;
+    protected List<Symbol> fields;
+    protected List<String> methods;
+    protected Map<String, Type> returnTypes;
+    protected Map<String, List<Symbol>> parameters;
+    protected Map<String, List<Symbol>> localVariables;
     public SimpleTable(List<String> imports, String className, String _super,
-                       List<Symbol> fields, List<String> methods, Type type,
-                       List<Symbol> parameters, List<Symbol> localVariables) {
+                       List<Symbol> fields, List<String> methods, Map<String, Type> returnTypes,
+                       Map<String, List<Symbol>> parameters, Map<String, List<Symbol>> localVariables) {
 
         this.imports = imports;
         this.className = className;
         this._super = _super;
         this.fields = fields;
         this.methods = methods;
-        this.type = type;
+        this.returnTypes = returnTypes;
         this.parameters = parameters;
         this.localVariables = localVariables;
     }
@@ -57,16 +60,16 @@ public class SimpleTable implements SymbolTable {
 
     @Override
     public Type getReturnType(String s) {
-        return type;
+        return returnTypes.get(s);
     }
 
     @Override
     public List<Symbol> getParameters(String s) {
-        return parameters;
+        return parameters.get(s);
     }
 
     @Override
     public List<Symbol> getLocalVariables(String s) {
-        return localVariables;
+        return localVariables.get(s);
     }
 }
