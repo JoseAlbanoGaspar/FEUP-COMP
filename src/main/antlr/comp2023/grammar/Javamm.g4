@@ -24,7 +24,7 @@ varDeclaration : t=type var=ID ';'
 mainMethodDeclaration : ('public')? 'static' 'void' 'main' '(' type '[' ']' arg=ID ')' '{' ( varDeclaration)* ( statement )* '}'                     #MainMethod
                       ;
 
-instanceMethodDeclaration :  ('public')? type name=ID '(' ( type arg=ID ( ',' type arg=ID )* )? ')' '{' ( varDeclaration)* ( statement )* 'return' expression ';' '}'  #Method
+instanceMethodDeclaration :  ('public')? type name=ID '(' ( types+=type args+=ID ( ',' types+=type args+=ID )* )? ')' '{' ( varDeclaration)* ( statement )* 'return' expression ';' '}'  #Method
                           ;
 
 type locals[boolean isArray=false] : 'int' ('[' ']'{$isArray = true;})?  #IntType

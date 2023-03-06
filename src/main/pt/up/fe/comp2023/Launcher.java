@@ -52,6 +52,7 @@ public class Launcher {
         System.out.println(table.getSuper());
         System.out.println(table.getImports());
         System.out.println(table.getFields());
+        System.out.println(table.getParameters("main"));
 
         // ... add remaining stages
 
