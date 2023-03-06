@@ -7,21 +7,14 @@ import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import java.util.List;
 
 public class SymbolTableVisitor extends PreorderJmmVisitor {
-    protected String imports;
-
+    protected List<String> imports;
     protected String className;
-
-    protected String superList;
-
-    protected List<Symbol> Fields;
-
+    protected String _super;
+    protected List<Symbol> fields;
     protected List<String> methods;
-
     protected Type type;
-
     protected List<Symbol> parameters;
-
-    protected List<Symbol> LocalVariables;
+    protected List<Symbol> localVariables;
     @Override
     protected void buildVisitor() {
         addVisit("Program", this::dealWithProgram);
@@ -55,6 +48,10 @@ public class SymbolTableVisitor extends PreorderJmmVisitor {
         addVisit("BoolFalse", this::dealWithBoolFalse);
         addVisit("Identifier", this::dealWithIdentifier);
         addVisit("This", this::dealWithThis);
+    }
+
+    public SimpleTable generateSymbolicTable() {
+        return new SimpleTable(imports, className, _super, fields, methods, type, parameters, localVariables);
     }
 
     private Object dealWithThis(Object o, Object o1) {
