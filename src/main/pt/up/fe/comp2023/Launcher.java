@@ -1,8 +1,6 @@
 package pt.up.fe.comp2023;
 
-import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
-import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.SpecsLogs;
 import pt.up.fe.specs.util.SpecsSystem;
@@ -38,21 +36,9 @@ public class Launcher {
         // Parse stage
         JmmParserResult parserResult = parser.parse(code, config);
 
-        // Check if there are parsing errors
-        for (Report report : parserResult.getReports()) {
-            System.out.println(report.getMessage());
-        }
-        TestUtils.noErrors(parserResult.getReports());
-
-        // Generate Symbolic Table
-        SymbolTableVisitor visitor = new SymbolTableVisitor();
-        visitor.visit(parserResult.getRootNode(), null);
-        SimpleTable table = visitor.generateSymbolicTable();
-        System.out.println(table.getClassName());
-        System.out.println(table.getSuper());
-        System.out.println(table.getImports());
-        System.out.println(table.getFields());
-        System.out.println(table.getParameters("main"));
+        // Analysis stage
+        Analysis analysis = new Analysis();
+        analysis.semanticAnalysis(parserResult);
 
         // ... add remaining stages
 
