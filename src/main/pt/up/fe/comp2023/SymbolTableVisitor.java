@@ -239,7 +239,9 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
 
     private Void dealWithClassDeclaration(JmmNode node, Void _void) {
         this.className = node.get("name");
-        this._super = node.get("superName");
+        if (node.hasAttribute("superName"))
+            this._super = node.get("superName");
+
         return null;
     }
 
