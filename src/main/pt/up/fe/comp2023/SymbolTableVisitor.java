@@ -1,5 +1,6 @@
 package pt.up.fe.comp2023;
 
+import org.antlr.v4.runtime.tree.Tree;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
@@ -154,7 +155,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
     }
 
     private Void dealWithMethod(JmmNode node, Void _void) {
-        methods.add(node.get("name"));
+        this.methods.add(node.get("name"));
 
         String typeType = node.getChildren().get(0).getKind();
         Type type = null;
@@ -169,30 +170,34 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
                 type = new Type("boolean", (boolean)node.getChildren().get(0).getObject("isArray"));
                 break;
         }
+        this.returnTypes.put(node.get("name"), type);
 
-        List<?> listArgs = new ArrayList<>();
-        if (node.getObject("args").getClass().isArray()) {
-            listArgs = Arrays.asList((Object[])node.getObject("args"));
-        } else if (node.getObject("args") instanceof Collection) {
-            listArgs = new ArrayList<>((Collection<?>)node.getObject("args"));
-        }
+        List<?> listArgs = objectToIterable(node.getObject("args"));
         if (listArgs.isEmpty()) return null;
 
-        List<?> listTypes = new ArrayList<>();
-        if (node.getObject("types").getClass().isArray()) {
-            listTypes = Arrays.asList((Object[])node.getObject("types"));
-        } else if (node.getObject("types") instanceof Collection) {
-            listTypes = new ArrayList<>((Collection<?>)node.getObject("types"));
-        }
+        List<?> listTypes = objectToIterable(node.getObject("types"));
         if (listTypes.isEmpty()) return null;
         if (listTypes.size() != listArgs.size()) return null;
 
         List<Symbol> args = new ArrayList<Symbol>();
         for (var i = 0; i < listArgs.size(); i++) {
-            System.out.println(listTypes.get(i));
-            System.out.println(listArgs.get(i));
-        }
+            typeType = listTypes.get(i).getClass().getSimpleName();
+            type = null;
+            switch (typeType) {
+                case "IDTypeContext":
+                    type = new Type(((Tree)(listTypes.get(i))).getChild(0).toString(), (boolean)node.getChildren().get(0).getObject("isArray"));
+                    break;
+                case "IntTypeContext":
+                    type = new Type("int", (boolean)node.getChildren().get(0).getObject("isArray"));
+                    break;
+                case "BoolTypeContext":
+                    type = new Type("boolean", (boolean)node.getChildren().get(0).getObject("isArray"));
+                    break;
+            }
+            args.add(new Symbol(type, listArgs.get(i).toString()));
 
+        }
+        this.parameters.put(node.get("name"), args);
         return null;
     }
 
@@ -212,6 +217,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
                 type = new Type("boolean", (boolean)node.getChildren().get(0).getObject("isArray"));
                 break;
         }
+        this.returnTypes.put("main", new Type("void", false));
         List<Symbol> args = new ArrayList<Symbol>(List.of(new Symbol(type, node.get("arg"))));
         parameters.put("main", args);
         return null;
@@ -246,12 +252,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
     }
 
     private Void dealWithImportDeclaration(JmmNode node, Void _void) {
-        List<?> list = new ArrayList<>();
-        if (node.getObject("packageNames").getClass().isArray()) {
-            list = Arrays.asList((Object[])node.getObject("packageNames"));
-        } else if (node.getObject("packageNames") instanceof Collection) {
-            list = new ArrayList<>((Collection<?>)node.getObject("packageNames"));
-        }
+        List<?> list = objectToIterable(node.getObject("packageNames"));
 
         if (list.isEmpty()) return null;
 
@@ -268,5 +269,15 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
 
     private Void dealWithProgram(JmmNode node, Void _void) {
         return null;
+    }
+
+    private List<?> objectToIterable(Object obj) {
+        List<?> list = new ArrayList<>();
+        if (obj.getClass().isArray()) {
+            list = Arrays.asList((Object[])obj);
+        } else if (obj instanceof Collection) {
+            list = new ArrayList<>((Collection<?>)obj);
+        }
+        return list;
     }
 }
