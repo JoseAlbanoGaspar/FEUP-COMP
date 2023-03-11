@@ -59,7 +59,11 @@ public class GrammarTest {
         TestUtils.parseVerbose("int foo(int anInt, int[] anArray, boolean aBool, String aString) {return a;}",
                 INSTANCE_METHOD);
     }
-
+    @Test
+    public void testInstanceMethodWithoutArgs() {
+        TestUtils.parseVerbose("int foo() {return a;}",
+                INSTANCE_METHOD);
+    }
     @Test
     public void testStmtScope() {
         TestUtils.parseVerbose("{a; b; c;}", STATEMENT);
