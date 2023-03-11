@@ -1,6 +1,5 @@
 package pt.up.fe.comp2023;
 
-import org.antlr.v4.runtime.tree.Tree;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
@@ -185,7 +184,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
             type = null;
             switch (typeType) {
                 case "IDTypeContext":
-                    type = new Type(((Tree)(listTypes.get(i))).getChild(0).toString(), (boolean)node.getChildren().get(0).getObject("isArray"));
+                    type = new Type(node.getChildren().get(1+i).getObject("typeName").toString(), (boolean)node.getChildren().get(1+i).getObject("isArray"));
                     break;
                 case "IntTypeContext":
                     type = new Type("int", (boolean)node.getChildren().get(0).getObject("isArray"));
