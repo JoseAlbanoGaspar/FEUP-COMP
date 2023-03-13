@@ -236,6 +236,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
                 type = new Type("boolean", (boolean)node.getChildren().get(0).getObject("isArray"));
                 break;
         }
+        this.returnTypes.put("main", new Type("void", false));
         List<Symbol> args = new ArrayList<Symbol>(List.of(new Symbol(type, node.get("arg"))));
         parameters.put("main", args);
         localVariables.put("main", new ArrayList<>());
