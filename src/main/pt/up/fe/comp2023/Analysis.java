@@ -23,16 +23,7 @@ public class Analysis implements JmmAnalysis {
         SymbolTableVisitor visitor = new SymbolTableVisitor();
         visitor.visit(jmmParserResult.getRootNode(), null);
         SimpleTable table = visitor.generateSymbolicTable();
-        System.out.println("Rets:");
-        System.out.println(table.getReturnType("getField1"));
-        System.out.println(table.getReturnType("getField2"));
-        System.out.println(table.getReturnType("getField3"));
-        System.out.println(table.getReturnType("all"));
-        /*System.out.println(table.getClassName());
-        System.out.println(table.getSuper());
-        System.out.println(table.getImports());
-        System.out.println(table.getFields());
-        System.out.println(table.getParameters("main"));*/
+        System.out.println(table);
         
         return new JmmSemanticsResult(jmmParserResult, table, reports);
     }

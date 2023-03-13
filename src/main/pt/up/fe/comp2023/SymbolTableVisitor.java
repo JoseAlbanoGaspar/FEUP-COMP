@@ -137,39 +137,22 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
 
     private Void dealWithMethod(JmmNode node, Void _void) {
         methods.add(node.get("name"));
-        JmmNode retTypeNode = node.getChildren().get(0);
-
-
-        System.out.println("------------");
-        System.out.println(retTypeNode.getKind());
-        System.out.println("------------");
 
         JmmNode typeNode = node.getJmmChild(0);
         Type type = new Type(typeNode.get("typeName"), (boolean)typeNode.getObject("isArray"));
 
-        System.out.println(type);
-        System.out.println("---------");
         returnTypes.put(node.get("name"),type);
-        /*add an empty array associated with this method in the arguments map*/
         parameters.put(node.get("name"), new ArrayList<>());
         localVariables.put(node.get("name"), new ArrayList<>());
         return null;
     }
     private Void dealWithMethodArgs(JmmNode node, Void unused) {
-        /*System.out.println("----------------");
-        System.out.println(node.get("types"));
-        System.out.println(node.get("args"));
-        System.out.println(node.getChildren());
-        System.out.println("--------------");*/
-
         List<?> listArgs = objectToIterable(node.getObject("args"));
         if (listArgs.isEmpty()) return null;
 
 
         List<Symbol> args = new ArrayList<>();
         for (var i = 0; i < listArgs.size(); i++) {
-            /*System.out.println(node.getChildren().get(i));
-            System.out.println(listArgs.get(i));*/
             JmmNode typeNode = node.getJmmChild(i);
             Type type = new Type(typeNode.get("typeName"), (boolean)typeNode.getObject("isArray"));
             args.add(new Symbol(type, listArgs.get(i).toString()));
@@ -197,9 +180,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         JmmNode typeNode = node.getJmmChild(0);
         Type type = new Type(typeNode.get("typeName"), (boolean)typeNode.getObject("isArray"));
         Symbol field = new Symbol(type, node.get("var"));
-        /*System.out.println("-------------");
-        System.out.println(node.getJmmParent().getKind());
-        System.out.println("-------------");*/
+
         if(node.getJmmParent().getKind().equals("Method")) {
             this.localVariables.put(node.getJmmParent().get("name"),List.of(field));
         }
@@ -222,9 +203,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
 
     private Void dealWithImportDeclaration(JmmNode node, Void _void) {
         List<?> list = objectToIterable(node.getObject("packageNames"));
-
         if (list.isEmpty()) return null;
-
 
         StringBuilder pkg = new StringBuilder();
         for (var imp : list) {
