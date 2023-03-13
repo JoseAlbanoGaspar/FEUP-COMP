@@ -18,7 +18,7 @@ importDeclaration : 'import' packageNames+=ID ( '.' packageNames+=ID )* ';'
 classDeclaration : 'class' name=ID ( 'extends' superName=ID )? '{' ( varDeclaration )* ( instanceMethodDeclaration )* (mainMethodDeclaration)? (instanceMethodDeclaration)*'}'
                  ;
 
-varDeclaration : t=type var=ID ';'
+varDeclaration : type var=ID ';'
                ;
 
 mainMethodDeclaration : ('public')? 'static' 'void' 'main' '(' type '[' ']' arg=ID ')' '{' ( varDeclaration)* ( statement )* '}'                     #MainMethod
@@ -26,7 +26,7 @@ mainMethodDeclaration : ('public')? 'static' 'void' 'main' '(' type '[' ']' arg=
 
 instanceMethodDeclaration :  ('public')? type name=ID '(' (arguments)? ')' '{' ( varDeclaration)* ( statement )* ('return' expression ';')? '}'  #Method
                           ;
-arguments : types+=type args+=ID (',' types+=type args+=ID)*  #MethodArgs
+arguments : type args+=ID (',' type args+=ID)*  #MethodArgs
           ;
 
 
