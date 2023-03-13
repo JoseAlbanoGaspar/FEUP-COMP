@@ -43,7 +43,7 @@ statement : '{' ( statement )* '}'  #BlockCode
           | var=ID '[' expression ']' '=' expression ';'  #Array
           ;
 
-expression : '!' expression  #Negation
+expression : '!' expression  #Not
            | '(' expression ')'  #Parenthesis
            | expression op=('*' | '/') expression #BinaryOp
            | expression op=('+' | '-') expression #BinaryOp
