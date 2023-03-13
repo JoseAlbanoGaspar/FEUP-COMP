@@ -21,7 +21,7 @@ classDeclaration : 'class' name=ID ( 'extends' superName=ID )? '{' ( varDeclarat
 varDeclaration : type var=ID ';'
                ;
 
-mainMethodDeclaration : ('public')? 'static' 'void' 'main' '(' type '[' ']' arg=ID ')' '{' ( varDeclaration)* ( statement )* '}'                     #MainMethod
+mainMethodDeclaration : ('public')? 'static' 'void' 'main' '(' type arg=ID ')' '{' ( varDeclaration)* ( statement )* '}'                     #MainMethod
                       ;
 
 instanceMethodDeclaration :  ('public')? type name=ID '(' (arguments)? ')' '{' ( varDeclaration)* ( statement )* ('return' expression ';')? '}'  #Method
@@ -30,9 +30,7 @@ arguments : type args+=ID (',' type args+=ID)*  #MethodArgs
           ;
 
 
-type locals[boolean isArray=false] : 'int' ('[' ']'{$isArray = true;})?  #IntType
-     | 'boolean'      #BoolType
-     | typeName=ID    #IDType
+type locals[boolean isArray=false] : typeName=ID ('[' ']'{$isArray = true;})?
      ;
 
 statement : '{' ( statement )* '}'  #BlockCode
@@ -52,7 +50,7 @@ expression : '!' expression  #Not
            | expression '[' expression ']' #SquareBrackets
            | expression '.' 'length' #Length
            | expression '.' methodName=ID '(' ( expression ( ',' expression )* )? ')' #FunctionCall
-           | 'new' 'int' '[' expression ']'  #NewArray
+           | 'new' type '[' expression ']'  #NewArray
            | 'new' className=ID '(' ')' #NewClass
            | value=INT   #Integer
            | value=('true' | 'false')  #BoolLiteral

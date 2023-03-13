@@ -24,9 +24,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         addVisit("VarDeclaration", this::dealWithVarDeclaration);
         addVisit("MainMethod", this::dealWithMainMethod);
         addVisit("Method", this::dealWithMethod);
-        addVisit("IntType", this::dealWithIntType);
-        addVisit("BoolType", this::dealWithBoolType);
-        addVisit("IDType", this::dealWithIDType);
+        addVisit("Type", this::dealWithType);
         addVisit("BlockCode", this::dealWithBlockCode);
         addVisit("If",this::dealWithIf);
         addVisit("While", this::dealWithWhile);
@@ -50,6 +48,9 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         addVisit("MethodArgs", this::dealWithMethodArgs);
     }
 
+    private Void dealWithType(JmmNode jmmNode, Void unused) {
+        return null;
+    }
 
 
     public SimpleTable generateSymbolicTable() {
@@ -134,18 +135,6 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         return null;
     }
 
-    private Void dealWithIDType(JmmNode node, Void _void) {
-        return null;
-    }
-
-    private Void dealWithBoolType(JmmNode node, Void _void) {
-        return null;
-    }
-
-    private Void dealWithIntType(JmmNode node, Void _void) {
-        return null;
-    }
-
     private Void dealWithMethod(JmmNode node, Void _void) {
         methods.add(node.get("name"));
         JmmNode retTypeNode = node.getChildren().get(0);
@@ -154,18 +143,10 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         System.out.println("------------");
         System.out.println(retTypeNode.getKind());
         System.out.println("------------");
-        Type type = null;
-        switch (retTypeNode.getKind()) {
-            case "IDType":
-                type = new Type(retTypeNode.get("typeName"), (boolean)retTypeNode.getObject("isArray"));
-                break;
-            case "IntType":
-                type = new Type("int", (boolean)retTypeNode.getObject("isArray"));
-                break;
-            case "BoolType":
-                type = new Type("boolean", (boolean)retTypeNode.getObject("isArray"));
-                break;
-        }
+
+        JmmNode typeNode = node.getJmmChild(0);
+        Type type = new Type(typeNode.get("typeName"), (boolean)typeNode.getObject("isArray"));
+
         System.out.println(type);
         System.out.println("---------");
         returnTypes.put(node.get("name"),type);
@@ -189,19 +170,8 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         for (var i = 0; i < listArgs.size(); i++) {
             /*System.out.println(node.getChildren().get(i));
             System.out.println(listArgs.get(i));*/
-            JmmNode typeNode = node.getChildren().get(i);
-            Type type = null;
-            switch (typeNode.getKind()) {
-                case "IDType":
-                    type = new Type(typeNode.get("typeName"), (boolean)typeNode.getObject("isArray"));
-                    break;
-                case "IntType":
-                    type = new Type("int", (boolean)typeNode.getObject("isArray"));
-                    break;
-                case "BoolType":
-                    type = new Type("boolean", (boolean)typeNode.getObject("isArray"));
-                    break;
-            }
+            JmmNode typeNode = node.getJmmChild(i);
+            Type type = new Type(typeNode.get("typeName"), (boolean)typeNode.getObject("isArray"));
             args.add(new Symbol(type, listArgs.get(i).toString()));
         }
         this.parameters.put(node.getJmmParent().get("name"), args);
@@ -213,19 +183,9 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         /*add an empty array associated with this method in the arguments map*/
         localVariables.put("main", new ArrayList<>());
 
-        String typeType = node.getChildren().get(0).getKind();
-        Type type = null;
-        switch (typeType) {
-            case "IDType":
-                type = new Type(node.getChildren().get(0).get("typeName"), (boolean)node.getChildren().get(0).getObject("isArray"));
-                break;
-            case "IntType":
-                type = new Type("int", (boolean)node.getChildren().get(0).getObject("isArray"));
-                break;
-            case "BoolType":
-                type = new Type("boolean", (boolean)node.getChildren().get(0).getObject("isArray"));
-                break;
-        }
+        JmmNode typeNode = node.getJmmChild(0);
+        Type type = new Type(typeNode.get("typeName"), (boolean)typeNode.getObject("isArray"));
+
         this.returnTypes.put("main", new Type("void", false));
         List<Symbol> args = new ArrayList<Symbol>(List.of(new Symbol(type, node.get("arg"))));
         parameters.put("main", args);
@@ -234,19 +194,8 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
     }
 
     private Void dealWithVarDeclaration(JmmNode node, Void _void) {
-        String typeType = node.getJmmChild(0).getKind();
-        Type type = null;
-        switch (typeType) {
-            case "IDType":
-                type = new Type(node.getChildren().get(0).get("typeName"), (boolean)node.getChildren().get(0).getObject("isArray"));
-                break;
-            case "IntType":
-                type = new Type("int", (boolean)node.getChildren().get(0).getObject("isArray"));
-                break;
-            case "BoolType":
-                type = new Type("boolean", (boolean)node.getChildren().get(0).getObject("isArray"));
-                break;
-        }
+        JmmNode typeNode = node.getJmmChild(0);
+        Type type = new Type(typeNode.get("typeName"), (boolean)typeNode.getObject("isArray"));
         Symbol field = new Symbol(type, node.get("var"));
         /*System.out.println("-------------");
         System.out.println(node.getJmmParent().getKind());
