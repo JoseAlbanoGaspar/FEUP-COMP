@@ -35,32 +35,42 @@ public class SimpleTable implements SymbolTable {
     @Override
     public String toString(){
         StringBuilder bob = new StringBuilder();
-        bob.append("IMPORTS:\n");
-        for(String impt: imports){
-            bob.append("-> ").append(impt).append("\n");
-        }
-        bob.append("CLASS NAME:\n-> ").append(className);
-        if(_super != null)
-            bob.append("SUPER CLASS NAME:\n-> ").append(_super);
-        else
-            bob.append("SUPER CLASS NAME:\n-> N/A\n");
 
-        bob.append("FIELDS:\n");
-        for(Symbol f: fields){
-            bob.append("-> ").append(f.print()).append("\n");
-        }
-
-        bob.append("METHODS:\n");
-        for (String mth : methods) {
-            bob.append("-> ").append(mth);
-            bob.append("   Returns: ").append(returnTypes.get(mth)).append("\n");
-            bob.append(("  Parameters:\n"));
-            for (Symbol par : parameters.get(mth)) {
-                bob.append("   -> ").append(par.print()).append("\n");
+        if (!imports.isEmpty()) {
+            bob.append("IMPORTS:\n");
+            for (String impt : imports) {
+                bob.append("    -> ").append(impt).append("\n");
             }
-            bob.append(("  Local Variables:\n"));
-            for (Symbol variable : localVariables.get(mth)) {
-                bob.append("   -> ").append(variable.print()).append("\n");
+        }
+
+        bob.append("CLASS NAME: ").append(className).append("\n");
+        if(_super != null)
+            bob.append("SUPER CLASS NAME: ").append(_super).append("\n");
+
+        if (!fields.isEmpty()) {
+            bob.append("FIELDS:\n");
+            for (Symbol f : fields) {
+                bob.append("    -> ").append(f.print()).append("\n");
+            }
+        }
+
+        if (!methods.isEmpty()) {
+            bob.append("METHODS:\n");
+            for (String mth : methods) {
+                bob.append("    -> ").append(mth).append("\n");
+                bob.append("        Returns: ").append(returnTypes.get(mth).print()).append("\n");
+                if (!parameters.get(mth).isEmpty()) {
+                    bob.append(("        Parameters:\n"));
+                    for (Symbol par : parameters.get(mth)) {
+                        bob.append("            -> ").append(par.print()).append("\n");
+                    }
+                }
+                if (!localVariables.get(mth).isEmpty()) {
+                    bob.append(("       Local Variables:\n"));
+                    for (Symbol variable : localVariables.get(mth)) {
+                        bob.append("            -> ").append(variable.print()).append("\n");
+                    }
+                }
             }
         }
 
