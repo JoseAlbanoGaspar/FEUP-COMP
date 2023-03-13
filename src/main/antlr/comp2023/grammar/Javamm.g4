@@ -45,8 +45,8 @@ statement : '{' ( statement )* '}'  #BlockCode
 
 expression : '!' expression  #Negation
            | '(' expression ')'  #Parenthesis
-           | expression op=('*' | '/') expression #Multiplicative
-           | expression op=('+' | '-') expression #Additive
+           | expression op=('*' | '/') expression #BinaryOp
+           | expression op=('+' | '-') expression #BinaryOp
            | expression  '<' expression #Compare
            | expression '&&' expression #LogicalAnd
            | expression '[' expression ']' #SquareBrackets
@@ -55,8 +55,7 @@ expression : '!' expression  #Negation
            | 'new' 'int' '[' expression ']'  #NewArray
            | 'new' className=ID '(' ')' #NewClass
            | value=INT   #Integer
-           | 'true'  #BoolTrue
-           | 'false' #BoolFalse
+           | value=('true' | 'false')  #BoolLiteral
            | value=ID      #Identifier
            | 'this'  #This
            ;

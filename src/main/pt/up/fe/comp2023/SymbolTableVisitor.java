@@ -35,8 +35,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         addVisit("Array", this::dealWithArray);
         addVisit("Negation", this::dealWithNegation);
         addVisit("Parenthesis", this::dealWithParenthesis);
-        addVisit("Multiplicative", this::dealWithMultiplicative);
-        addVisit("Additive", this::dealWithAdditive);
+        addVisit("Multiplicative", this::dealWithBinaryOp);
         addVisit("Compare", this::dealWithCompare);
         addVisit("LogicalAnd", this::dealWithLogicalAnd);
         addVisit("SquareBrackets", this::dealWithSquareBrackets);
@@ -45,8 +44,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         addVisit("NewArray", this::dealWithNewArray);
         addVisit("NewClass", this::dealWithNewClass);
         addVisit("Integer", this::dealWithInteger);
-        addVisit("BoolTrue", this::dealWithBoolTrue);
-        addVisit("BoolFalse", this::dealWithBoolFalse);
+        addVisit("BoolLiteral", this::dealWithBool);
         addVisit("Identifier", this::dealWithIdentifier);
         addVisit("This", this::dealWithThis);
         addVisit("MethodArgs", this::dealWithMethodArgs);
@@ -66,11 +64,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         return null;
     }
 
-    private Void dealWithBoolFalse(JmmNode node, Void _void) {
-        return null;
-    }
-
-    private Void dealWithBoolTrue(JmmNode node, Void _void) {
+    private Void dealWithBool(JmmNode node, Void _void) {
         return null;
     }
 
@@ -104,11 +98,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         return null;
     }
 
-    private Void dealWithAdditive(JmmNode node, Void _void) {
-        return null;
-    }
-
-    private Void dealWithMultiplicative(JmmNode node, Void _void) {
+    private Void dealWithBinaryOp(JmmNode node, Void _void) {
         return null;
     }
 
