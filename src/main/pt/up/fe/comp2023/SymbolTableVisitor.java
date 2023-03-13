@@ -238,11 +238,12 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         }
         List<Symbol> args = new ArrayList<Symbol>(List.of(new Symbol(type, node.get("arg"))));
         parameters.put("main", args);
+        localVariables.put("main", new ArrayList<>());
         return null;
     }
 
     private Void dealWithVarDeclaration(JmmNode node, Void _void) {
-        String typeType = node.getChildren().get(0).getKind();
+        String typeType = node.getJmmChild(0).getKind();
         Type type = null;
         switch (typeType) {
             case "IDType":
