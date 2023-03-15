@@ -244,4 +244,13 @@ public class GrammarTest {
         TestUtils.parseVerbose("1 && 2 < 3 + 4 - 5 * 6 / 7", EXPRESSION);
     }
 
+    @Test
+    public void testCommentInline(){
+        TestUtils.parseVerbose("int t(){//com\nreturn 0;}", INSTANCE_METHOD);
+    }
+
+    @Test
+    public void testCommentInMultiple(){
+        TestUtils.parseVerbose("int t(){/*com\nreturn 0;*/a=3;}", INSTANCE_METHOD);
+    }
 }
