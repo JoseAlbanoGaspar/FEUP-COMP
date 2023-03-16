@@ -258,4 +258,19 @@ public class GrammarTest {
     public void testInt(){
         TestUtils.parseVerbose("int a = 10;", INSTANCE_METHOD);
     }
+
+    @Test
+    public void testWhileIf(){
+        TestUtils.parseVerbose("while(true){if(3 < 6){ b = true;} else{ b = false;}}", STATEMENT);
+    }
+
+    @Test
+    public void testIfCondition(){
+        TestUtils.parseVerbose("if(3 < 6){ b = true;} else{ b = false;}", STATEMENT);
+    }
+
+    @Test
+    public void testExpression2(){
+        TestUtils.parseVerbose("3", EXPRESSION);
+    }
 }
