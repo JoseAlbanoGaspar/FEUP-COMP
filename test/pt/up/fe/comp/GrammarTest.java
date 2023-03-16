@@ -253,4 +253,9 @@ public class GrammarTest {
     public void testCommentInMultiple(){
         TestUtils.parseVerbose("int t(){/*com\nreturn 0;*/a=3;}", INSTANCE_METHOD);
     }
+
+    @Test
+    public void testInt(){
+        TestUtils.parseVerbose("int a = 10;", INSTANCE_METHOD);
+    }
 }
