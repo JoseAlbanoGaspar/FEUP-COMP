@@ -12,8 +12,8 @@ public class OllirParser implements JmmOptimization {
 
         OllirVisitor visitor = new OllirVisitor(jmmSemanticsResult.getSymbolTable());
         visitor.visit(jmmSemanticsResult.getRootNode(), null);
-        visitor.getOllirCode();
+        String ollirCode = visitor.getOllirCode();
 
-        return null;
+        return new OllirResult(jmmSemanticsResult, ollirCode, jmmSemanticsResult.getReports());
     }
 }
