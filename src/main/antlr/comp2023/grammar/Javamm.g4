@@ -8,10 +8,6 @@ grammar Javamm;
 INT : [0] | [1-9][0-9]* ;
 ID : [a-zA-Z_$][a-zA-Z_0-9]* ;
 
-/*
-INT : [0-9]+ ;
-ID : [a-zA-Z_][a-zA-Z_0-9]* ;
-*/
 
 WS : [ \t\n\r\f]+ -> skip ;
 COMMENT:'//' .*? '\n' -> skip;
@@ -51,17 +47,17 @@ statement : '{' ( statement )* '}'  #BlockCode
 
 expression : '!' expression  #Not
            | '(' expression ')'  #Parenthesis
-           | expression op=('*' | '/') expression #BinaryOp
-           | expression op=('+' | '-') expression #BinaryOp
-           | expression  '<' expression #Compare
-           | expression '&&' expression #LogicalAnd
+           | expression op=('*' | '/') expression  #BinaryOp
+           | expression op=('+' | '-') expression  #BinaryOp
+           | expression  '<' expression  #Compare
+           | expression '&&' expression  #LogicalAnd
            | expression '[' expression ']' #SquareBrackets
            | expression '.' 'length' #Length
            | expression '.' methodName=ID '(' ( expression ( ',' expression )* )? ')' #FunctionCall
            | 'new' type '[' expression ']'  #NewArray
            | 'new' className=ID '(' ')' #NewClass
-           | value=INT   #Integer
-           | value=('true' | 'false')  #BoolLiteral
+           | value=INT    #Integer
+           | value=('true' | 'false') #BoolLiteral
            | value=ID      #Identifier
            | 'this'  #This
            ;

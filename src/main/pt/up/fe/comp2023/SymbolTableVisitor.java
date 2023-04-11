@@ -33,7 +33,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         addVisit("Array", this::dealWithArray);
         addVisit("Not", this::dealWithNegation);
         addVisit("Parenthesis", this::dealWithParenthesis);
-        addVisit("Multiplicative", this::dealWithBinaryOp);
+        addVisit("BinaryOp", this::dealWithBinaryOp);
         addVisit("Compare", this::dealWithCompare);
         addVisit("LogicalAnd", this::dealWithLogicalAnd);
         addVisit("SquareBrackets", this::dealWithSquareBrackets);
@@ -182,10 +182,20 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         Symbol field = new Symbol(type, node.get("var"));
 
         if(node.getJmmParent().getKind().equals("Method")) {
-            this.localVariables.put(node.getJmmParent().get("name"),List.of(field));
+            if (localVariables.containsKey(node.getJmmParent().get("name"))) {
+                List<Symbol> list = localVariables.get(node.getJmmParent().get("name"));
+                list.add(field);
+            } else {
+                localVariables.put(node.getJmmParent().get("name"), List.of(field));
+            }
         }
         else if(node.getJmmParent().getKind().equals("MainMethod")){
-            this.localVariables.put("main",List.of(field));
+            if (localVariables.containsKey("main")) {
+                List<Symbol> list = localVariables.get("main");
+                list.add(field);
+            } else {
+                localVariables.put("main", List.of(field));
+            }
         }
         else
             this.fields.add(field);

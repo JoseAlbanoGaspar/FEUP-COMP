@@ -35,7 +35,7 @@ public class Launcher {
 
         // Parse stage
         JmmParserResult parserResult = parser.parse(code, config);
-
+        System.out.println(parserResult);
         // Analysis stage
         Analysis analysis = new Analysis();
         analysis.semanticAnalysis(parserResult);
