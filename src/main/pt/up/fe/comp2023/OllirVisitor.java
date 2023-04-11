@@ -46,6 +46,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithMethodArgs(JmmNode jmmNode, String s) {
+
         return s;
     }
 
@@ -209,7 +210,22 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithImportDeclaration(JmmNode jmmNode, String s) {
-        return "";
+        String ret = s+"import ";
+
+        boolean first = true;
+        String s2;
+        for(JmmNode child: jmmNode.getChildren()){
+            if(first){
+                first = false;
+                ret+=jmmNode.get("packageNames")
+            }else{
+                ret+="."+jmmNode.get("packageNames")
+            }
+
+        }
+
+        ret+=";\n";
+        return ret
     }
 
     private String dealWithProgram(JmmNode jmmNode, String s) {
