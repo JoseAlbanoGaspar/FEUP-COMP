@@ -46,6 +46,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithMethodArgs(JmmNode jmmNode, String s) {
+        return s;
     }
 
     private String dealWithThis(JmmNode jmmNode, String s) {
@@ -137,7 +138,15 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithMainMethod(JmmNode jmmNode, String s) {
-        return null;
+        String ret = "";
+        ret+=s+"\n\t.method public static main(args.array.String).V {\n";
+
+        for (JmmNode child : jmmNode.getChildren()){
+            ret+=visit(child, s+"\t");
+        }
+
+        ret+=s+"}\n";
+        return ret;
     }
 
     private String dealWithVarDeclaration(JmmNode jmmNode, String s) {
@@ -152,7 +161,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
         for (JmmNode child: jmmNode.getChildren()){
             if(child.getKind().equals("VarDeclaration")){
-                ret+=visit(child);
+                ret+=visit(child, s+"\t");
             }
         }
         ret+=s+"\t.construct" + name + "().V {\n";
@@ -163,17 +172,23 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             if(child.getKind().equals("VarDeclaration")){
                 continue;
             }
-            else{
-                ret+=visit(child);
-            }
+            ret+=visit(child, s+"\t");
+
         }
         return ret+=s+"}";
     }
 
     private String dealWithImportDeclaration(JmmNode jmmNode, String s) {
+        return "";
     }
 
     private String dealWithProgram(JmmNode jmmNode, String s) {
+        String ret = "";
+        for (JmmNode child: jmmNode.getChildren()){
+            ret+=visit(child, "");
+        }
+        this.ollirString = ret;
+        return ret;
     }
 
     public String getOllirCode() {
