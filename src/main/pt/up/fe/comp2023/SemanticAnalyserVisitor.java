@@ -62,7 +62,7 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> {
             aux = aux.getJmmParent();
         }
         if(aux.getKind().equals("MainMethod")) {
-            createReport(node, "this cannot ve used in static methods");
+            createReport(node, "this cannot be used in static methods");
         }
 
 
@@ -73,17 +73,26 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> {
         Type type = varCheck(node, "value");
         if(type.getName().equals("NotFound"))
             createReport(node, "Variable not declared: " + node.get("value"));
-        else if(type.getName().equals("int"))
-            dealWithInteger(node,_void);
-            if(node.getJmmParent().getKind().equals("If") || node.getJmmParent().getKind().equals("While")){
+        else if(type.getName().equals("int")) {
+            dealWithInteger(node, _void);
+            if (node.getJmmParent().getKind().equals("If") || node.getJmmParent().getKind().equals("While")) {
                 createReport(node, "Expressions in conditions must return a boolean!");
             }
+        }
         else if(type.getName().equals("boolean")) {
             dealWithBool(node, _void);
             if(node.getJmmParent().getKind().equals("SquareBrackets") ||
                     (node.getJmmParent().getKind().equals("Array") &&
                     node.getJmmParent().getJmmChild(0).equals(node))){
                 createReport(node, "Array index expression must be integer!");
+            }
+        }
+        else{ //import or class types
+            if(node.getJmmParent().getKind().equals("BinaryOp")){
+                createReport(node, node.get("value") + " cannot be used in arithmetic operations!");
+            }
+            else if (node.getJmmParent().getKind().equals("LogicalAnd") || node.getJmmParent().getKind().equals("Not")){
+                createReport(node, node.get("value") + " cannot be used in boolean operations!");
             }
         }
 
@@ -102,8 +111,6 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> {
     }
 
     private Void dealWithInteger(JmmNode node, Void _void) {
-
-        //System.out.println(node);
         JmmNode parent = node.getJmmParent();
 
         if(parent.getKind().equals("LogicalAnd"))
@@ -233,6 +240,21 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> {
         if(type.getName().equals("NotFound"))
             createReport(node, "Variable not declared: " + node.get("var"));
 
+        //this used as object verification
+        if(node.getJmmChild(0).getKind().equals("This")){
+            JmmNode aux = node;
+            while(!aux.getKind().equals("ClassDeclaration")){
+                aux = aux.getJmmParent();
+            }
+            if(!type.getName().equals(aux.get("name"))){
+                if(!aux.hasAttribute("superName")){
+                    createReport(node, "this cannot be assigned to " + node.get("var"));
+                }
+                else if(!type.getName().equals(aux.get("superName"))){
+                    createReport(node, "this cannot be assigned to " + node.get("var"));
+                }
+            }
+        }
         assignmentCheck(node.getJmmChild(0), type);
         return null;
     }
@@ -342,7 +364,7 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> {
         for (String s : simpleTable.getImports()) {
             String[] parts = s.split("\\."); // split the string on "." character
             if(parts[parts.length-1].equals(node.get(attribute))) {
-                return new Type("import", false);
+                return new Type(node.get(attribute), false);
             }
         }
 
@@ -382,12 +404,17 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> {
     private Void assignmentCheck(JmmNode node, Type type) {
         if(node.getKind().equals("Identifier")){
             if(!varCheck(node, "value").getName().equals(type.getName())){ //attention to "import" type
-                createReport(node.getJmmParent(), "Type of the assignee must be compatible with the assigned!");
+                createReport(node.getJmmParent(), "Type of the assignee must be compatible with the assigned!1");
             }
         }
-        if(node.getKind().equals("SquareBrackets") && node.getJmmChild(0).getKind().equals("Identifier"))
+        else if(node.getKind().equals("NewClass")){
+            if(!node.get("className").equals(type.getName())){ //attention to "import" type
+                createReport(node.getJmmParent(), "Type of the assignee must be compatible with the assigned!2");
+            }
+        }
+        else if(node.getKind().equals("SquareBrackets") && node.getJmmChild(0).getKind().equals("Identifier"))
             if(!varCheck(node.getJmmChild(0), "value").getName().equals(type.getName())){ //attention to "import" type
-                createReport(node.getJmmParent(), "Type of the assignee must be compatible with the assigned!");
+                createReport(node.getJmmParent(), "Type of the assignee must be compatible with the assigned!3");
             }
 
         if(type.getName().equals("int")){
@@ -395,16 +422,17 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> {
                     node.getKind().equals("Compare") ||
                     node.getKind().equals("LogicalAnd") ||
                     node.getKind().equals("BoolLiteral")){
-                createReport(node.getJmmParent(), "Type of the assignee must be compatible with the assigned!");
+                createReport(node.getJmmParent(), "Type of the assignee must be compatible with the assigned!4");
             }
         }
-        else if(type.getName().equals("bool")){
+        else if(type.getName().equals("boolean")){
             if(node.getKind().equals("BinaryOp") ||
                     node.getKind().equals("Length") ||
                     node.getKind().equals("Integer") ){
-                createReport(node.getJmmParent(), "Type of the assignee must be compatible with the assigned!");
+                createReport(node.getJmmParent(), "Type of the assignee must be compatible with the assigned!5");
             }
         }
+
         return null;
     }
 

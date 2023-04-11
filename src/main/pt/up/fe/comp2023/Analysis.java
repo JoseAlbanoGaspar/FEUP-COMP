@@ -38,8 +38,8 @@ public class Analysis implements JmmAnalysis {
         for (Report report : semanticVisitor.getReports()) {
             System.out.println(report.getMessage());
         }
-        TestUtils.noErrors(semanticVisitor.getReports());
+        //TestUtils.noErrors(semanticVisitor.getReports());
 
-        return new JmmSemanticsResult(jmmParserResult, table, reports);
+        return new JmmSemanticsResult(jmmParserResult, table, semanticVisitor.getReports());
     }
 }
