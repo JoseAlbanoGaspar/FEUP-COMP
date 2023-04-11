@@ -33,7 +33,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         addVisit("Array", this::dealWithArray);
         addVisit("Not", this::dealWithNegation);
         addVisit("Parenthesis", this::dealWithParenthesis);
-        addVisit("Multiplicative", this::dealWithBinaryOp);
+        addVisit("BinaryOp", this::dealWithBinaryOp);
         addVisit("Compare", this::dealWithCompare);
         addVisit("LogicalAnd", this::dealWithLogicalAnd);
         addVisit("SquareBrackets", this::dealWithSquareBrackets);

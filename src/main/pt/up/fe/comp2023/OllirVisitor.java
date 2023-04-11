@@ -1,17 +1,27 @@
 package pt.up.fe.comp2023;
 
 
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class OllirVisitor extends AJmmVisitor<String, String> {
     private String ollirString;
     private SymbolTable symbolTable;
 
+    private Map<String, String> types;
+
     public OllirVisitor(SymbolTable symbolTable){
         this.symbolTable = symbolTable;
-        ollirString = "";
+        this.ollirString = "";
+        this.types = new HashMap<String, String>(){{
+            put("int", "i32");
+            put("boolean", "bool");
+        }};
     }
     @Override
     protected void buildVisitor() {
@@ -30,7 +40,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("Array", this::dealWithArray);
         addVisit("Not", this::dealWithNegation);
         addVisit("Parenthesis", this::dealWithParenthesis);
-        addVisit("Multiplicative", this::dealWithBinaryOp);
+        addVisit("BinaryOp", this::dealWithBinaryOp);
         addVisit("Compare", this::dealWithCompare);
         addVisit("LogicalAnd", this::dealWithLogicalAnd);
         addVisit("SquareBrackets", this::dealWithSquareBrackets);
@@ -46,8 +56,19 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithMethodArgs(JmmNode jmmNode, String s) {
+        String ret = "";
+        String methodName = jmmNode.getJmmParent().get("name");
+        var args = symbolTable.getParameters(methodName);
+        boolean first = true;
+        for (Symbol symbol: args){
+            String comma = first ? "" : ", ";
+            first = false;
+            String array = symbol.getType().isArray() ? ".array" : "";
+            ret += comma + symbol.getName() + array + "." + types.get(symbol.getType().getName());
 
-        return s;
+        }
+
+        return ret;
     }
 
     private String dealWithThis(JmmNode jmmNode, String s) {
@@ -137,7 +158,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     private String dealWithMethod(JmmNode jmmNode, String s) {
         String ret = "";
         String name = jmmNode.get("name");
-        ret+=s+"\t.method public "+name+"(";
+        ret+=s+".method public "+name+"(";
 
         String s2;
         boolean first = true;
@@ -148,15 +169,15 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             }else{
                 s2=", ";
             }
-            if(child.getKind().equals("Arguments")){
+            if(child.getKind().equals("MethodArgs")){
                 ret+=visit(child, s2);
             }
         }
-        String returnType = getType(name);
+        String returnType = getRetType(name);
         ret+=")."+ returnType + " {\n";
 
         for (JmmNode child : jmmNode.getChildren()){
-            if(child.getKind().equals("Arguments")) continue;
+            if(child.getKind().equals("MethodArgs")) continue;
             if(child.getKind().equals("Expression")){
                 ret+=s+"\tret." + returnType + " ";
                 ret += visit(child, "");
@@ -217,15 +238,15 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         for(JmmNode child: jmmNode.getChildren()){
             if(first){
                 first = false;
-                ret+=jmmNode.get("packageNames")
+                ret+=jmmNode.get("packageNames");
             }else{
-                ret+="."+jmmNode.get("packageNames")
+                ret+="."+jmmNode.get("packageNames");
             }
 
         }
 
         ret+=";\n";
-        return ret
+        return ret;
     }
 
     private String dealWithProgram(JmmNode jmmNode, String s) {
@@ -241,7 +262,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         return ollirString;
     }
 
-    private String getType(String name){
+    private String getRetType(String name){
         return symbolTable.getReturnType(name).getName();
     }
 }
