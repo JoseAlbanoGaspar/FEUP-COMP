@@ -50,91 +50,123 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithThis(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithIdentifier(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithBool(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithInteger(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithNewClass(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithNewArray(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithFunctionCall(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithLength(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithSquareBrackets(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithLogicalAnd(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithCompare(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithBinaryOp(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithParenthesis(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithNegation(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithArray(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithAssignment(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithStatementExpression(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithWhile(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithIf(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithBlockCode(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithType(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithMethod(JmmNode jmmNode, String s) {
-        return null;
+        String ret = "";
+        String name = jmmNode.get("name");
+        ret+=s+"\t.method public "+name+"(";
+
+        String s2;
+        boolean first = true;
+        for(JmmNode child: jmmNode.getChildren()){
+            if(first){
+                s2 = "";
+                first = false;
+            }else{
+                s2=", ";
+            }
+            if(child.getKind().equals("Arguments")){
+                ret+=visit(child, s2);
+            }
+        }
+        String returnType = getType(name);
+        ret+=")."+ returnType + " {\n";
+
+        for (JmmNode child : jmmNode.getChildren()){
+            if(child.getKind().equals("Arguments")) continue;
+            if(child.getKind().equals("Expression")){
+                ret+=s+"\tret." + returnType + " ";
+                ret += visit(child, "");
+                ret +=";\n";
+                break;
+            }
+            ret += visit(child, s+"\t");
+        }
+
+        ret+=s+"}\n";
+        return ret;
     }
 
     private String dealWithMainMethod(JmmNode jmmNode, String s) {
@@ -150,7 +182,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithVarDeclaration(JmmNode jmmNode, String s) {
-        return null;
+        return "";
     }
 
     private String dealWithClassDeclaration(JmmNode jmmNode, String s) {
@@ -165,15 +197,13 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             }
         }
         ret+=s+"\t.construct" + name + "().V {\n";
-        ret+=s+"\t\tinvokespecial(this, \"<init>\".V;\n";
+        ret+=s+"\t\tinvokespecial(this, \"<init>\").V;\n";
         ret+=s+"\t}\n";
 
         for (JmmNode child: jmmNode.getChildren()){
-            if(child.getKind().equals("VarDeclaration")){
-                continue;
-            }
-            ret+=visit(child, s+"\t");
+            if(child.getKind().equals("VarDeclaration")) continue;
 
+            ret+=visit(child, s+"\t");
         }
         return ret+=s+"}";
     }
@@ -193,5 +223,9 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
     public String getOllirCode() {
         return ollirString;
+    }
+
+    private String getType(String name){
+        return symbolTable.getReturnType(name).getName();
     }
 }
