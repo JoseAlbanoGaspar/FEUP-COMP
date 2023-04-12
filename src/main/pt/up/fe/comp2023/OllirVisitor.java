@@ -6,23 +6,25 @@ import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class OllirVisitor extends AJmmVisitor<String, String> {
     private String ollirString;
     private final SymbolTable symbolTable;
 
-    private final Map<String, String> types;
     private boolean importsHandled;
+    private String typesSwap(String str){
+        switch(str){
+            case "int":
+                return "i32";
+            case "boolean":
+                return "bool";
+            default:
+                return str;
+        }
+    }
 
     public OllirVisitor(SymbolTable symbolTable){
         this.symbolTable = symbolTable;
         this.ollirString = "";
-        this.types = new HashMap<>() {{
-            put("int", "i32");
-            put("boolean", "bool");
-        }};
         importsHandled = false;
     }
     @Override
@@ -66,10 +68,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             String comma = first ? "" : ", ";
             first = false;
             String array = symbol.getType().isArray() ? ".array" : "";
-            ret.append(comma).append(symbol.getName()).append(array).append(".").append(types.get(symbol.getType().getName()));
-
+            ret.append(comma).append(symbol.getName()).append(array).append(".").append(typesSwap(symbol.getType().getName()));
         }
-
         return ret.toString();
     }
 
@@ -217,7 +217,13 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
         for (JmmNode child: jmmNode.getChildren()){
             if(child.getKind().equals("VarDeclaration")){
-                ret.append(visit(child, s + "\t"));
+                for(Symbol symbol: this.symbolTable.getFields()) {
+                    String array = symbol.getType().isArray() ? ".array" : "";
+                    ret.append(s).append("\t.field private ")
+                            .append(symbol.getName()).append(array).append(".").append(typesSwap(symbol.getType().getName()))
+                            .append(";\n");
+                }
+                break;
             }
         }
         ret.append(s).append("\t.construct").append(name).append("().V {\n");
