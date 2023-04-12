@@ -12,14 +12,11 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
     private boolean importsHandled;
     private String typesSwap(String str){
-        switch(str){
-            case "int":
-                return "i32";
-            case "boolean":
-                return "bool";
-            default:
-                return str;
-        }
+        return switch (str) {
+            case "int" -> "i32";
+            case "boolean" -> "bool";
+            default -> str;
+        };
     }
 
     public OllirVisitor(SymbolTable symbolTable){
@@ -134,7 +131,9 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithAssignment(JmmNode jmmNode, String s) {
-        return "";
+        StringBuilder ret = new StringBuilder(s);
+
+        return ret.toString();
     }
 
     private String dealWithStatementExpression(JmmNode jmmNode, String s) {
@@ -181,14 +180,13 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         for (JmmNode child : jmmNode.getChildren()){
             if(child.getKind().equals("MethodArgs")) continue;
             if(child.getKind().equals("Expression")){
-                ret.append(s).append("\tret.").append(returnType).append(" ");
-                ret.append(visit(child, ""));
-                ret.append(";\n");
+                ret.append(s).append("\tret.").append(returnType).append(" ")
+                        .append(visit(child, ""))
+                        .append(";\n");
                 break;
             }
             ret.append(visit(child, s + "\t"));
         }
-
         ret.append(s).append("}\n");
         return ret.toString();
     }
@@ -212,8 +210,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     private String dealWithClassDeclaration(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
         String name = jmmNode.get("name");
-        ret.append(name);
-        ret.append(" {\n");
+        ret.append(name).append(" {\n");
 
         for (JmmNode child: jmmNode.getChildren()){
             if(child.getKind().equals("VarDeclaration")){
@@ -226,9 +223,9 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 break;
             }
         }
-        ret.append(s).append("\t.construct").append(name).append("().V {\n");
-        ret.append(s).append("\t\tinvokespecial(this, \"<init>\").V;\n");
-        ret.append(s).append("\t}\n");
+        ret.append(s).append("\t.construct").append(name).append("().V {\n")
+                .append(s).append("\t\tinvokespecial(this, \"<init>\").V;\n")
+                .append(s).append("\t}\n");
 
         for (JmmNode child: jmmNode.getChildren()){
             if(child.getKind().equals("VarDeclaration")) continue;
