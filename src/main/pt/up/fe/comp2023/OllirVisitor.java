@@ -132,6 +132,24 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
     private String dealWithAssignment(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
+        Symbol symbol = null;
+        if(jmmNode.getJmmParent().getKind().equals("ClassDeclaration")){ //class variable
+            for(Symbol symbol1 : this.symbolTable.getFields()){
+                if(symbol1.getName().equals(jmmNode.get("var"))){
+                    symbol = symbol1;
+                }
+            }
+            assert symbol != null;
+
+            String txt = symbol.getType().isArray()? ".array" : "";
+
+            ret.append("putfield(this, ")
+                    .append(jmmNode.get("var"))
+                    .append(".")
+                    .append(txt)
+                    .append(typesSwap(symbol.getType().getName()));
+        }
+
 
         return ret.toString();
     }
