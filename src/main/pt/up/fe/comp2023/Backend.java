@@ -6,6 +6,7 @@ import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 public class Backend implements JasminBackend {
 
@@ -15,25 +16,43 @@ public class Backend implements JasminBackend {
 
         StringBuilder jasminCode = new StringBuilder();
 
-        // class directive
-        jasminCode.append(".class ").append(accessModifierToString(ollirClass.getClassAccessModifier())).append(" ").append(ollirClass.getClassName());
-        jasminCode.append("\n");
-
-        // super directive
-        String superClass = ollirClass.getSuperClass() == null ? "java/lang/Object" : ollirClass.getSuperClass();
-        jasminCode.append(".super ").append(superClass);
-        jasminCode.append("\n");
-
-        // fields directives
-        for (Field field : ollirClass.getFields()) {
-            jasminCode.append(".field ").append(accessModifierToString(field.getFieldAccessModifier()));
-            jasminCode.append(" '").append(field.getFieldName()).append("' ");
-            jasminCode.append(typeToString(field.getFieldType()));
-            jasminCode.append("\n");
-        }
+        buildClass(jasminCode, ollirClass);
+        buildSuper(jasminCode, ollirClass.getSuperClass());
+        buildFields(jasminCode, ollirClass.getFields());
 
         System.out.println(jasminCode);
         return new JasminResult(jasminCode.toString());
+    }
+
+    private void buildClass(StringBuilder code, ClassUnit ollirClass) {
+        code.append(".class ")
+            .append(accessModifierToString(ollirClass.getClassAccessModifier()))
+            .append(" ")
+            .append(ollirClass.getClassName())
+            .append("\n");
+    }
+
+    private void buildSuper(StringBuilder code, String superClass) {
+        String superName = superClass == null ? "java/lang/Object" : superClass;
+        code.append(".super ")
+            .append(superName)
+            .append("\n");
+    }
+
+    private void buildFields(StringBuilder code, ArrayList<Field> fields) {
+        for (Field field : fields) {
+            buildField(code, field);
+        }
+    }
+
+    private void buildField(StringBuilder code, Field field) {
+        code.append(".field ")
+            .append(accessModifierToString(field.getFieldAccessModifier()))
+            .append(" '")
+            .append(field.getFieldName())
+            .append("' ")
+            .append(typeToString(field.getFieldType()))
+            .append("\n");
     }
 
     private String accessModifierToString(AccessModifiers accessModifiers) {
@@ -50,7 +69,7 @@ public class Backend implements JasminBackend {
                 return "[" + typeToString(((ArrayType)type).getElementType());
             case CLASS: case OBJECTREF:
                 return "L" + ((ClassType)type).getName() + ";";
-            case THIS:
+            case THIS: // ??
                 return "Lthis;";
             case STRING:
                 return "Ljava/lang/String;";
