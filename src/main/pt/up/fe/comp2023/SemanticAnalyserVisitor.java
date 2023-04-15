@@ -342,6 +342,13 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
         // check if it is in fields
         for(Symbol symb : simpleTable.getFields()){
             if(symb.getName().equals(node.get(attribute))) {
+                JmmNode aux = node;
+                while(!aux.getKind().equals("Method") && !aux.getKind().equals("MainMethod") ){
+                    aux = aux.getJmmParent();
+                }
+                if(aux.getKind().equals("MainMethod")){
+                    createReport(node, "Cannot access fields in static methods");
+                }
                 return symb.getType();
             }
         }
