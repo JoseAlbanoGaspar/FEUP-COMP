@@ -1,5 +1,7 @@
 package pt.up.fe.comp2023;
 
+import pt.up.fe.comp.TestUtils;
+import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.SpecsLogs;
@@ -36,10 +38,13 @@ public class Launcher {
         // Parse stage
         JmmParserResult parserResult = parser.parse(code, config);
         System.out.println(parserResult);
+
         // Analysis stage
         Analysis analysis = new Analysis();
-        analysis.semanticAnalysis(parserResult);
-
+        JmmSemanticsResult semanticsResult = analysis.semanticAnalysis(parserResult);
+        //TestUtils.analyse(parserResult);
+        TestUtils.noErrors(semanticsResult);
+        System.out.println(semanticsResult.getReports());
         // ... add remaining stages
 
     }

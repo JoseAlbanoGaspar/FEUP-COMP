@@ -13,8 +13,6 @@ public class Analysis implements JmmAnalysis {
     @Override
     public JmmSemanticsResult semanticAnalysis(JmmParserResult jmmParserResult) {
         // Check if there are parsing errors
-        List<Report> reports = jmmParserResult.getReports();
-
         for (Report report : jmmParserResult.getReports()) {
             System.out.println(report.getMessage());
         }
@@ -44,7 +42,6 @@ public class Analysis implements JmmAnalysis {
                 System.out.println(report.getMessage());
             }
             if(!semVisitor.getReports().isEmpty()) {
-                TestUtils.noErrors(semVisitor.getReports());
                 return new JmmSemanticsResult(jmmParserResult, table, semVisitor.getReports());
             }
         }
