@@ -15,6 +15,10 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         return switch (str) {
             case "int" -> "i32";
             case "boolean" -> "bool";
+            case "void" -> "V";
+            case "false" -> "0.bool";
+            case "true" -> "1.bool";
+            case "int array" -> "array.i32";
             default -> str;
         };
     }
@@ -38,7 +42,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("While", this::dealWithWhile);
         addVisit("StatementExpression", this::dealWithStatementExpression);
         addVisit("Assignment", this::dealWithAssignment);
-        addVisit("Array", this::dealWithArray);
+        addVisit("Array", this::dealWithAssignment);
         addVisit("Not", this::dealWithNegation);
         addVisit("Parenthesis", this::dealWithParenthesis);
         addVisit("BinaryOp", this::dealWithBinaryOp);
@@ -79,11 +83,11 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithBool(JmmNode jmmNode, String s) {
-        return "";
+        return typesSwap(jmmNode.get("value"));
     }
 
     private String dealWithInteger(JmmNode jmmNode, String s) {
-        return "";
+        return jmmNode.get("value") + ".i32";
     }
 
     private String dealWithNewClass(JmmNode jmmNode, String s) {
@@ -126,9 +130,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         return "";
     }
 
-    private String dealWithArray(JmmNode jmmNode, String s) {
-        return "";
-    }
 
     private String dealWithAssignment(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
@@ -149,9 +150,100 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     .append(txt)
                     .append(typesSwap(symbol.getType().getName()));
         }
+        else{
+            boolean isArray = false;
+            if(jmmNode.getKind().equals("Array")) isArray = true;
 
+            Symbol var = null;
+            for (Symbol vari : symbolTable.getLocalVariables(jmmNode.getJmmParent().get("name"))){
+                if (vari.getName().equals(jmmNode.get("var"))) var = vari;
+            }
+            JmmNode assig= jmmNode.getChildren().get(0);
+            if(assig.getKind().equals("BinaryOp") || assig.getKind().equals("Not") || assig.getKind().equals("LogicalAnd") || assig.getKind().equals("Compare")){
+                String op = visit(assig);
+                String[] rows = op.split("\n");
+                for(int i = 0; i<rows.length; i++){
+                    if (i == rows.length - 1) {
+                        ret.append(varAux(jmmNode, var, isArray));
+
+                        ret.append(rows[i]).append("\n");
+                    } else
+                        ret.append("\t\t").append(rows[i]).append("\n");
+                }
+            }
+            else if (assig.getKind().equals("NewArray") || assig.getKind().equals("NewClass")){
+                String assignmentString = visit(assig);
+                if (assignmentString.contains("\n")) {
+                    ret.append(assignmentString, 0, assignmentString.indexOf("\n"));
+                    assignmentString = assignmentString.substring(assignmentString.indexOf("\n") + 1);
+                }
+                ret.append(varAux(jmmNode, var, isArray));
+                ret.append(assignmentString).append(";\n");
+                if (!assig.getChildren().get(0).getKind().equals("ARRAY"))
+                    ret.append("\t\tinvokespecial(").append(var.getName()).append(".").append(typesSwap(var.getType().isArray() ? var.getType().getName() + " array" : var.getType().getName()))
+                            .append(", \"<init>\").V;\n");
+            }
+            else{
+                String assignString = visit(assig);
+                if (assig.getKind().equals("SquareBrackets")) {
+                    String before;
+                    if (assignString.contains("\n")) {
+                        before = assignString.substring(0, assignString.lastIndexOf("\n"));
+                        if (assignString.lastIndexOf("\n") < assignString.lastIndexOf(":=.")) { //multiple lines
+                            before += assignString.substring(assignString.lastIndexOf("\n"));
+                            assignString = assignString.substring(assignString.lastIndexOf("\n") + 1, assignString.lastIndexOf(" :=."));
+                        } else
+                            assignString = assignString.substring(assignString.lastIndexOf("\n") + 1, assignString.lastIndexOf(";"));
+                    } else {
+                        before = assignString;
+                        assignString = assignString.substring(0, assignString.indexOf(' '));
+                    }
+                    ret.append(before)
+                            .append("\n");
+                } else if (assig.getKind().equals("FunctionCall")) {
+                    if (assignString.contains("\n")) {
+                        ret.append(assignString, 0, assignString.lastIndexOf("\n"));
+                        assignString = assignString.substring(assignString.lastIndexOf("\n") + 1);
+                    } else if (assignString.contains(":=.")) {
+                        ret.append(assignString);
+                        assignString = assignString.substring(0, assignString.indexOf(" ")) + ";";
+                    }
+                }
+                if (assignString.contains("\n")) {
+                    ret.append(assignString.substring(0, assignString.lastIndexOf("\n") + 1));
+                    assignString = assignString.substring(assignString.lastIndexOf("\n") + 1);
+                }
+
+                ret.append(varAux(jmmNode, var, isArray))
+                    .append(assignString);
+
+                if (!assig.getKind().equals("FunctionCall"))
+                    ret.append(";");
+                ret.append("\n");
+            }
+        }
 
         return ret.toString();
+    }
+
+    private String varAux(JmmNode jmmNode, Symbol var, boolean isArray){
+        if(!isArray){
+            String txt = var.getType().isArray()? ".array" : "";
+            return var.getName()+txt+"."+typesSwap(var.getType().getName())+ " :=." +typesSwap(var.getType().getName())+txt +" ";
+        }
+        String access = visit(jmmNode);
+        String before = "";
+        String ret = "";
+        if (access.contains("\n")) {
+            before = access.substring(0, access.lastIndexOf("\n"));
+            access = access.substring(access.lastIndexOf("\n"));
+        }
+        if (access.contains(":=."))
+            access = access.substring(access.lastIndexOf(" "), access.lastIndexOf(";"));
+        if (access.contains(";"))
+            access = access.substring(0, access.lastIndexOf(";"));
+        ret += before + "\t\t" + access + " :=.i32 ";
+        return ret;
     }
 
     private String dealWithStatementExpression(JmmNode jmmNode, String s) {
