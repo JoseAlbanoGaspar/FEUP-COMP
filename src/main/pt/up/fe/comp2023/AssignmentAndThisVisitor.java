@@ -135,7 +135,7 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
         if(simpleTable.getSuper() != null && left.getName().equals(simpleTable.getSuper()) && importedClasses.contains(left.getName())) {
             notImportedOrExtended = false;
         }
-        if(!left.equals(right) && notImportedOrExtended){
+        if(!left.getName().equals(right.getName()) && notImportedOrExtended){
             createReport(node, "Cannot assign to " + node.get("var") + " the type " + right.getName() + "!");
         }
         return null;
@@ -281,7 +281,12 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
             case "Parenthesis", "SquareBrackets" -> type = getType(node.getJmmChild(0));
             case "NewArray" -> type = new Type(node.getJmmChild(0).get("typeName"), true);
             case "NewClass" -> type = new Type(node.get("className"), false);
-            case "Identifier" -> type = varCheck(node, "value");
+            case "Identifier" -> {
+                type = varCheck(node, "value");
+                if(node.getJmmParent().getKind().equals("SquareBrackets")){
+                    type = new Type(type.getName(), false);
+                }
+            }
             case "This" -> {
                 while (!node.getKind().equals("ClassDeclaration"))
                     node = node.getJmmParent();

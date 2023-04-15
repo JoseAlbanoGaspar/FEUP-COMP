@@ -94,7 +94,10 @@ public class SemanticArrayVisitor extends PreorderJmmVisitor<Void, Void> impleme
     }
 
     private Void dealWithSquareBrackets(JmmNode node, Void _void) {
-        if(!getType(node.getJmmChild(0)).isArray())
+        if(!node.getJmmChild(0).getKind().equals("Identifier")){
+            createReport(node, "Trying to index something that is not an identifier");
+        }
+        if(!varCheck(node.getJmmChild(0), "value").isArray())
             createReport(node,"Cannot index a variable that is not an array!");
         if(!getType(node.getJmmChild(1)).getName().equals("int"))
             createReport(node,"Index expression must be an integer");
@@ -255,7 +258,12 @@ public class SemanticArrayVisitor extends PreorderJmmVisitor<Void, Void> impleme
             case "Parenthesis", "SquareBrackets" -> type = getType(node.getJmmChild(0));
             case "NewArray" -> type = new Type(node.getJmmChild(0).get("typeName"), true);
             case "NewClass" -> type = new Type(node.get("className"), false);
-            case "Identifier" -> type = varCheck(node, "value");
+            case "Identifier" -> {
+                type = varCheck(node, "value");
+                if(node.getJmmParent().getKind().equals("SquareBrackets")){
+                    type = new Type(type.getName(), false);
+                }
+            }
             case "This" -> {
                 while (!node.getKind().equals("ClassDeclaration"))
                     node = node.getJmmParent();

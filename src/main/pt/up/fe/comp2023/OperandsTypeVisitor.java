@@ -257,7 +257,12 @@ public class OperandsTypeVisitor extends PreorderJmmVisitor<Void, Void> implemen
             case "Parenthesis", "SquareBrackets" -> type = getType(node.getJmmChild(0));
             case "NewArray" -> type = new Type(node.getJmmChild(0).get("typeName"), true);
             case "NewClass" -> type = new Type(node.get("className"), false);
-            case "Identifier" -> type = varCheck(node, "value");
+            case "Identifier" -> {
+                type = varCheck(node, "value");
+                if(node.getJmmParent().getKind().equals("SquareBrackets")){
+                    type = new Type(type.getName(), false);
+                }
+            }
             case "This" -> {
                 while (!node.getKind().equals("ClassDeclaration"))
                     node = node.getJmmParent();
