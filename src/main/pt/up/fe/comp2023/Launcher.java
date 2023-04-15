@@ -40,11 +40,10 @@ public class Launcher {
         System.out.println(parserResult);
 
         // Analysis stage
-        Analysis analysis = new Analysis();
-        JmmSemanticsResult semanticsResult = analysis.semanticAnalysis(parserResult);
-        //TestUtils.analyse(parserResult);
-        TestUtils.noErrors(semanticsResult);
-        System.out.println(semanticsResult.getReports());
+        //Analysis analysis = new Analysis();
+        //JmmSemanticsResult semanticsResult = analysis.semanticAnalysis(parserResult);
+        System.out.println(TestUtils.analyse(parserResult).getReports());
+
         // ... add remaining stages
 
     }
