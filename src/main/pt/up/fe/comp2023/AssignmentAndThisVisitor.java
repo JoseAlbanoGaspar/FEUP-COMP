@@ -58,9 +58,9 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
     }
 
     private Void dealWithThis(JmmNode node, Void _void) {
-        while (!node.getKind().equals("MethodDeclaration") && !node.getKind().equals("MainDeclaration"))
+        while (!node.getKind().equals("Method") && !node.getKind().equals("MainMethod"))
             node = node.getJmmParent();
-        if(node.getKind().equals("MainDeclaration"))
+        if(node.getKind().equals("MainMethod"))
             createReport(node, "Can only use this in static methods");
         return null;
     }
