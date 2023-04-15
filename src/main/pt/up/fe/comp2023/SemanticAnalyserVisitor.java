@@ -379,7 +379,7 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
             }
         }
         else{
-            for(Symbol symb : simpleTable.getParameters(aux.get("name"))){
+            for(Symbol symb : simpleTable.getParameters("main")){
                 if (symb.getName().equals(node.get(attribute))) {
                     return symb.getType();
                 }
