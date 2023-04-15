@@ -142,13 +142,13 @@ public class OperandsTypeVisitor extends PreorderJmmVisitor<Void, Void> implemen
     }
 
     private Void dealWithWhile(JmmNode node, Void _void) {
-        if(!getType(node.getJmmChild(0)).equals("boolean"))
+        if(!getType(node.getJmmChild(0)).getName().equals("boolean"))
             createReport(node, "If condition must evaluate to a boolean value!");
         return null;
     }
 
     private Void dealWithIf(JmmNode node, Void _void) {
-        if(!getType(node.getJmmChild(0)).equals("boolean"))
+        if(!getType(node.getJmmChild(0)).getName().equals("boolean"))
             createReport(node, "If condition must evaluate to a boolean value!");
         return null;
     }
