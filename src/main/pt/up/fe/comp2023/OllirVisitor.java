@@ -286,8 +286,9 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         }
         String returnType = getRetType(name);
         ret.append(").").append(returnType).append(" {\n");
-
-        for (JmmNode child : jmmNode.getChildren()){
+        int i;
+        for (i = 0; i < jmmNode.getNumChildren()-1; i++){
+            JmmNode child = jmmNode.getChildren().get(i);
             if(child.getKind().equals("MethodArgs")) continue;
             if(child.getKind().equals("Expression")){
                 ret.append(s).append("\tret.").append(returnType).append(" ")
@@ -297,7 +298,12 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             }
             ret.append(visit(child, s + "\t"));
         }
-        ret.append(s).append("}\n");
+        if(returnType != "V"){
+            ret.append(s).append("\tret.").append(returnType).append(" ").append(visit(jmmNode.getChildren().get(i)))
+                    .append("\n\t}\n");
+            return ret.toString();
+        }
+        ret.append("\n\t}\n");
         return ret.toString();
     }
 
