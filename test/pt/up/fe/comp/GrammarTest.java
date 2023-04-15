@@ -273,4 +273,7 @@ public class GrammarTest {
     public void testExpression2(){
         TestUtils.parseVerbose("3", EXPRESSION);
     }
+
+    @Test
+    public void testExpression3(){TestUtils.parseVerbose("result = (4 < 5) + 6 < 67;", STATEMENT);}
 }

@@ -6,6 +6,7 @@ import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Analysis implements JmmAnalysis {
@@ -24,7 +25,30 @@ public class Analysis implements JmmAnalysis {
         visitor.visit(jmmParserResult.getRootNode(), null);
         SimpleTable table = visitor.generateSymbolicTable();
         System.out.println(table);
-        
-        return new JmmSemanticsResult(jmmParserResult, table, reports);
+
+        // Semantic Analysis
+        /*
+                1 - create a new visitor with the symbolic table
+                2 - the visitor should do the analysis
+                3 - it should update the reports
+         */
+        List<Reporter> visitors = new ArrayList<>();
+        visitors.add(new SemanticAnalyserVisitor(table));
+        visitors.add(new OperandsTypeVisitor(table));
+        visitors.add(new SemanticArrayVisitor(table));
+        visitors.add(new AssignmentAndThisVisitor(table));
+        visitors.add(new IncompatibleRetArgsVisitor(table));
+        for(Reporter semVisitor : visitors){
+            semVisitor.visit(jmmParserResult.getRootNode());
+            for (Report report : semVisitor.getReports()) {
+                System.out.println(report.getMessage());
+            }
+            if(!semVisitor.getReports().isEmpty())
+                return new JmmSemanticsResult(jmmParserResult, table, semVisitor.getReports());
+        }
+
+        //TestUtils.noErrors(semanticVisitor.getReports());
+
+        return new JmmSemanticsResult(jmmParserResult, table,new ArrayList<>());
     }
 }
