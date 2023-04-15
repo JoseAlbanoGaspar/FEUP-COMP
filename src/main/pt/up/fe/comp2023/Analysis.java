@@ -43,11 +43,13 @@ public class Analysis implements JmmAnalysis {
             for (Report report : semVisitor.getReports()) {
                 System.out.println(report.getMessage());
             }
-            if(!semVisitor.getReports().isEmpty())
+            if(!semVisitor.getReports().isEmpty()) {
+                TestUtils.noErrors(semVisitor.getReports());
                 return new JmmSemanticsResult(jmmParserResult, table, semVisitor.getReports());
+            }
         }
 
-        //TestUtils.noErrors(semanticVisitor.getReports());
+        //
 
         return new JmmSemanticsResult(jmmParserResult, table,new ArrayList<>());
     }
