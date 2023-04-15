@@ -133,31 +133,43 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
     private String dealWithAssignment(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
-        Symbol symbol = null;
-        if(jmmNode.getJmmParent().getKind().equals("ClassDeclaration")){ //class variable
-            for(Symbol symbol1 : this.symbolTable.getFields()){
-                if(symbol1.getName().equals(jmmNode.get("var"))){
-                    symbol = symbol1;
-                }
-            }
-            assert symbol != null;
 
-            String txt = symbol.getType().isArray()? ".array" : "";
+        Symbol var = null;
+        boolean isField=false;
+
+        for (Symbol vari : symbolTable.getLocalVariables(jmmNode.getJmmParent().get("name"))){ //check if local
+            if (vari.getName().equals(jmmNode.get("var"))) var = vari;
+        }
+        if(var == null){
+            for (Symbol vari : symbolTable.getParameters(jmmNode.getJmmParent().get("name"))){ //check if parameter
+                if (vari.getName().equals(jmmNode.get("var"))) var = vari;
+            }
+        }
+        if(var == null){
+            for(Symbol symbol1 : this.symbolTable.getFields()){ //check if field
+                if(symbol1.getName().equals(jmmNode.get("var"))) var = symbol1;
+            }
+            isField = true;
+        }
+
+        assert var!= null;
+
+        if(isField){ //class variable
+            String txt = var.getType().isArray()? ".array" : "";
 
             ret.append("putfield(this, ")
                     .append(jmmNode.get("var"))
                     .append(".")
                     .append(txt)
-                    .append(typesSwap(symbol.getType().getName()));
+                    .append(typesSwap(var.getType().getName())).append(", ")
+                    .append(visit(jmmNode.getChildren().get(0)))
+                    .append(").V;\n");
         }
         else{
             boolean isArray = false;
             if(jmmNode.getKind().equals("Array")) isArray = true;
 
-            Symbol var = null;
-            for (Symbol vari : symbolTable.getLocalVariables(jmmNode.getJmmParent().get("name"))){
-                if (vari.getName().equals(jmmNode.get("var"))) var = vari;
-            }
+
             JmmNode assig= jmmNode.getChildren().get(0);
             if(assig.getKind().equals("BinaryOp") || assig.getKind().equals("Not") || assig.getKind().equals("LogicalAnd") || assig.getKind().equals("Compare")){
                 String op = visit(assig);
