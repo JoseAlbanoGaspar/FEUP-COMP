@@ -312,7 +312,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         }
         if(returnType != "V"){
             ret.append(s).append("\tret.").append(returnType).append(" ").append(visit(jmmNode.getChildren().get(i)))
-                    .append("\n\t}\n");
+                    .append(";\n\t}\n");
             return ret.toString();
         }
         ret.append("\n\t}\n");
