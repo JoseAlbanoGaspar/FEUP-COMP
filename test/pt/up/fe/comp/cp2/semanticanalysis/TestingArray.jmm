@@ -1,0 +1,17 @@
+class ArrayAccessOnInt {
+
+    public static void main(String[] args) {
+
+    }
+
+    public int foo() {
+        int[] a;
+        int[] b;
+
+        while(a[b[10]] < 4){
+            a[2] = 3 + b[9];
+        }
+
+        return a[10];
+    }
+}

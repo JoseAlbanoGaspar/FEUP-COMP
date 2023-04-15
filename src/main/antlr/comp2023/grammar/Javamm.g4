@@ -47,15 +47,15 @@ statement : '{' ( statement )* '}'  #BlockCode
 
 expression : '!' expression  #Not
            | '(' expression ')'  #Parenthesis
-           | expression op=('*' | '/') expression  #BinaryOp
-           | expression op=('+' | '-') expression  #BinaryOp
-           | expression  '<' expression  #Compare
-           | expression '&&' expression  #LogicalAnd
            | expression '[' expression ']' #SquareBrackets
            | expression '.' 'length' #Length
            | expression '.' methodName=ID '(' ( expression ( ',' expression )* )? ')' #FunctionCall
            | 'new' type '[' expression ']'  #NewArray
            | 'new' className=ID '(' ')' #NewClass
+           | expression op=('*' | '/') expression  #BinaryOp
+           | expression op=('+' | '-') expression  #BinaryOp
+           | expression  '<' expression  #Compare
+           | expression '&&' expression  #LogicalAnd
            | value=INT    #Integer
            | value=('true' | 'false') #BoolLiteral
            | value=ID      #Identifier

@@ -276,4 +276,9 @@ public class GrammarTest {
 
     @Test
     public void testExpression3(){TestUtils.parseVerbose("result = (4 < 5) + 6 < 67;", STATEMENT);}
+
+    @Test
+    public void assignWithBinOp(){TestUtils.parseVerbose(
+            "a[9 + c] = 3 + b[0 + 1];",STATEMENT
+    );}
 }

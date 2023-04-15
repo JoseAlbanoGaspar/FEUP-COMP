@@ -138,4 +138,10 @@ public class SemanticAnalysisTest {
                 .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/ArrayIndexGood.jmm"));
         TestUtils.noErrors(result);
     }
+    @Test
+    public void testingArray(){
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/TestingArray.jmm"));
+        TestUtils.noErrors(result);
+    }
 }
