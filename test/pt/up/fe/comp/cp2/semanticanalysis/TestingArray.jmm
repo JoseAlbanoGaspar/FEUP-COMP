@@ -1,7 +1,13 @@
-class ArrayAccessOnInt {
+import B;
+import S;
+class ArrayAccessOnInt extends S {
 
     public static void main(String[] args) {
+        B b;
+        boolean a;
 
+        a = b.bar() < 4;
+        a = 4 < S.buz();
     }
 
     public int foo() {

@@ -13,11 +13,11 @@ import java.util.List;
 
 public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> implements Reporter{
     protected SimpleTable simpleTable;
-    protected List<Report> reports;
+    protected SemanticUtils utils;
 
     public AssignmentAndThisVisitor(SimpleTable simpleTable){
         this.simpleTable = simpleTable;
-        this.reports = new ArrayList<>();
+        this.utils = new SemanticUtils(simpleTable);
     }
 
 
@@ -61,7 +61,7 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
         while (!node.getKind().equals("Method") && !node.getKind().equals("MainMethod"))
             node = node.getJmmParent();
         if(node.getKind().equals("MainMethod"))
-            createReport(node, "Can only use this in static methods");
+            utils.createReport(node, "Can only use this in static methods");
         return null;
     }
 
@@ -118,8 +118,8 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
     }
 
     private Void dealWithArray(JmmNode node, Void _void) {
-        Type left = varCheck(node, "var");
-        Type right = getType(node.getJmmChild(0));
+        Type left = utils.varCheck(node, "var");
+        Type right = utils.getType(node.getJmmChild(0));
         boolean notImportedOrExtended = true;
 
         //check if right and left are both imported
@@ -136,14 +136,14 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
             notImportedOrExtended = false;
         }
         if(!left.getName().equals(right.getName()) && notImportedOrExtended){
-            createReport(node, "Cannot assign to " + node.get("var") + " the type " + right.getName() + "!");
+            utils.createReport(node, "Cannot assign to " + node.get("var") + " the type " + right.getName() + "!");
         }
         return null;
     }
 
     private Void dealWithAssignment(JmmNode node, Void _void) {
-        Type left = varCheck(node, "var");
-        Type right = getType(node.getJmmChild(0));
+        Type left = utils.varCheck(node, "var");
+        Type right = utils.getType(node.getJmmChild(0));
         boolean notImportedOrExtended = true;
 
         //check if right and left are both imported
@@ -160,7 +160,7 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
             notImportedOrExtended = false;
         }
         if(!left.equals(right) && notImportedOrExtended){
-            createReport(node, "Cannot assign to " + node.get("var") + " the type " + right.getName() + "!");
+            utils.createReport(node, "Cannot assign to " + node.get("var") + " the type " + right.getName() + "!");
         }
         return null;
     }
@@ -212,134 +212,9 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
         return null;
     }
 
-    private Void createReport(JmmNode node, String message){
-        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,Integer.parseInt(node.get("lineStart")),Integer.parseInt(node.get("colStart")), message));
-        return null;
-    }
 
-
-    private Type varCheck(JmmNode node, String attribute) {
-        // check if it is in fields
-        for(Symbol symb : simpleTable.getFields()){
-            if(symb.getName().equals(node.get(attribute))) {
-                return symb.getType();
-            }
-        }
-        // check imports
-        for (String s : simpleTable.getImports()) {
-            String[] parts = s.split("\\."); // split the string on "." character
-            if(parts[parts.length-1].equals(node.get(attribute))) {
-                return new Type(node.get(attribute), false);
-            }
-
-        }
-        //check super
-        if(node.get(attribute).equals(simpleTable.getSuper())){
-            return new Type(simpleTable.getSuper(), false);
-        }
-        //check class name
-        if(node.get(attribute).equals(simpleTable.getClassName())){
-            return new Type(simpleTable.getClassName(), false);
-        }
-        // check localVariables and parameters
-        JmmNode aux = node;
-        while(!aux.getKind().equals("Method") && !aux.getKind().equals("MainMethod") ){
-            aux = aux.getJmmParent();
-        }
-        if(aux.getKind().equals("Method")) {
-            for(Symbol symb : simpleTable.getParameters(aux.get("name"))){
-                if (symb.getName().equals(node.get(attribute))) {
-                    return symb.getType();
-                }
-            }
-            for( Symbol symb : simpleTable.getLocalVariables(aux.get("name"))) {
-                if (symb.getName().equals(node.get(attribute))) {
-                    return symb.getType();
-                }
-            }
-        }
-        else{
-            for(Symbol symb : simpleTable.getParameters("main")){
-                if (symb.getName().equals(node.get(attribute))) {
-                    return symb.getType();
-                }
-            }
-            for( Symbol symb : simpleTable.getLocalVariables("main")) {
-                if (symb.getName().equals(node.get(attribute))) {
-                    return symb.getType();
-                }
-            }
-        }
-        return new Type("NotFound", false);
-    }
-
-    public Type getType(JmmNode node){
-        Type type = new Type("", false);
-        switch (node.getKind()) {
-            case "Not", "Compare", "LogicalAnd", "BoolLiteral" -> type = new Type("boolean", false);
-            case "BinaryOp", "Length", "Integer" -> type = new Type("int", false);
-            case "Parenthesis", "SquareBrackets" -> type = getType(node.getJmmChild(0));
-            case "NewArray" -> type = new Type(node.getJmmChild(0).get("typeName"), true);
-            case "NewClass" -> type = new Type(node.get("className"), false);
-            case "Identifier" -> {
-                type = varCheck(node, "value");
-                if(node.getJmmParent().getKind().equals("SquareBrackets")){
-                    type = new Type(type.getName(), false);
-                }
-            }
-            case "This" -> {
-                while (!node.getKind().equals("ClassDeclaration"))
-                    node = node.getJmmParent();
-                type = new Type(node.get("name"), false);
-            }
-            case "FunctionCall" -> {
-                Type calleeType = getType(node.getJmmChild(0));
-                if(calleeType.getName().equals("NotFound")) return calleeType;
-                if (simpleTable.getMethods().contains(node.get("methodName"))) {
-                    type = simpleTable.getReturnType(node.get("methodName"));
-                } else {
-                    // check imports
-                    for (String s : simpleTable.getImports()) {
-                        String[] parts = s.split("\\."); // split the string on "." character
-                        if (parts[parts.length - 1].equals(calleeType.getName())) {
-                            if(node.getJmmParent().getKind().equals("StatementExpression"))
-                                return new Type("void", false);
-                            else if (node.getJmmParent().getKind().equals("Method")){  // check return type ??
-                                return simpleTable.getReturnType(node.getJmmParent().get("name"));
-                            }
-                            else return varCheck(node.getJmmParent(), "var");
-                        }
-                    }
-                    if (simpleTable.getSuper() != null && calleeType.getName().equals(simpleTable.getSuper())) {
-                        if (node.getJmmParent().getKind().equals("StatementExpression")) {
-                            type = new Type("void", false);
-                        } else if (node.getJmmParent().getKind().equals("Method")){  // check return type ??
-                            type = simpleTable.getReturnType(node.getJmmParent().get("name"));
-                        }
-                        else{
-                            type = varCheck(node.getJmmParent(), "var");
-                        }
-                    }
-                    else if(simpleTable.getSuper() != null && calleeType.getName().equals(simpleTable.getClassName())){
-                        if (node.getJmmParent().getKind().equals("StatementExpression")) {
-                            type = new Type("void", false);
-                        } else if (node.getJmmParent().getKind().equals("Method")){  // check return type ??
-                            type = simpleTable.getReturnType(node.getJmmParent().get("name"));
-                        }
-                        else{
-                            type = varCheck(node.getJmmParent(), "var");
-                        }
-                    }
-                    else {
-                        createReport(node, "Method " + node.get(("methodName")) + " does not exist!");
-                    }
-                }
-            }
-        }
-        return type;
-    }
     public List<Report> getReports(){
-        return this.reports;
+        return utils.getReports();
     }
 
     @Override
