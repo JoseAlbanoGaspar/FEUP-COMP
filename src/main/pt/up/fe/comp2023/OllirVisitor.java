@@ -49,7 +49,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("Assignment", this::dealWithAssignment);
         addVisit("Array", this::dealWithAssignment);
         addVisit("Not", this::dealWithNegation); //later
-        addVisit("Parenthesis", this::dealWithParenthesis); //TODO
+        addVisit("Parenthesis", this::dealWithParenthesis);
         addVisit("BinaryOp", this::dealWithBinaryOp);
         addVisit("Compare", this::dealWithCompare); //later
         addVisit("LogicalAnd", this::dealWithLogicalAnd); //later
@@ -528,7 +528,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         String kind = jmmNode.getKind();
         StringBuilder newStr = new StringBuilder(str);
         StringBuilder auxString = new StringBuilder();
-        if (kind.equals("BinaryOp") || kind.equals("FunctionCall") || kind.equals("SquareBrackets")) {
+        if (kind.equals("BinaryOp") || kind.equals("FunctionCall") || kind.equals("SquareBrackets") || kind.equals("Parenthesis")) {
             String sub, before = "";
             int lastIndDot = str.lastIndexOf(".");
             if(str.contains(":=.")){
@@ -559,7 +559,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                         + sub);
             }
         }
-        else{ //not operation, array or functioncall
+        else{ //not operation, array, functioncall or parenthesis
             if(str.contains("\n")){
                 List<String> strings = List.of(str.split("\n"));
                 if(strings.get(strings.toArray().length - 1).contains("\n")){
@@ -581,7 +581,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithParenthesis(JmmNode jmmNode, String s) {
-        return "";
+        return visit(jmmNode.getJmmChild(0), "");
     }
 
     private String dealWithNegation(JmmNode jmmNode, String s) {
