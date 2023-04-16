@@ -54,10 +54,10 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("Compare", this::dealWithCompare); //later
         addVisit("LogicalAnd", this::dealWithLogicalAnd); //later
         addVisit("SquareBrackets", this::dealWithSquareBrackets); //TODO
-        addVisit("Length", this::dealWithLength); //TODO
+        addVisit("Length", this::dealWithLength);
         addVisit("FunctionCall", this::dealWithFunctionCall); //TODO
-        addVisit("NewArray", this::dealWithNewArray); //TODO
-        addVisit("NewClass", this::dealWithNewClass); //TODO
+        addVisit("NewArray", this::dealWithNewArray);
+        addVisit("NewClass", this::dealWithNewClass);
         addVisit("Integer", this::dealWithInteger);
         addVisit("BoolLiteral", this::dealWithBool);
         addVisit("Identifier", this::dealWithIdentifier);
@@ -476,7 +476,11 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithLength(JmmNode jmmNode, String s) {
-        return "";
+        StringBuilder ret = new StringBuilder(s);
+        ret.append("arraylength(")
+                .append(visit(jmmNode.getJmmChild(0)))
+                .append(").i32");
+        return ret.toString();
     }
 
     private String dealWithSquareBrackets(JmmNode jmmNode, String s) {
