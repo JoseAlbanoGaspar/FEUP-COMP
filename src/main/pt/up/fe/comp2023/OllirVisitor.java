@@ -87,7 +87,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         }
 
         assert var!= null;
-
         if(isField){ //class variable
             String txt = var.getType().isArray()? ".array" : "";
 
@@ -105,14 +104,15 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             JmmNode assig= jmmNode.getChildren().get(0);
             if(assig.getKind().equals("BinaryOp")){
                 String op = visit(assig, "");
-                String[] rows = op.split("\n");
-                for(int i = 0; i<rows.length; i++){
-                    if (i == rows.length - 1) {
+                List<String> rows = List.of(op.split("\n"));
+                for(int i = 0; i<rows.size(); i++){
+                    if (i == rows.size() - 1) {
                         ret.append(varAux(jmmNode, var, isArray));
 
-                        ret.append(rows[i]).append("\n");
-                    } else
-                        ret.append("\t\t").append(rows[i]).append("\n");
+                        ret.append(rows.get(i)).append("\n");
+                    } else{
+                        ret.append(rows.get(i)).append("\n");
+                    }
                 }
             }
             else if (assig.getKind().equals("NewArray") || assig.getKind().equals("NewClass")){
@@ -226,8 +226,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             JmmNode lastNode = jmmNode.getChildren().get(i);
             if(lastNode.getKind().equals("Identifier")){
                 ret.append(s).append("\tret.").append(typesSwap(returnType)).append(" ").append(visit(lastNode, ""))
-                        .append("\n\t}\n");
-                return ret.toString();
+                        .append(";\n\t}\n");
             }
             else{ //op, need to make temp
                 String lastString = visit(lastNode, "");
@@ -264,9 +263,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                         .append(sub)
                         .append(";\n\t}\n");
                 this.tempCnt++;
-
-                return ret.toString();
             }
+            return ret.toString();
         }
         ret.append("\n\t}\n");
         return ret.toString();
@@ -393,7 +391,27 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
         String type = typesSwap(var.getType().getName());
         if(isField){
-
+            ret.append("t")
+                    .append(this.tempCnt)
+                    .append(".")
+                    .append(type)
+                    .append(" :=.")
+                    .append(type)
+                    .append(" getfield(this, ")
+                    .append(var.getName())
+                    .append(".")
+                    .append(type)
+                    .append(").")
+                    .append(type)
+                    .append(";\n");
+            this.tempCnt++;
+            ret.append(s)
+                    .append("t")
+                    .append(this.tempCnt++)
+                    .append(".")
+                    .append(type)
+                    .toString();
+            return ret.toString();
         }
         else if(isInMethod){
             return ret.append(var.getName())
@@ -402,11 +420,10 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     .toString();
         }
         //param
-        System.out.println(symbolTable.getParameters(parentName));
         //get param index
         int i;
         for(i = 0; i < symbolTable.getParameters(parentName).size(); i++)
-            if (symbolTable.getParameters(parentName).get(i).getName() == var.getName()) break;
+            if (symbolTable.getParameters(parentName).get(i).getName().equals(var.getName())) break;
 
         return ret.append("$")
                 .append(i+1)
@@ -458,6 +475,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         JmmNode left = jmmNode.getJmmChild(0), right = jmmNode.getJmmChild(1);
         String leftString = visit(left, ""), rightString = visit(right, "");
 
+
         List<String> nestedLeft = getNested(left, leftString), nestedRight = getNested(right, rightString);
 
         if (!nestedLeft.get(0).contains("\n")) ret.append(nestedLeft.get(0));
@@ -465,10 +483,13 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         leftString = nestedLeft.get(1);
 
         if (!nestedRight.get(0).contains("\n")) ret.append(nestedRight.get(0));
-        else ret.append(nestedRight.get(0)).append("\n");
+        else {
+            ret.append(nestedRight.get(0)).append("\n");
+        }
         rightString = nestedRight.get(1);
 
-        ret.append(leftString)
+
+        ret.append("\n").append(leftString)
                 .append(" ")
                 .append(jmmNode.get("op"))
                 .append(".i32 ")
