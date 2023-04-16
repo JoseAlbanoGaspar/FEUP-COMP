@@ -42,26 +42,26 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("MainMethod", this::dealWithMainMethod);
         addVisit("Method", this::dealWithMethod);
         addVisit("Type", this::dealWithType);
-        addVisit("BlockCode", this::dealWithBlockCode);
-        addVisit("If",this::dealWithIf);
-        addVisit("While", this::dealWithWhile);
+        addVisit("BlockCode", this::dealWithBlockCode); //later
+        addVisit("If",this::dealWithIf); //later
+        addVisit("While", this::dealWithWhile); //later
         addVisit("StatementExpression", this::dealWithStatementExpression);
         addVisit("Assignment", this::dealWithAssignment);
         addVisit("Array", this::dealWithAssignment);
-        addVisit("Not", this::dealWithNegation);
-        addVisit("Parenthesis", this::dealWithParenthesis);
+        addVisit("Not", this::dealWithNegation); //later
+        addVisit("Parenthesis", this::dealWithParenthesis); //TODO
         addVisit("BinaryOp", this::dealWithBinaryOp);
-        addVisit("Compare", this::dealWithCompare);
-        addVisit("LogicalAnd", this::dealWithLogicalAnd);
-        addVisit("SquareBrackets", this::dealWithSquareBrackets);
-        addVisit("Length", this::dealWithLength);
-        addVisit("FunctionCall", this::dealWithFunctionCall);
-        addVisit("NewArray", this::dealWithNewArray);
-        addVisit("NewClass", this::dealWithNewClass);
+        addVisit("Compare", this::dealWithCompare); //later
+        addVisit("LogicalAnd", this::dealWithLogicalAnd); //later
+        addVisit("SquareBrackets", this::dealWithSquareBrackets); //TODO
+        addVisit("Length", this::dealWithLength); //TODO
+        addVisit("FunctionCall", this::dealWithFunctionCall); //TODO
+        addVisit("NewArray", this::dealWithNewArray); //TODO
+        addVisit("NewClass", this::dealWithNewClass); //TODO
         addVisit("Integer", this::dealWithInteger);
         addVisit("BoolLiteral", this::dealWithBool);
         addVisit("Identifier", this::dealWithIdentifier);
-        addVisit("This", this::dealWithThis);
+        addVisit("This", this::dealWithThis); //??
         addVisit("MethodArgs", this::dealWithMethodArgs);
     }
 
@@ -224,7 +224,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         }
         if(!returnType.equals("V")){
             JmmNode lastNode = jmmNode.getChildren().get(i);
-            if(lastNode.getKind().equals("Identifier")){
+            if(lastNode.getKind().equals("Identifier") || lastNode.getKind().equals("Integer") || lastNode.getKind().equals("BoolLiteral")){
                 ret.append(s).append("\tret.").append(typesSwap(returnType)).append(" ").append(visit(lastNode, ""))
                         .append(";\n\t}\n");
             }
@@ -243,7 +243,12 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     lastString = lines.get(j);
                 }
 
-                String sub = lastString.substring(lastString.indexOf(".")+1, lastString.indexOf(" "));
+                System.out.println(lastString);
+                String sub;
+                if(lastString.contains(" ") && lastString.contains(".")){
+                    sub = lastString.substring(lastString.indexOf(".")+1, lastString.indexOf(" "));
+                }
+                else sub = lastString.substring(lastString.indexOf(".")+1);
                 ret.append(s)
                         .append("\tt")
                         .append(this.tempCnt)
