@@ -133,10 +133,10 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
 
     private Void dealWithFunctionCall(JmmNode node, Void _void) {
         Type type = utils.getType(node);
-        System.out.println("-------------------");
+        /*System.out.println("-------------------");
         System.out.println(type);
         System.out.println(node);
-        System.out.println("-------------------");
+        System.out.println("-------------------");*/
 
         return null;
     }

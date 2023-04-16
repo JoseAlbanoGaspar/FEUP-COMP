@@ -4,13 +4,17 @@ class ArrayAccessOnInt extends S {
 
     public static void main(String[] args) {
         B b;
+        ArrayAccessOnInt k;
+        S s;
         boolean a;
         int[] c;
-
+        int d;
 
         a = b.bar() < 4;
         a = 4 < S.buz();
         c[2] = b.foo() + S.fiz();
+        d = (c.length * b.foo()) / c[0];
+        s = k;
     }
 
     public boolean foo() {
@@ -18,7 +22,7 @@ class ArrayAccessOnInt extends S {
         int[] b;
 
         while(a[b[10]] < 4){
-            a[2] = 3 + b[9];
+            //a[2] = 3 + b[9];
         }
 
         return true;

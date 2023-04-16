@@ -138,6 +138,9 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
         if(!left.getName().equals(right.getName()) && notImportedOrExtended){
             utils.createReport(node, "Cannot assign to " + node.get("var") + " the type " + right.getName() + "!");
         }
+        if(node.getJmmChild(1).getKind().equals("This") && !(left.getName().equals(simpleTable.getClassName()) || (simpleTable.getSuper() != null && simpleTable.getSuper().equals(left.getName())))){
+            utils.createReport(node , "Cannot assign this!");
+        }
         return null;
     }
 
@@ -161,6 +164,9 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
         }
         if(!left.equals(right) && notImportedOrExtended){
             utils.createReport(node, "Cannot assign to " + node.get("var") + " the type " + right.getName() + "!");
+        }
+        if(node.getJmmChild(0).getKind().equals("This") && !(left.getName().equals(simpleTable.getClassName()) || (simpleTable.getSuper() != null && simpleTable.getSuper().equals(left.getName())))){
+            utils.createReport(node , "Cannot assign this!");
         }
         return null;
     }
