@@ -8,6 +8,7 @@ import pt.up.fe.comp.jmm.ast.JmmNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OllirVisitor extends AJmmVisitor<String, String> {
     private String ollirString;
@@ -222,9 +223,50 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             ret.append(visit(child, s + "\t"));
         }
         if(!returnType.equals("V")){
-            ret.append(s).append("\tret.").append(typesSwap(returnType)).append(" ").append(visit(jmmNode.getChildren().get(i), ""))
-                    .append("\n\t}\n");
-            return ret.toString();
+            JmmNode lastNode = jmmNode.getChildren().get(i);
+            if(lastNode.getKind().equals("Identifier")){
+                ret.append(s).append("\tret.").append(typesSwap(returnType)).append(" ").append(visit(lastNode, ""))
+                        .append("\n\t}\n");
+                return ret.toString();
+            }
+            else{ //op, need to make temp
+                String lastString = visit(lastNode, "");
+                if(lastString.contains("\n")){
+                    List<String> lines = List.of(lastString.split("\n"));
+                    lines = lines.stream().filter(x -> !x.isEmpty()).collect(Collectors.toList());
+                    int j;
+                    for(j = 0; j < lines.size()-1; j++){
+                        ret.append(s)
+                                .append("\t")
+                                .append(lines.get(j))
+                                .append("\n");
+                    }
+                    lastString = lines.get(j);
+                }
+
+                String sub = lastString.substring(lastString.indexOf(".")+1, lastString.indexOf(" "));
+                ret.append(s)
+                        .append("\tt")
+                        .append(this.tempCnt)
+                        .append(".")
+                        .append(sub)
+                        .append(" :=.")
+                        .append(sub)
+                        .append(" ")
+                        .append(lastString)
+                        .append("\n")
+                        .append(s)
+                        .append("\tret.")
+                        .append(sub)
+                        .append(" t")
+                        .append(this.tempCnt)
+                        .append(".")
+                        .append(sub)
+                        .append(";\n\t}\n");
+                this.tempCnt++;
+
+                return ret.toString();
+            }
         }
         ret.append("\n\t}\n");
         return ret.toString();
