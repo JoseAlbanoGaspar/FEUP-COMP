@@ -5,7 +5,6 @@ import pt.up.fe.comp.jmm.jasmin.JasminBackend;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class Backend implements JasminBackend {
@@ -17,8 +16,11 @@ public class Backend implements JasminBackend {
         StringBuilder jasminCode = new StringBuilder();
 
         buildClass(jasminCode, ollirClass);
-        buildSuper(jasminCode, ollirClass.getSuperClass());
+        buildSuper(jasminCode, ollirClass.getSuperClass(), ollirClass);
         buildFields(jasminCode, ollirClass.getFields());
+
+        fullClassName(ollirClass, ollirClass.getSuperClass());
+        System.out.println();
 
         System.out.println(jasminCode);
         return new JasminResult(jasminCode.toString());
@@ -32,8 +34,8 @@ public class Backend implements JasminBackend {
             .append("\n");
     }
 
-    private void buildSuper(StringBuilder code, String superClass) {
-        String superName = superClass == null ? "java/lang/Object" : superClass;
+    private void buildSuper(StringBuilder code, String superClass, ClassUnit ollirClass) {
+        String superName = superClass == null ? "java/lang/Object" : fullClassName(ollirClass, superClass);
         code.append(".super ")
             .append(superName)
             .append("\n");
@@ -53,6 +55,13 @@ public class Backend implements JasminBackend {
             .append("' ")
             .append(typeToString(field.getFieldType()))
             .append("\n");
+    }
+
+    private String fullClassName(ClassUnit ollirClass, String className) {
+        for (String imp : ollirClass.getImports()) {
+            if (imp.endsWith(className)) return imp.replace('.', '/');
+        }
+        return className;
     }
 
     private String accessModifierToString(AccessModifiers accessModifiers) {
