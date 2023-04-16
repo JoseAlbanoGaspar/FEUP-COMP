@@ -296,6 +296,9 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         String name = jmmNode.get("name");
         ret.append(name).append(" {\n");
 
+        String superName =  jmmNode.hasAttribute("superName") ? " extends " : "";
+
+
         for (JmmNode child: jmmNode.getChildren()){
             if(child.getKind().equals("VarDeclaration")){
                 for(Symbol symbol: this.symbolTable.getFields()) {
@@ -399,7 +402,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             ret.append("t")
                     .append(this.tempCnt)
                     .append(".")
-                    .append(type)
+                    .append(type)F
                     .append(" :=.")
                     .append(type)
                     .append(" getfield(this, ")
@@ -448,11 +451,24 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithNewClass(JmmNode jmmNode, String s) {
-        return "";
+        StringBuilder ret = new StringBuilder(s);
+        ret.append("new(")
+                .append(jmmNode.get("className"))
+                .append(").")
+                .append(jmmNode.get("className"));
+        return ret.toString();
     }
 
     private String dealWithNewArray(JmmNode jmmNode, String s) {
-        return "";
+        StringBuilder ret = new StringBuilder(s);
+
+        JmmNode expression = jmmNode.getJmmChild(1);
+        String expressionString = visit(expression, "");
+        if(expression.getKind().equals("FunctionCall")){
+            ret.append("\n");
+            expressionString = expressionString.substring(0, expressionString.indexOf(" "));
+        }
+        return ret.append("new(array, ").append(expressionString).append(").i32").toString();
     }
 
     private String dealWithFunctionCall(JmmNode jmmNode, String s) {
