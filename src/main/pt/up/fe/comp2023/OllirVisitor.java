@@ -402,7 +402,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             ret.append("t")
                     .append(this.tempCnt)
                     .append(".")
-                    .append(type)F
+                    .append(type)
                     .append(" :=.")
                     .append(type)
                     .append(" getfield(this, ")
