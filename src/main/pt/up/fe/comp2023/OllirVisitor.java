@@ -95,7 +95,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     .append(".")
                     .append(txt)
                     .append(typesSwap(var.getType().getName())).append(", ")
-                    .append(visit(jmmNode.getChildren().get(0)))
+                    .append(visit(jmmNode.getChildren().get(0), ""))
                     .append(").V;\n");
         }
         else{
@@ -103,7 +103,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
             JmmNode assig= jmmNode.getChildren().get(0);
             if(assig.getKind().equals("BinaryOp")){
-                String op = visit(assig);
+                String op = visit(assig, "");
                 String[] rows = op.split("\n");
                 for(int i = 0; i<rows.length; i++){
                     if (i == rows.length - 1) {
@@ -115,7 +115,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 }
             }
             else if (assig.getKind().equals("NewArray") || assig.getKind().equals("NewClass")){
-                String assignmentString = visit(assig);
+                String assignmentString = visit(assig, "");
                 if (assignmentString.contains("\n")) {
                     ret.append(assignmentString, 0, assignmentString.indexOf("\n"));
                     assignmentString = assignmentString.substring(assignmentString.indexOf("\n") + 1);
@@ -127,7 +127,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                             .append(", \"<init>\").V;\n");
             }
             else{
-                String assignString = visit(assig);
+                String assignString = visit(assig, "");
                 if (assig.getKind().equals("SquareBrackets")) {
                     String before;
                     if (assignString.contains("\n")) {
@@ -313,7 +313,66 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithIdentifier(JmmNode jmmNode, String s) {
-        return "ident";
+        StringBuilder ret = new StringBuilder(s);
+        Symbol var = null;
+        boolean isField=false, isInMethod=false;
+
+        for(Symbol vari: symbolTable.getFields()) {
+            if (vari.getName().equals(jmmNode.get("value"))) {
+                isField = true;
+                var = vari;
+            }
+        }
+        JmmNode parent = jmmNode;
+        String parentName = null;
+        if(!isField){
+            do{
+                parent = parent.getJmmParent();
+                if(parent.getKind().equals("Method") || parent.getKind().equals("MainMethod")){
+                    break;
+                }
+            }while (!parent.getKind().equals("ClassDeclaration"));
+            parentName = parent.getKind().equals("MainMethod") ? "main" : parent.get("name");
+
+            //check if local
+            for (Symbol vari : symbolTable.getLocalVariables(parentName))
+                if (vari.getName().equals(jmmNode.get("value"))){
+                    var = vari;
+                    isInMethod = true;
+                }
+            if(var == null){
+                //check if parameter
+                for (Symbol vari : symbolTable.getParameters(parentName))
+                    if (vari.getName().equals(jmmNode.get("value"))) var = vari;
+            }
+
+        }
+        assert var!= null;
+
+        String type = typesSwap(var.getType().getName());
+        if(isField){
+
+        }
+        else if(isInMethod){
+            return ret.append(var.getName())
+                    .append(".")
+                    .append(type)
+                    .toString();
+        }
+        //param
+        System.out.println(symbolTable.getParameters(parentName));
+        //get param index
+        int i;
+        for(i = 0; i < symbolTable.getParameters(parentName).size(); i++)
+            if (symbolTable.getParameters(parentName).get(i).getName() == var.getName()) break;
+
+        return ret.append("$")
+                .append(i+1)
+                .append(".")
+                .append(var.getName())
+                .append(".")
+                .append(typesSwap(var.getType().getName()))
+                .toString();
     }
 
     private String dealWithBool(JmmNode jmmNode, String s) {
@@ -355,7 +414,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     private String dealWithBinaryOp(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
         JmmNode left = jmmNode.getJmmChild(0), right = jmmNode.getJmmChild(1);
-        String leftString = visit(left), rightString = visit(right);
+        String leftString = visit(left, ""), rightString = visit(right, "");
 
         List<String> nestedLeft = getNested(left, leftString), nestedRight = getNested(right, rightString);
 
@@ -446,7 +505,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             String txt = var.getType().isArray()? ".array" : "";
             return var.getName()+txt+"."+typesSwap(var.getType().getName())+ " :=." +typesSwap(var.getType().getName())+txt +" ";
         }
-        String access = visit(jmmNode);
+        String access = visit(jmmNode, "");
         String before = "";
         String ret = "";
         if (access.contains("\n")) {
