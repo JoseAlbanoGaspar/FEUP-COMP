@@ -417,8 +417,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     .append("t")
                     .append(this.tempCnt++)
                     .append(".")
-                    .append(type)
-                    .toString();
+                    .append(type);
             return ret.toString();
         }
         else if(isInMethod){
@@ -451,12 +450,10 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithNewClass(JmmNode jmmNode, String s) {
-        StringBuilder ret = new StringBuilder(s);
-        ret.append("new(")
-                .append(jmmNode.get("className"))
-                .append(").")
-                .append(jmmNode.get("className"));
-        return ret.toString();
+        return s + "new(" +
+                jmmNode.get("className") +
+                ")." +
+                jmmNode.get("className");
     }
 
     private String dealWithNewArray(JmmNode jmmNode, String s) {
@@ -476,11 +473,9 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithLength(JmmNode jmmNode, String s) {
-        StringBuilder ret = new StringBuilder(s);
-        ret.append("arraylength(")
-                .append(visit(jmmNode.getJmmChild(0)))
-                .append(").i32");
-        return ret.toString();
+        return s + "arraylength(" +
+                visit(jmmNode.getJmmChild(0)) +
+                ").i32";
     }
 
     private String dealWithSquareBrackets(JmmNode jmmNode, String s) {
