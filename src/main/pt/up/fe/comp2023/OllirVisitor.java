@@ -22,7 +22,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             case "void" -> "V";
             case "false" -> "0.bool";
             case "true" -> "1.bool";
-            case "int array" -> "array.i32";
             default -> str;
         };
     }
@@ -53,7 +52,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("BinaryOp", this::dealWithBinaryOp);
         addVisit("Compare", this::dealWithCompare); //later
         addVisit("LogicalAnd", this::dealWithLogicalAnd); //later
-        addVisit("SquareBrackets", this::dealWithSquareBrackets); //TODO
+        addVisit("SquareBrackets", this::dealWithSquareBrackets);
         addVisit("Length", this::dealWithLength);
         addVisit("FunctionCall", this::dealWithFunctionCall); //TODO
         addVisit("NewArray", this::dealWithNewArray);
@@ -396,26 +395,33 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
         }
         assert var!= null;
-
+        String txt = var.getType().isArray()? ".array" : "";
         String type = typesSwap(var.getType().getName());
         if(isField){
             ret.append("t")
                     .append(this.tempCnt)
+                    .append(txt)
                     .append(".")
                     .append(type)
-                    .append(" :=.")
+                    .append(" :=")
+                    .append(txt)
+                    .append(".")
                     .append(type)
                     .append(" getfield(this, ")
                     .append(var.getName())
+                    .append(txt)
                     .append(".")
                     .append(type)
-                    .append(").")
+                    .append(")")
+                    .append(txt)
+                    .append(".")
                     .append(type)
                     .append(";\n");
             this.tempCnt++;
             ret.append(s)
                     .append("t")
                     .append(this.tempCnt++)
+                    .append(txt)
                     .append(".")
                     .append(type);
             return ret.toString();
@@ -479,7 +485,20 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithSquareBrackets(JmmNode jmmNode, String s) {
-        return "";
+        StringBuilder ret = new StringBuilder(s);
+
+        String left = visit(jmmNode.getJmmChild(0), "");
+        String right = visit(jmmNode.getJmmChild(1), "");
+
+        List<String> leftSplit = List.of(left.split(".array"));
+
+        ret.append(leftSplit.get(0))
+                .append("[")
+                .append(right)
+                .append("]")
+                .append(leftSplit.get(1));
+
+        return ret.toString();
     }
 
     private String dealWithLogicalAnd(JmmNode jmmNode, String s) {
