@@ -7,6 +7,7 @@ import pt.up.fe.comp.jmm.ollir.OllirResult;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Backend implements JasminBackend {
     private String superClass = "java/lang/Object";
@@ -84,7 +85,7 @@ public class Backend implements JasminBackend {
         jasminCode.append("\t.limit stack 99\n")
             .append("\t.limit locals 99\n");
 
-        Integer nLocalVars = 0;
+        AtomicInteger nLocalVars = new AtomicInteger(0);
         Map<String, Integer> localVars = new HashMap<>();
         for (Instruction instruction : method.getInstructions()) {
             buildInstruction(instruction, nLocalVars, localVars);
@@ -106,7 +107,7 @@ public class Backend implements JasminBackend {
             .append(".end method\n");
     }
 
-    private void buildInstruction(Instruction instruction, Integer nLocalVars, Map<String, Integer> localVars) {
+    private void buildInstruction(Instruction instruction, AtomicInteger nLocalVars, Map<String, Integer> localVars) {
         switch (instruction.getInstType()) {
             case ASSIGN:
                 buildAssignInstruction((AssignInstruction) instruction, nLocalVars, localVars);
@@ -141,11 +142,12 @@ public class Backend implements JasminBackend {
         }
     }
 
-    private void buildAssignInstruction(AssignInstruction instruction, Integer currVars, Map<String, Integer> localVars) {
+    private void buildAssignInstruction(AssignInstruction instruction, AtomicInteger currVars, Map<String, Integer> localVars) {
         Integer variable = localVars.get(((Operand) instruction.getDest()).getName());
         if (variable == null) { // variable not previously used
-            variable = ++currVars;
-            localVars.put(((Operand) instruction.getDest()).getName(), currVars);
+            currVars.set(currVars.intValue() + 1);
+            variable = currVars.intValue();
+            localVars.put(((Operand) instruction.getDest()).getName(), currVars.intValue());
         }
         // execute right side of assignment,
         // this way the resulting value should
