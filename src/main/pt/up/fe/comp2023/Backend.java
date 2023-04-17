@@ -118,10 +118,10 @@ public class Backend implements JasminBackend {
                 buildGotoInstruction((GotoInstruction) instruction);
                 break;
             case NOPER:
-                buildNoperInstruction();
+                buildNoperInstruction((SingleOpInstruction) instruction, localVars);
                 break;
             case BRANCH:
-                buildBranchInstruction();
+                buildBranchInstruction((CondBranchInstruction) instruction);
                 break;
             case RETURN:
                 buildReturnInstruction((ReturnInstruction) instruction);
@@ -144,7 +144,7 @@ public class Backend implements JasminBackend {
     private void buildAssignInstruction(AssignInstruction instruction, Integer currVars, Map<String, Integer> localVars) {
         Integer variable = localVars.get(((Operand) instruction.getDest()).getName());
         if (variable == null) { // variable not previously used
-            currVars++;
+            variable = ++currVars;
             localVars.put(((Operand) instruction.getDest()).getName(), currVars);
         }
         // execute right side of assignment,
@@ -161,8 +161,10 @@ public class Backend implements JasminBackend {
     }
     private void buildCallInstruction(CallInstruction instruction) {}
     private void buildGotoInstruction(GotoInstruction instruction) {}
-    private void buildNoperInstruction() {}
-    private void buildBranchInstruction() {}
+    private void buildNoperInstruction(SingleOpInstruction instruction, Map<String, Integer> localVariables) {
+        buildLoad(instruction.getSingleOperand(), localVariables);
+    }
+    private void buildBranchInstruction(CondBranchInstruction instruction) {}
     private void buildReturnInstruction(ReturnInstruction instruction) {}
     private void buildGetFieldInstruction(GetFieldInstruction instruction) {}
     private void buildPutFieldInstruction(PutFieldInstruction instruction) {}
