@@ -5,6 +5,9 @@ import pt.up.fe.comp.jmm.jasmin.JasminBackend;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Backend implements JasminBackend {
     private String superClass = "java/lang/Object";
     private ClassUnit ollirClass = null;
@@ -81,12 +84,14 @@ public class Backend implements JasminBackend {
         jasminCode.append("\t.limit stack 99\n")
             .append("\t.limit locals 99\n");
 
+        Integer nLocalVars = 0;
+        Map<String, Integer> localVars = new HashMap<>();
         for (Instruction instruction : method.getInstructions()) {
-            buildInstruction(instruction);
+            buildInstruction(instruction, nLocalVars, localVars);
         }
 
         // If method does not contain return instruction,
-        // manually add it.
+        // manually add it, returning void.
         if (method.getInstructions().get(method.getInstructions().size() - 1).getInstType() != InstructionType.RETURN) {
             jasminCode.append("\treturn\n");
         }
@@ -101,10 +106,10 @@ public class Backend implements JasminBackend {
             .append(".end method\n");
     }
 
-    private void buildInstruction(Instruction instruction) {
+    private void buildInstruction(Instruction instruction, Integer nLocalVars, Map<String, Integer> localVars) {
         switch (instruction.getInstType()) {
             case ASSIGN:
-                buildAssignInstruction((AssignInstruction) instruction);
+                buildAssignInstruction((AssignInstruction) instruction, nLocalVars, localVars);
                 break;
             case CALL:
                 buildCallInstruction((CallInstruction) instruction);
@@ -128,7 +133,7 @@ public class Backend implements JasminBackend {
                 buildPutFieldInstruction((PutFieldInstruction) instruction);
                 break;
             case UNARYOPER:
-                buildUnaryOperInstruction((UnaryOpInstruction) instruction);
+                buildUnaryOperInstruction((UnaryOpInstruction) instruction, localVars);
                 break;
             case BINARYOPER:
                 buildBinaryOperInstruction((BinaryOpInstruction) instruction);
@@ -136,7 +141,13 @@ public class Backend implements JasminBackend {
         }
     }
 
-    private void buildAssignInstruction(AssignInstruction instruction) {}
+    private void buildAssignInstruction(AssignInstruction instruction, Integer currVars, Map<String, Integer> localVars) {
+        // Integer variable = localVars.get(((Operand) instruction.getDest()).getName());
+        // if (variable == null) { // variable not previously used
+        //     currVars++;
+        //     localVars.put(((Operand) instruction.getDest()).getName(), currVars);
+        // }
+    }
     private void buildCallInstruction(CallInstruction instruction) {}
     private void buildGotoInstruction(GotoInstruction instruction) {}
     private void buildNoperInstruction() {}
@@ -144,8 +155,32 @@ public class Backend implements JasminBackend {
     private void buildReturnInstruction(ReturnInstruction instruction) {}
     private void buildGetFieldInstruction(GetFieldInstruction instruction) {}
     private void buildPutFieldInstruction(PutFieldInstruction instruction) {}
-    private void buildUnaryOperInstruction(UnaryOpInstruction instruction) {}
+    private void buildUnaryOperInstruction(UnaryOpInstruction instruction, Map<String, Integer> localVariables) {
+        if (instruction.getOperation().getOpType() == OperationType.NOTB) { // Only supported unary operation
+            buildLoad(instruction.getOperand(), localVariables);
+            // negate the boolean value by XORing it with 1
+            jasminCode.append("\ticonst_1")
+                    .append("\tixor\n");
+        } else {
+            throw new IllegalArgumentException("Operation type " + instruction.getOperation().getOpType() + " is not supported for unary operation");
+        }
+    }
     private void buildBinaryOperInstruction(BinaryOpInstruction instruction) {}
+
+    private void buildLoad(Element element, Map<String, Integer> localVariables) {
+        if (element.isLiteral()) {
+            // push constant integer to stack
+            jasminCode.append("\tldc ").append(((LiteralElement) element).getLiteral()).append("\n");
+        } else if (element.getType().getTypeOfElement() == ElementType.THIS) { // push this to the stack
+            jasminCode.append("\taload_0\n");
+        } else { // push local variable value to stack
+            jasminCode.append("\t")
+                    .append(typePrefix(element.getType()))
+                    .append("load ").append(localVariables.get(((Operand) element).getName()))
+                    .append("\n");
+        }
+
+    }
 
     private String fullClassName(String className) {
         for (String imp : ollirClass.getImports()) {
@@ -179,4 +214,12 @@ public class Backend implements JasminBackend {
         }
     }
 
+    private String typePrefix(Type type) {
+        switch (type.getTypeOfElement()) {
+            case INT32: case BOOLEAN:
+                return "i";
+            default:
+                return "a";
+        }
+    }
 }
