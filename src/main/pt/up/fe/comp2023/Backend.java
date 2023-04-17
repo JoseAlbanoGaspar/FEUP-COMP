@@ -142,11 +142,22 @@ public class Backend implements JasminBackend {
     }
 
     private void buildAssignInstruction(AssignInstruction instruction, Integer currVars, Map<String, Integer> localVars) {
-        // Integer variable = localVars.get(((Operand) instruction.getDest()).getName());
-        // if (variable == null) { // variable not previously used
-        //     currVars++;
-        //     localVars.put(((Operand) instruction.getDest()).getName(), currVars);
-        // }
+        Integer variable = localVars.get(((Operand) instruction.getDest()).getName());
+        if (variable == null) { // variable not previously used
+            currVars++;
+            localVars.put(((Operand) instruction.getDest()).getName(), currVars);
+        }
+        // execute right side of assignment,
+        // this way the resulting value should
+        // be at the top of the stack
+        buildInstruction(instruction.getRhs(), currVars, localVars);
+
+        // store top of the stack in the local variable
+        jasminCode.append("\t")
+                .append(typePrefix(((Operand) instruction.getDest()).getType()))
+                .append("store ")
+                .append(variable)
+                .append("\n");
     }
     private void buildCallInstruction(CallInstruction instruction) {}
     private void buildGotoInstruction(GotoInstruction instruction) {}
