@@ -3,17 +3,22 @@ package pt.up.fe.comp2023;
 
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OllirVisitor extends AJmmVisitor<String, String> {
     private String ollirString;
     private final SymbolTable symbolTable;
     private int tempCnt;
+
+    private Map<JmmNode, String> functionRets;
     private boolean importsHandled;
     private String typesSwap(String str){
         return switch (str) {
@@ -22,6 +27,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             case "void" -> "V";
             case "false" -> "0.bool";
             case "true" -> "1.bool";
+            case "import" -> "";
             default -> str;
         };
     }
@@ -31,6 +37,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         this.ollirString = "";
         importsHandled = false;
         this.tempCnt = 1;
+        this.functionRets = new HashMap<>();
     }
     @Override
     protected void buildVisitor() {
@@ -144,6 +151,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     ret.append(before)
                             .append("\n");
                 } else if (assig.getKind().equals("FunctionCall")) {
+                    this.functionRets.put(jmmNode.getJmmChild(0), typesSwap(var.getType().getName()));
+
                     if (assignString.contains("\n")) {
                         ret.append(assignString, 0, assignString.lastIndexOf("\n"));
                         assignString = assignString.substring(assignString.lastIndexOf("\n") + 1);
@@ -170,7 +179,9 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithStatementExpression(JmmNode jmmNode, String s) {
-        return "";
+        if(jmmNode.getJmmChild(0).getKind().equals("FunctionCall"))
+            this.functionRets.put(jmmNode.getJmmChild(0), typesSwap("void"));
+        return visit(jmmNode.getJmmChild(0), s) + ";\n";
     }
 
     private String dealWithWhile(JmmNode jmmNode, String s) {
@@ -362,7 +373,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     private String dealWithIdentifier(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
         Symbol var = null;
-        boolean isField=false, isInMethod=false;
+        boolean isField=false, isInMethod=false, isImported = false;
 
         for(Symbol vari: symbolTable.getFields()) {
             if (vari.getName().equals(jmmNode.get("value"))) {
@@ -375,9 +386,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         if(!isField){
             do{
                 parent = parent.getJmmParent();
-                if(parent.getKind().equals("Method") || parent.getKind().equals("MainMethod")){
+                if(parent.getKind().equals("Method") || parent.getKind().equals("MainMethod"))
                     break;
-                }
             }while (!parent.getKind().equals("ClassDeclaration"));
             parentName = parent.getKind().equals("MainMethod") ? "main" : parent.get("name");
 
@@ -391,6 +401,14 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 //check if parameter
                 for (Symbol vari : symbolTable.getParameters(parentName))
                     if (vari.getName().equals(jmmNode.get("value"))) var = vari;
+            }
+            if(var == null){ //is from import
+                for(String imp : this.symbolTable.getImports()){
+                    if (imp.equals(jmmNode.get("value"))){
+                        isImported = true;
+                        var = new Symbol(new Type("import", false), jmmNode.get("value"));
+                    }
+                }
             }
 
         }
@@ -432,6 +450,9 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     .append(type)
                     .toString();
         }
+        else if(isImported){
+            return ret.append(var.getName()).toString();
+        }
         //param
         //get param index
         int i;
@@ -468,6 +489,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         JmmNode expression = jmmNode.getJmmChild(1);
         String expressionString = visit(expression, "");
         if(expression.getKind().equals("FunctionCall")){
+            this.functionRets.put(jmmNode.getJmmChild(0), "i32");
             ret.append("\n");
             expressionString = expressionString.substring(0, expressionString.indexOf(" "));
         }
@@ -477,12 +499,41 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     private String dealWithFunctionCall(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
 
-        String name = jmmNode.get("");
+        String lastString, name = jmmNode.get("methodName");
+        //check if method or import
+        String objectString = visit(jmmNode.getJmmChild(0), "");
+
+        System.out.println(jmmNode.getChildren());
+        List<String> visitedArgs = new ArrayList<>();
+        for(int i = 1; i < jmmNode.getNumChildren(); i++){
+            if(jmmNode.getJmmChild(i).getKind().equals("FunctionCall") &&){
+                this.functionRets.put(jmmNode.getJmmChild(i), ); //get from list of args
+            String childString = visit(jmmNode.getJmmChild(i), "");
+            List<String> nested = getNested(jmmNode.getJmmChild(i), childString);
+
+            if (!nested.get(0).contains("\n")) ret.append(nested.get(0));
+            else ret.append(nested.get(0)).append("\n");
+            visitedArgs.add(nested.get(1));
+        }
+
+        ret.append(this.symbolTable.getImports().contains(objectString) ? "invokestatic(" : "invokevirtual(")
+                .append(objectString)
+                .append(", ")
+                .append(name);
+
+        for(String arg : visitedArgs){
+            ret.append(", ").append(arg);
+        }
+        ret.append(").");
+
+        //return type
 
         return ret.toString();
     }
 
     private String dealWithLength(JmmNode jmmNode, String s) {
+        if(jmmNode.getJmmChild(0).getKind().equals("FunctionCall"))
+            this.functionRets.put(jmmNode.getJmmChild(0), "array.i32");
         return s + "arraylength(" +
                 visit(jmmNode.getJmmChild(0)) +
                 ").i32";
@@ -490,7 +541,10 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
     private String dealWithSquareBrackets(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
-
+        if(jmmNode.getJmmChild(0).getKind().equals("FunctionCall"))
+            this.functionRets.put(jmmNode.getJmmChild(0), "array.i32");
+        if(jmmNode.getJmmChild(1).getKind().equals("FunctionCall"))
+            this.functionRets.put(jmmNode.getJmmChild(1), typesSwap("i32"));
         String left = visit(jmmNode.getJmmChild(0), "");
         String right = visit(jmmNode.getJmmChild(1), "");
 
@@ -515,9 +569,12 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
     private String dealWithBinaryOp(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
+        if(jmmNode.getJmmChild(0).getKind().equals("FunctionCall"))
+            this.functionRets.put(jmmNode.getJmmChild(0), "i32");
+        if(jmmNode.getJmmChild(1).getKind().equals("FunctionCall"))
+            this.functionRets.put(jmmNode.getJmmChild(1), "i32");
         JmmNode left = jmmNode.getJmmChild(0), right = jmmNode.getJmmChild(1);
         String leftString = visit(left, ""), rightString = visit(right, "");
-
 
         List<String> nestedLeft = getNested(left, leftString), nestedRight = getNested(right, rightString);
 
@@ -526,11 +583,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         leftString = nestedLeft.get(1);
 
         if (!nestedRight.get(0).contains("\n")) ret.append(nestedRight.get(0));
-        else {
-            ret.append(nestedRight.get(0)).append("\n");
-        }
+        else ret.append(nestedRight.get(0)).append("\n");
         rightString = nestedRight.get(1);
-
 
         ret.append("\n").append(leftString)
                 .append(" ")
@@ -599,6 +653,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithParenthesis(JmmNode jmmNode, String s) {
+        if(jmmNode.getJmmChild(0).getKind().equals("FunctionCall"))
+            this.functionRets.put(jmmNode.getJmmChild(0), typesSwap("void"));
         return visit(jmmNode.getJmmChild(0), "");
     }
 
