@@ -9,23 +9,24 @@ import java.util.ArrayList;
 
 public class Backend implements JasminBackend {
     private String superClass = "java/lang/Object";
+    private ClassUnit ollirClass = null;
 
     @Override
     public JasminResult toJasmin(OllirResult ollirResult) {
-        ClassUnit ollirClass = ollirResult.getOllirClass();
+        this.ollirClass = ollirResult.getOllirClass();
 
         StringBuilder jasminCode = new StringBuilder();
 
-        buildClass(jasminCode, ollirClass);
-        buildSuper(jasminCode, ollirClass.getSuperClass(), ollirClass);
-        buildFields(jasminCode, ollirClass.getFields());
-        buildMethods(jasminCode, ollirClass.getMethods(), ollirClass);
+        buildClass(jasminCode);
+        buildSuper(jasminCode);
+        buildFields(jasminCode);
+        buildMethods(jasminCode);
 
         System.out.println(jasminCode);
         return new JasminResult(jasminCode.toString());
     }
 
-    private void buildClass(StringBuilder code, ClassUnit ollirClass) {
+    private void buildClass(StringBuilder code) {
         code.append(".class ")
             .append(accessModifierToString(ollirClass.getClassAccessModifier()))
             .append(" ")
@@ -33,15 +34,15 @@ public class Backend implements JasminBackend {
             .append("\n");
     }
 
-    private void buildSuper(StringBuilder code, String superClass, ClassUnit ollirClass) {
-        this.superClass = superClass == null ? "java/lang/Object" : fullClassName(ollirClass, superClass);
+    private void buildSuper(StringBuilder code) {
+        this.superClass = superClass == null ? "java/lang/Object" : fullClassName(superClass);
         code.append(".super ")
             .append(this.superClass)
             .append("\n");
     }
 
-    private void buildFields(StringBuilder code, ArrayList<Field> fields) {
-        for (Field field : fields) {
+    private void buildFields(StringBuilder code) {
+        for (Field field : ollirClass.getFields()) {
             buildField(code, field);
         }
     }
@@ -56,9 +57,9 @@ public class Backend implements JasminBackend {
             .append("\n");
     }
 
-    private void buildMethods(StringBuilder code, ArrayList<Method> methods, ClassUnit ollirClass) {
-        for (Method method : methods) {
-            if (method.isConstructMethod()) buildConstructor(code, ollirClass);
+    private void buildMethods(StringBuilder code) {
+        for (Method method : ollirClass.getMethods()) {
+            if (method.isConstructMethod()) buildConstructor(code);
             else buildMethod(code, method);
         }
     }
@@ -80,15 +81,22 @@ public class Backend implements JasminBackend {
             .append(typeToString(method.getReturnType()))
             .append("\n");
 
-        // TODO: Add body
         code.append("\t.limit stack 99\n")
             .append("\t.limit locals 99\n");
 
-        code.append("\treturn\n")
-            .append(".end method\n");
+        for (Instruction instruction : method.getInstructions()) {
+            buildInstruction(instruction);
+        }
+
+        // If method does not contain return instruction,
+        // manually add it.
+        if (method.getInstructions().get(method.getInstructions().size() - 1).getInstType() != InstructionType.RETURN) {
+            code.append("\treturn\n");
+        }
+        code.append(".end method\n");
     }
 
-    private void buildConstructor(StringBuilder code, ClassUnit ollirClass) {
+    private void buildConstructor(StringBuilder code) {
         code.append(".method ").append(accessModifierToString(ollirClass.getClassAccessModifier())).append(" <init>()V\n")
             .append("\taload_0\n")
             .append("\tinvokespecial ").append(this.superClass).append("/<init>()V\n")
@@ -96,7 +104,22 @@ public class Backend implements JasminBackend {
             .append(".end method\n");
     }
 
-    private String fullClassName(ClassUnit ollirClass, String className) {
+    private void buildInstruction(Instruction instruction) {
+        switch (instruction.getInstType()) {
+            case ASSIGN:
+            case CALL:
+            case GOTO:
+            case NOPER:
+            case BRANCH:
+            case RETURN:
+            case GETFIELD:
+            case PUTFIELD:
+            case UNARYOPER:
+            case BINARYOPER:
+        }
+    }
+
+    private String fullClassName(String className) {
         for (String imp : ollirClass.getImports()) {
             if (imp.endsWith(className)) return imp.replace('.', '/');
         }
@@ -117,8 +140,8 @@ public class Backend implements JasminBackend {
                 return "[" + typeToString(((ArrayType)type).getElementType());
             case CLASS: case OBJECTREF:
                 return "L" + ((ClassType)type).getName() + ";";
-            case THIS: // ??
-                return "Lthis;";
+            case THIS:
+                return "L" + ollirClass.getClassName();
             case STRING:
                 return "Ljava/lang/String;";
             case VOID:
