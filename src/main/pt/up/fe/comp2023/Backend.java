@@ -88,6 +88,10 @@ public class Backend implements JasminBackend {
 
         AtomicInteger nLocalVars = new AtomicInteger(0);
         Map<String, Integer> localVars = new HashMap<>();
+        for (Element elem : method.getParams()) {
+            nLocalVars.set(nLocalVars.intValue() + 1);
+            localVars.put(((Operand) elem).getName(), nLocalVars.intValue());
+        }
         for (Instruction instruction : method.getInstructions()) {
             buildInstruction(instruction, nLocalVars, localVars);
         }
