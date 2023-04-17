@@ -85,7 +85,7 @@ public class Backend implements JasminBackend {
             .append("\t.limit locals 99\n");
 
         for (Instruction instruction : method.getInstructions()) {
-            buildInstruction(instruction);
+            buildInstruction(code, instruction);
         }
 
         // If method does not contain return instruction,
@@ -104,20 +104,51 @@ public class Backend implements JasminBackend {
             .append(".end method\n");
     }
 
-    private void buildInstruction(Instruction instruction) {
+    private void buildInstruction(StringBuilder code, Instruction instruction) {
         switch (instruction.getInstType()) {
             case ASSIGN:
+                buildAssignInstruction(code, (AssignInstruction) instruction);
+                break;
             case CALL:
+                buildCallInstruction(code, (CallInstruction) instruction);
+                break;
             case GOTO:
+                buildGotoInstruction(code, (GotoInstruction) instruction);
+                break;
             case NOPER:
+                buildNoperInstruction(code);
+                break;
             case BRANCH:
+                buildBranchInstruction(code);
+                break;
             case RETURN:
+                buildReturnInstruction(code, (ReturnInstruction) instruction);
+                break;
             case GETFIELD:
+                buildGetFieldInstruction(code, (GetFieldInstruction) instruction);
+                break;
             case PUTFIELD:
+                buildPutFieldInstruction(code, (PutFieldInstruction) instruction);
+                break;
             case UNARYOPER:
+                buildUnaryOperInstruction(code, (UnaryOpInstruction) instruction);
+                break;
             case BINARYOPER:
+                buildBinaryOperInstruction(code, (BinaryOpInstruction) instruction);
+                break;
         }
     }
+
+    private void buildAssignInstruction(StringBuilder code, AssignInstruction instruction) {}
+    private void buildCallInstruction(StringBuilder code, CallInstruction instruction) {}
+    private void buildGotoInstruction(StringBuilder code, GotoInstruction instruction) {}
+    private void buildNoperInstruction(StringBuilder code) {}
+    private void buildBranchInstruction(StringBuilder code) {}
+    private void buildReturnInstruction(StringBuilder code, ReturnInstruction instruction) {}
+    private void buildGetFieldInstruction(StringBuilder code, GetFieldInstruction instruction) {}
+    private void buildPutFieldInstruction(StringBuilder code, PutFieldInstruction instruction) {}
+    private void buildUnaryOperInstruction(StringBuilder code, UnaryOpInstruction instruction) {}
+    private void buildBinaryOperInstruction(StringBuilder code, BinaryOpInstruction instruction) {}
 
     private String fullClassName(String className) {
         for (String imp : ollirClass.getImports()) {
