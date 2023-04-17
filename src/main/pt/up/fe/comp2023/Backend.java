@@ -5,50 +5,47 @@ import pt.up.fe.comp.jmm.jasmin.JasminBackend;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 
-import java.util.ArrayList;
-
 public class Backend implements JasminBackend {
     private String superClass = "java/lang/Object";
     private ClassUnit ollirClass = null;
+    private final StringBuilder jasminCode = new StringBuilder();
 
     @Override
     public JasminResult toJasmin(OllirResult ollirResult) {
         this.ollirClass = ollirResult.getOllirClass();
 
-        StringBuilder jasminCode = new StringBuilder();
-
-        buildClass(jasminCode);
-        buildSuper(jasminCode);
-        buildFields(jasminCode);
-        buildMethods(jasminCode);
+        buildClass();
+        buildSuper();
+        buildFields();
+        buildMethods();
 
         System.out.println(jasminCode);
         return new JasminResult(jasminCode.toString());
     }
 
-    private void buildClass(StringBuilder code) {
-        code.append(".class ")
+    private void buildClass() {
+        jasminCode.append(".class ")
             .append(accessModifierToString(ollirClass.getClassAccessModifier()))
             .append(" ")
             .append(ollirClass.getClassName())
             .append("\n");
     }
 
-    private void buildSuper(StringBuilder code) {
+    private void buildSuper() {
         this.superClass = superClass == null ? "java/lang/Object" : fullClassName(superClass);
-        code.append(".super ")
+        jasminCode.append(".super ")
             .append(this.superClass)
             .append("\n");
     }
 
-    private void buildFields(StringBuilder code) {
+    private void buildFields() {
         for (Field field : ollirClass.getFields()) {
-            buildField(code, field);
+            buildField(field);
         }
     }
 
-    private void buildField(StringBuilder code, Field field) {
-        code.append(".field ")
+    private void buildField(Field field) {
+        jasminCode.append(".field ")
             .append(accessModifierToString(field.getFieldAccessModifier()))
             .append(" '")
             .append(field.getFieldName())
@@ -57,98 +54,98 @@ public class Backend implements JasminBackend {
             .append("\n");
     }
 
-    private void buildMethods(StringBuilder code) {
+    private void buildMethods() {
         for (Method method : ollirClass.getMethods()) {
-            if (method.isConstructMethod()) buildConstructor(code);
-            else buildMethod(code, method);
+            if (method.isConstructMethod()) buildConstructor();
+            else buildMethod(method);
         }
     }
 
-    private void buildMethod(StringBuilder code, Method method) {
-        code.append(".method ");
+    private void buildMethod(Method method) {
+        jasminCode.append(".method ");
 
-        if (method.isStaticMethod()) code.append("static ");
-        if (method.isFinalMethod()) code.append("final ");
+        if (method.isStaticMethod()) jasminCode.append("static ");
+        if (method.isFinalMethod()) jasminCode.append("final ");
 
-        code.append(accessModifierToString(method.getMethodAccessModifier()))
+        jasminCode.append(accessModifierToString(method.getMethodAccessModifier()))
             .append(" ").append(method.getMethodName()).append("(");
 
         for (Element elem : method.getParams()) {
-            code.append(typeToString(elem.getType()));
+            jasminCode.append(typeToString(elem.getType()));
         }
 
-        code.append(")")
+        jasminCode.append(")")
             .append(typeToString(method.getReturnType()))
             .append("\n");
 
-        code.append("\t.limit stack 99\n")
+        jasminCode.append("\t.limit stack 99\n")
             .append("\t.limit locals 99\n");
 
         for (Instruction instruction : method.getInstructions()) {
-            buildInstruction(code, instruction);
+            buildInstruction(instruction);
         }
 
         // If method does not contain return instruction,
         // manually add it.
         if (method.getInstructions().get(method.getInstructions().size() - 1).getInstType() != InstructionType.RETURN) {
-            code.append("\treturn\n");
+            jasminCode.append("\treturn\n");
         }
-        code.append(".end method\n");
+        jasminCode.append(".end method\n");
     }
 
-    private void buildConstructor(StringBuilder code) {
-        code.append(".method ").append(accessModifierToString(ollirClass.getClassAccessModifier())).append(" <init>()V\n")
+    private void buildConstructor() {
+        jasminCode.append(".method ").append(accessModifierToString(ollirClass.getClassAccessModifier())).append(" <init>()V\n")
             .append("\taload_0\n")
             .append("\tinvokespecial ").append(this.superClass).append("/<init>()V\n")
             .append("\treturn\n")
             .append(".end method\n");
     }
 
-    private void buildInstruction(StringBuilder code, Instruction instruction) {
+    private void buildInstruction(Instruction instruction) {
         switch (instruction.getInstType()) {
             case ASSIGN:
-                buildAssignInstruction(code, (AssignInstruction) instruction);
+                buildAssignInstruction((AssignInstruction) instruction);
                 break;
             case CALL:
-                buildCallInstruction(code, (CallInstruction) instruction);
+                buildCallInstruction((CallInstruction) instruction);
                 break;
             case GOTO:
-                buildGotoInstruction(code, (GotoInstruction) instruction);
+                buildGotoInstruction((GotoInstruction) instruction);
                 break;
             case NOPER:
-                buildNoperInstruction(code);
+                buildNoperInstruction();
                 break;
             case BRANCH:
-                buildBranchInstruction(code);
+                buildBranchInstruction();
                 break;
             case RETURN:
-                buildReturnInstruction(code, (ReturnInstruction) instruction);
+                buildReturnInstruction((ReturnInstruction) instruction);
                 break;
             case GETFIELD:
-                buildGetFieldInstruction(code, (GetFieldInstruction) instruction);
+                buildGetFieldInstruction((GetFieldInstruction) instruction);
                 break;
             case PUTFIELD:
-                buildPutFieldInstruction(code, (PutFieldInstruction) instruction);
+                buildPutFieldInstruction((PutFieldInstruction) instruction);
                 break;
             case UNARYOPER:
-                buildUnaryOperInstruction(code, (UnaryOpInstruction) instruction);
+                buildUnaryOperInstruction((UnaryOpInstruction) instruction);
                 break;
             case BINARYOPER:
-                buildBinaryOperInstruction(code, (BinaryOpInstruction) instruction);
+                buildBinaryOperInstruction((BinaryOpInstruction) instruction);
                 break;
         }
     }
 
-    private void buildAssignInstruction(StringBuilder code, AssignInstruction instruction) {}
-    private void buildCallInstruction(StringBuilder code, CallInstruction instruction) {}
-    private void buildGotoInstruction(StringBuilder code, GotoInstruction instruction) {}
-    private void buildNoperInstruction(StringBuilder code) {}
-    private void buildBranchInstruction(StringBuilder code) {}
-    private void buildReturnInstruction(StringBuilder code, ReturnInstruction instruction) {}
-    private void buildGetFieldInstruction(StringBuilder code, GetFieldInstruction instruction) {}
-    private void buildPutFieldInstruction(StringBuilder code, PutFieldInstruction instruction) {}
-    private void buildUnaryOperInstruction(StringBuilder code, UnaryOpInstruction instruction) {}
-    private void buildBinaryOperInstruction(StringBuilder code, BinaryOpInstruction instruction) {}
+    private void buildAssignInstruction(AssignInstruction instruction) {}
+    private void buildCallInstruction(CallInstruction instruction) {}
+    private void buildGotoInstruction(GotoInstruction instruction) {}
+    private void buildNoperInstruction() {}
+    private void buildBranchInstruction() {}
+    private void buildReturnInstruction(ReturnInstruction instruction) {}
+    private void buildGetFieldInstruction(GetFieldInstruction instruction) {}
+    private void buildPutFieldInstruction(PutFieldInstruction instruction) {}
+    private void buildUnaryOperInstruction(UnaryOpInstruction instruction) {}
+    private void buildBinaryOperInstruction(BinaryOpInstruction instruction) {}
 
     private String fullClassName(String className) {
         for (String imp : ollirClass.getImports()) {
