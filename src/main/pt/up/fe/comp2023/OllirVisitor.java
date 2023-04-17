@@ -356,7 +356,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithThis(JmmNode jmmNode, String s) {
-        return "";
+        return "this";
     }
 
     private String dealWithIdentifier(JmmNode jmmNode, String s) {
