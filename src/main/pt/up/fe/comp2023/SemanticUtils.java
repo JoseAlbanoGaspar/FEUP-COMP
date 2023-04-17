@@ -109,7 +109,10 @@ public class SemanticUtils {
             }
             case "FunctionCall" -> {
                 Type calleeType = getType(node.getJmmChild(0));
-                if(calleeType.getName().equals("NotFound")) return calleeType;
+                if(calleeType.getName().equals("NotFound")) {
+                    System.out.println("not exists");
+                    return calleeType;
+                }
                 if (simpleTable.getMethods().contains(node.get("methodName")) && calleeType.getName().equals(simpleTable.getClassName())) {
                     type = simpleTable.getReturnType(node.get("methodName"));
                 } else {

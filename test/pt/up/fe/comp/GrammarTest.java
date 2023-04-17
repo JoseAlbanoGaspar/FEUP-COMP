@@ -284,6 +284,6 @@ public class GrammarTest {
 
     @Test
     public void assignTest(){TestUtils.parseVerbose(
-            "array=new int[3];",STATEMENT
+            "a.bar();",STATEMENT
     );}
 }
