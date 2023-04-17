@@ -293,10 +293,10 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     private String dealWithClassDeclaration(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
         String name = jmmNode.get("name");
-        ret.append(name).append(" {\n");
 
-        String superName =  jmmNode.hasAttribute("superName") ? " extends " : "";
+        String superName =  jmmNode.hasAttribute("superName") ? " extends "+jmmNode.get("superName") : "";
 
+        ret.append(name).append(superName).append(" {\n");
 
         for (JmmNode child: jmmNode.getChildren()){
             if(child.getKind().equals("VarDeclaration")){
@@ -475,7 +475,11 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithFunctionCall(JmmNode jmmNode, String s) {
-        return "";
+        StringBuilder ret = new StringBuilder(s);
+
+        String name = jmmNode.get("");
+
+        return ret.toString();
     }
 
     private String dealWithLength(JmmNode jmmNode, String s) {
