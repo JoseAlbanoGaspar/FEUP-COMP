@@ -8,6 +8,7 @@ import pt.up.fe.comp.jmm.ollir.OllirResult;
 import java.util.ArrayList;
 
 public class Backend implements JasminBackend {
+    private String superClass = "java/lang/Object";
 
     @Override
     public JasminResult toJasmin(OllirResult ollirResult) {
@@ -18,9 +19,7 @@ public class Backend implements JasminBackend {
         buildClass(jasminCode, ollirClass);
         buildSuper(jasminCode, ollirClass.getSuperClass(), ollirClass);
         buildFields(jasminCode, ollirClass.getFields());
-
-        fullClassName(ollirClass, ollirClass.getSuperClass());
-        System.out.println();
+        buildMethods(jasminCode, ollirClass.getMethods(), ollirClass);
 
         System.out.println(jasminCode);
         return new JasminResult(jasminCode.toString());
@@ -35,9 +34,9 @@ public class Backend implements JasminBackend {
     }
 
     private void buildSuper(StringBuilder code, String superClass, ClassUnit ollirClass) {
-        String superName = superClass == null ? "java/lang/Object" : fullClassName(ollirClass, superClass);
+        this.superClass = superClass == null ? "java/lang/Object" : fullClassName(ollirClass, superClass);
         code.append(".super ")
-            .append(superName)
+            .append(this.superClass)
             .append("\n");
     }
 
@@ -55,6 +54,41 @@ public class Backend implements JasminBackend {
             .append("' ")
             .append(typeToString(field.getFieldType()))
             .append("\n");
+    }
+
+    private void buildMethods(StringBuilder code, ArrayList<Method> methods, ClassUnit ollirClass) {
+        for (Method method : methods) {
+            if (method.isConstructMethod()) buildConstructor(code, ollirClass);
+            else buildMethod(code, method);
+        }
+    }
+
+    private void buildMethod(StringBuilder code, Method method) {
+        code.append(".method ").append(accessModifierToString(method.getMethodAccessModifier()))
+            .append(" ").append(method.getMethodName()).append("(");
+
+        for (Element elem : method.getParams()) {
+            code.append(typeToString(elem.getType()));
+        }
+
+        code.append(")")
+            .append(typeToString(method.getReturnType()))
+            .append("\n");
+
+        // TODO: Add body
+        code.append("\t.limit stack 99\n")
+            .append("\t.limit locals 99\n");
+
+        code.append("\treturn\n")
+            .append(".end method\n");
+    }
+
+    private void buildConstructor(StringBuilder code, ClassUnit ollirClass) {
+        code.append(".method ").append(accessModifierToString(ollirClass.getClassAccessModifier())).append(" <init>()V\n")
+            .append("\taload_0\n")
+            .append("\tinvokespecial ").append(this.superClass).append("/<init>()V\n")
+            .append("\treturn\n")
+            .append(".end method\n");
     }
 
     private String fullClassName(ClassUnit ollirClass, String className) {
