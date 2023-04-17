@@ -5,6 +5,7 @@ import pt.up.fe.comp.jmm.jasmin.JasminBackend;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 
+import java.lang.reflect.MalformedParameterizedTypeException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -125,7 +126,7 @@ public class Backend implements JasminBackend {
                 buildBranchInstruction((CondBranchInstruction) instruction);
                 break;
             case RETURN:
-                buildReturnInstruction((ReturnInstruction) instruction);
+                buildReturnInstruction((ReturnInstruction) instruction, localVars);
                 break;
             case GETFIELD:
                 buildGetFieldInstruction((GetFieldInstruction) instruction);
@@ -167,7 +168,16 @@ public class Backend implements JasminBackend {
         buildLoad(instruction.getSingleOperand(), localVariables);
     }
     private void buildBranchInstruction(CondBranchInstruction instruction) {}
-    private void buildReturnInstruction(ReturnInstruction instruction) {}
+    private void buildReturnInstruction(ReturnInstruction instruction, Map<String, Integer> localVariables) {
+        if (instruction.hasReturnValue()) {
+            buildLoad(instruction.getOperand(), localVariables);
+            jasminCode.append("\t")
+                    .append(typePrefix(instruction.getOperand().getType()));
+        } else {
+            jasminCode.append("\t");
+        }
+        jasminCode.append("return\n");
+    }
     private void buildGetFieldInstruction(GetFieldInstruction instruction) {}
     private void buildPutFieldInstruction(PutFieldInstruction instruction) {}
     private void buildUnaryOperInstruction(UnaryOpInstruction instruction, Map<String, Integer> localVariables) {
