@@ -19,7 +19,11 @@ class Fac9 {
 
         array=new int[3];
 
-        array=this.returnArray();
+        //array=this.returnArray();
+
+        array[0] = var1;
+        array[var2] = var1 + array[0];
+
 
         //factTest=this;
         fac2Test=Fac2.create();

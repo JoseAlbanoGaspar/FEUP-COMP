@@ -132,33 +132,17 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
     }
 
     private Void dealWithFunctionCall(JmmNode node, Void _void) {
-        Type type = utils.getType(node);
-        /*System.out.println("-------------------");
-        System.out.println(type);
-        System.out.println(node);
-        System.out.println("-------------------");*/
 
         return null;
     }
 
     private Void dealWithLength(JmmNode node, Void _void) {
 
-        /* JmmNode parent = node.getJmmParent();
-        if(!parent.getKind().equals("BinaryOp") || !parent.getKind().equals("Compare")){
-            createReport(node, "Length returns an integer: Bool expected!");
-            return null;
-        }*/
         return null;
     }
 
     private Void dealWithSquareBrackets(JmmNode node, Void _void) {
 
-        /*if(node.getJmmChild(0).getKind().equals("Identifier"))
-            checkIndexedVarIsArray(node.getChildren().get(0), "value");
-        if(!node.getJmmChild(1).getKind().equals("BinaryOp") &&
-           !node.getJmmChild(1).getKind().equals("Integer")  &&
-           !node.getJmmChild(1).getKind().equals("Identifier"))  //note : in dealWithIdentifier are made the verifications about the type of identifier
-            createReport(node, "Array index expression must be integer!");*/
         return null;
     }
 
@@ -167,11 +151,7 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
     }
 
     private Void dealWithCompare(JmmNode node, Void _void) {
-        /*JmmNode parent = node.getJmmParent();
-        if(parent.getKind().equals("BinaryOp")){
-            createReport(node, "Boolean not allowed as arithmetic member!");
-            return null;
-        }*/
+
         return null;
     }
 
@@ -183,103 +163,27 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
             }
 
         }
-        /* JmmNode parent = node.getJmmParent();
-        if(parent.getKind().equals("Compare")) {
-            createReport(node, "Boolean not allowed as arithmetic member!");
-            return null;
-        }
-        if(parent.getKind().equals("LogicalAnd")) {
-            createReport(node, "Integer used in && operator!");
-            return null;
-        }*/
+
 
         return null;
     }
 
     private Void dealWithParenthesis(JmmNode node, Void _void) {
 
-        /*JmmNode child = node.getJmmChild(0);
-        JmmNode parent = node.getJmmParent();
-        if(child.getKind().equals("BinaryOp")){
-            if(parent.getKind().equals("LogicalAnd")){
-                createReport(node, "Integer used in && operator!");
-            }
-        }
-        if(child.getKind().equals("Compare")){
-            if(parent.getKind().equals("BinaryOp")){
-                createReport(node, "Boolean used in " + parent.get("op") + " operator!");
-            }
-        }
-        if(child.getKind().equals("LogicalAnd")){
-            if(parent.getKind().equals("BinaryOp")){
-                createReport(node, " <bool> " + parent.get("op") + " int not possible");
-            }
-            if(parent.getKind().equals("Compare")){
-                createReport(node, "< operator must receive 2 integers, one bool given");
-            }
-        }
-        if(child.getKind().equals("Length")){
-            if(parent.getKind().equals("Compare") || parent.getKind().equals("Not") || parent.getKind().equals("LogicalAnd"))
-                createReport(node, "Length returns an integer and it's passed instead of a boolean");
-        }*/
         return null;
     }
 
     private Void dealWithNegation(JmmNode node, Void _void) {
 
-        /*if(!node.getJmmChild(0).getKind().equals("Compare") && !node.getJmmChild(0).getKind().equals("LogicalAnd")){
-            if(!node.getJmmChild(0).getKind().equals("Parenthesis")){
-                createReport(node, "Cannot negate integers");
-            }
-            else{
-                if(!node.getJmmChild(0).getJmmChild(0).getKind().equals("Compare") && !node.getJmmChild(0).getJmmChild(0).getKind().equals("LogicalAnd")) {
-                    createReport(node, "Cannot negate integers");
-                }
-            }
-        }*/
         return null;
     }
 
     private Void dealWithArray(JmmNode node, Void _void) {
 
-        /*Type type = varCheck(node, "var");
-        if(type.getName().equals("NotFound"))
-            createReport(node, "Variable not declared: " + node.get("var"));
-
-        //checks if array expression is integer
-        if(!node.getJmmChild(0).getKind().equals("BinaryOp") &&
-                !node.getJmmChild(0).getKind().equals("Integer")  &&
-                !node.getJmmChild(0).getKind().equals("Identifier"))  //note : in dealWithIdentifier are made the verifications about the type of identifier
-            createReport(node, "Array index expression must be integer!");
-
-        //checks type compatibility in assignments
-        assignmentCheck(node.getJmmChild(1), type);*/
-
-
         return null;
     }
 
     private Void dealWithAssignment(JmmNode node, Void _void) {
-        /*Type type = varCheck(node, "var");
-        if(type.getName().equals("NotFound"))
-            createReport(node, "Variable not declared: " + node.get("var"));
-
-        //this used as object verification
-        if(node.getJmmChild(0).getKind().equals("This")){
-            JmmNode aux = node;
-            while(!aux.getKind().equals("ClassDeclaration")){
-                aux = aux.getJmmParent();
-            }
-            if(!type.getName().equals(aux.get("name"))){
-                if(!aux.hasAttribute("superName")){
-                    createReport(node, "this cannot be assigned to " + node.get("var"));
-                }
-                else if(!type.getName().equals(aux.get("superName"))){
-                    createReport(node, "this cannot be assigned to " + node.get("var"));
-                }
-            }
-        }
-        assignmentCheck(node.getJmmChild(0), type);*/
         return null;
     }
 
@@ -288,12 +192,10 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
     }
 
     private Void dealWithWhile(JmmNode node, Void _void) {
-        //checkBoolExpInConditions(node);
         return null;
     }
 
     private Void dealWithIf(JmmNode node, Void _void) {
-        //checkBoolExpInConditions(node);
         return null;
     }
 
