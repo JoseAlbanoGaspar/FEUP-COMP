@@ -281,4 +281,9 @@ public class GrammarTest {
     public void assignWithBinOp(){TestUtils.parseVerbose(
             "a[9 + c] = 3 + b[0 + 1];",STATEMENT
     );}
+
+    @Test
+    public void assignTest(){TestUtils.parseVerbose(
+            "array=new int[3];",STATEMENT
+    );}
 }

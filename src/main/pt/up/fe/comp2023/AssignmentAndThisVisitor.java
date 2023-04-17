@@ -147,6 +147,10 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
     private Void dealWithAssignment(JmmNode node, Void _void) {
         Type left = utils.varCheck(node, "var");
         Type right = utils.getType(node.getJmmChild(0));
+
+        System.out.println("-------exp type---------");
+        System.out.println(right);
+        System.out.println("------------------------");
         boolean notImportedOrExtended = true;
 
         //check if right and left are both imported

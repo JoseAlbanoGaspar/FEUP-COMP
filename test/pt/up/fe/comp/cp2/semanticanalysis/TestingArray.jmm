@@ -1,30 +1,31 @@
-import B;
-import S;
-class ArrayAccessOnInt extends S {
+import Class.Fac2;
 
-    public static void main(String[] args) {
-        B b;
-        ArrayAccessOnInt k;
-        S s;
-        boolean a;
-        int[] c;
-        int d;
-
-        a = b.bar() < 4;
-        a = 4 < S.buz();
-        c[2] = b.foo() + S.fiz();
-        d = (c.length * b.foo()) / c[0];
-        s = k;
+class Fac9 {
+    public int returnInt(){
+        return 1;
+    }
+    public int[] returnArray(){
+        int[] a;
+        return a;//new int[3];
     }
 
-    public boolean foo() {
-        int[] a;
-        int[] b;
 
-        while(a[b[10]] < 4){
-            //a[2] = 3 + b[9];
-        }
+    public static void main(String[]args){
+        int var1;
+        boolean var2;
+        int[] array;
+        Fac facTest;
+        Fac2 fac2Test;
 
-        return true;
+        array=new int[3];
+
+        array=this.returnArray();
+
+        //factTest=this;
+        fac2Test=Fac2.create();
+
+
+
+
     }
 }
