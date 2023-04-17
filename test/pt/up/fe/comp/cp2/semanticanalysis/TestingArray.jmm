@@ -4,9 +4,8 @@ class Fac9 {
     public int returnInt(){
         return 1;
     }
-    public int[] returnArray(){
-        int[] a;
-        return a;//new int[3];
+    public int[] returnArray(int a){
+        return new int[a];
     }
 
 
@@ -17,12 +16,10 @@ class Fac9 {
         Fac facTest;
         Fac2 fac2Test;
 
-        array=new int[3];
-
-        //array=this.returnArray();
-
-        array[0] = var1;
-        array[var2] = var1 + array[0];
+        //array[0] = Fac2.func();
+        //array[Fac2.func()] = var1;
+        array[9] = var2;
+        //array[var1 + 2] = var1 + array[0];
 
 
         //factTest=this;

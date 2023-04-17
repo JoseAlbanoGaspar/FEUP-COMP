@@ -77,9 +77,6 @@ public class SemanticArrayVisitor extends PreorderJmmVisitor<Void, Void> impleme
         return null; }
 
     private Void dealWithNewArray(JmmNode node, Void _void) {
-        if(!utils.getType(node.getJmmChild(0)).getName().equals("int")){
-            utils.createReport(node,"Only integer arrays supported!");
-        }
         if(!utils.getType(node.getJmmChild(1)).getName().equals("int"))
             utils.createReport(node,"Index expression must be an integer");
         return null;
