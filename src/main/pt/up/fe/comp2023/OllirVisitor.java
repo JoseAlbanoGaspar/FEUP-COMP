@@ -236,6 +236,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                         .append(";\n\t}\n");
             } else { //op, need to make temp
                 String lastString = visit(lastNode, "");
+
                 if (lastString.contains("\n")) {
                     List<String> lines = List.of(lastString.split("\n"));
                     lines = lines.stream().filter(x -> !x.isEmpty()).collect(Collectors.toList());
@@ -249,7 +250,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     lastString = lines.get(j);
                 }
 
-                System.out.println(lastString);
                 String sub;
                 if (lastString.contains(" ") && lastString.contains(".")) {
                     sub = lastString.substring(lastString.indexOf(".") + 1, lastString.indexOf(" "));
@@ -263,7 +263,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                         .append(sub)
                         .append(" ")
                         .append(lastString)
-                        .append("\n")
+                        .append(";\n")
                         .append(s)
                         .append("\tret.")
                         .append(sub)
@@ -573,11 +573,13 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         JmmNode left = jmmNode.getJmmChild(0), right = jmmNode.getJmmChild(1);
         String leftString = visit(left, ""), rightString = visit(right, "");
 
+
         List<String> nestedLeft = getNested(left, leftString), nestedRight = getNested(right, rightString);
 
         if (!nestedLeft.get(0).contains("\n")) ret.append(nestedLeft.get(0));
         else ret.append(nestedLeft.get(0)).append("\n");
         leftString = nestedLeft.get(1);
+
 
         if (!nestedRight.get(0).contains("\n")) ret.append(nestedRight.get(0));
         else ret.append(nestedRight.get(0)).append("\n");
@@ -587,8 +589,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 .append(" ")
                 .append(jmmNode.get("op"))
                 .append(".i32 ")
-                .append(rightString)
-                .append(";");
+                .append(rightString);
         return ret.toString();
     }
 
