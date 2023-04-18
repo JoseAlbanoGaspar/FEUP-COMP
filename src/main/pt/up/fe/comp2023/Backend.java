@@ -7,6 +7,7 @@ import pt.up.fe.comp.jmm.ollir.OllirResult;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Backend implements JasminBackend {
@@ -133,7 +134,7 @@ public class Backend implements JasminBackend {
                 buildReturnInstruction((ReturnInstruction) instruction, localVars);
                 break;
             case GETFIELD:
-                buildGetFieldInstruction((GetFieldInstruction) instruction);
+                buildGetFieldInstruction((GetFieldInstruction) instruction, localVars);
                 break;
             case PUTFIELD:
                 buildPutFieldInstruction((PutFieldInstruction) instruction);
@@ -182,7 +183,14 @@ public class Backend implements JasminBackend {
         }
         jasminCode.append("return\n");
     }
-    private void buildGetFieldInstruction(GetFieldInstruction instruction) {}
+    private void buildGetFieldInstruction(GetFieldInstruction instruction, Map<String, Integer> localVariables) {
+        buildLoad(instruction.getFirstOperand(), localVariables);
+
+        jasminCode.append("\tgetfield ")
+                .append(fullClassName(((Operand) instruction.getFirstOperand()).getName()))
+                .append("/").append(((Operand) instruction.getSecondOperand()).getName()).append(" ")
+                .append(typeToString(instruction.getSecondOperand().getType())).append("\n");
+    }
     private void buildPutFieldInstruction(PutFieldInstruction instruction) {}
     private void buildUnaryOperInstruction(UnaryOpInstruction instruction, Map<String, Integer> localVariables) {
         if (instruction.getOperation().getOpType() == OperationType.NOTB) { // Only supported unary operation
@@ -241,6 +249,7 @@ public class Backend implements JasminBackend {
     }
 
     private String fullClassName(String className) {
+        if (Objects.equals(className, "this")) return ollirClass.getClassName();
         for (String imp : ollirClass.getImports()) {
             if (imp.endsWith(className)) return imp.replace('.', '/');
         }
