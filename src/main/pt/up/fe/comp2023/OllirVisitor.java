@@ -77,20 +77,25 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
         Symbol var = null;
         boolean isField = false;
-
-        for (Symbol vari : symbolTable.getLocalVariables(jmmNode.getJmmParent().get("name"))) { //check if local
-            if (vari.getName().equals(jmmNode.get("var"))) var = vari;
-        }
-        if (var == null) {
-            for (Symbol vari : symbolTable.getParameters(jmmNode.getJmmParent().get("name"))) { //check if parameter
+        if(jmmNode.getJmmParent().getKind().equals("MainMethod")){
+            for (Symbol vari : symbolTable.getLocalVariables("main")) { //check if local
                 if (vari.getName().equals(jmmNode.get("var"))) var = vari;
             }
-        }
-        if (var == null) {
-            for (Symbol symbol1 : this.symbolTable.getFields()) { //check if field
-                if (symbol1.getName().equals(jmmNode.get("var"))) var = symbol1;
+        }else {
+            for (Symbol vari : symbolTable.getLocalVariables(jmmNode.getJmmParent().get("name"))) { //check if local
+                if (vari.getName().equals(jmmNode.get("var"))) var = vari;
             }
-            isField = true;
+            if (var == null) {
+                for (Symbol vari : symbolTable.getParameters(jmmNode.getJmmParent().get("name"))) { //check if parameter
+                    if (vari.getName().equals(jmmNode.get("var"))) var = vari;
+                }
+            }
+            if (var == null) {
+                for (Symbol symbol1 : this.symbolTable.getFields()) { //check if field
+                    if (symbol1.getName().equals(jmmNode.get("var"))) var = symbol1;
+                }
+                isField = true;
+            }
         }
 
         assert var != null;
