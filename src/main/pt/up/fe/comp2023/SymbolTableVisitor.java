@@ -182,19 +182,21 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Void, Void> {
         Symbol field = new Symbol(type, node.get("var"));
 
         if(node.getJmmParent().getKind().equals("Method")) {
-            if (localVariables.containsKey(node.getJmmParent().get("name"))) {
-                List<Symbol> list = localVariables.get(node.getJmmParent().get("name"));
-                list.add(field);
-            } else {
-                localVariables.put(node.getJmmParent().get("name"), List.of(field));
+            if(this.localVariables.get(node.getJmmParent().get("name"))!=null){
+                List<Symbol> current = this.localVariables.get(node.getJmmParent().get("name"));
+                current.add(field);
+                this.localVariables.put(node.getJmmParent().get("name"),current);
+            }else{
+                this.localVariables.put(node.getJmmParent().get("name"),List.of(field));
             }
         }
         else if(node.getJmmParent().getKind().equals("MainMethod")){
-            if (localVariables.containsKey("main")) {
-                List<Symbol> list = localVariables.get("main");
-                list.add(field);
-            } else {
-                localVariables.put("main", List.of(field));
+            if(this.localVariables.get("main")!=null){
+                List<Symbol> current = this.localVariables.get("main");
+                current.add(field);
+                this.localVariables.put("main",current);
+            }else{
+                this.localVariables.put("main",List.of(field));
             }
         }
         else
