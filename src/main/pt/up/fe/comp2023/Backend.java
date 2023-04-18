@@ -5,7 +5,6 @@ import pt.up.fe.comp.jmm.jasmin.JasminBackend;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 
-import java.lang.reflect.MalformedParameterizedTypeException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,6 +13,7 @@ public class Backend implements JasminBackend {
     private String superClass = "java/lang/Object";
     private ClassUnit ollirClass = null;
     private final StringBuilder jasminCode = new StringBuilder();
+    private int labelCounter = 0;
 
     @Override
     public JasminResult toJasmin(OllirResult ollirResult) {
@@ -142,7 +142,7 @@ public class Backend implements JasminBackend {
                 buildUnaryOperInstruction((UnaryOpInstruction) instruction, localVars);
                 break;
             case BINARYOPER:
-                buildBinaryOperInstruction((BinaryOpInstruction) instruction);
+                buildBinaryOperInstruction((BinaryOpInstruction) instruction, localVars);
                 break;
         }
     }
@@ -194,7 +194,36 @@ public class Backend implements JasminBackend {
             throw new IllegalArgumentException("Operation type " + instruction.getOperation().getOpType() + " is not supported for unary operation");
         }
     }
-    private void buildBinaryOperInstruction(BinaryOpInstruction instruction) {}
+    private void buildBinaryOperInstruction(BinaryOpInstruction instruction, Map<String, Integer> localVariables) {
+        buildLoad(instruction.getLeftOperand(), localVariables);
+        buildLoad(instruction.getRightOperand(), localVariables);
+        switch (instruction.getOperation().getOpType()) {
+            case MUL:
+                jasminCode.append("\timul\n");
+                break;
+            case DIV:
+                jasminCode.append("\tidiv\n");
+                break;
+            case ADD:
+                jasminCode.append("\tiadd\n");
+                break;
+            case SUB:
+                jasminCode.append("\tisub\n");
+                break;
+            case LTH:
+                jasminCode.append("\tif_icmplt true").append(labelCounter).append("\n")
+                        .append("\ticonst_0\n")
+                        .append("\tgoto end").append(labelCounter).append("\n")
+                        .append("true").append(labelCounter).append(":\n")
+                        .append("\ticonst_1\n")
+                        .append("end").append(labelCounter).append(":\n");
+                labelCounter++;
+                break;
+            case ANDB:
+                jasminCode.append("\tiand\n");
+                break;
+        }
+    }
 
     private void buildLoad(Element element, Map<String, Integer> localVariables) {
         if (element.isLiteral()) {
