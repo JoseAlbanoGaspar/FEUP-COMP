@@ -133,10 +133,12 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 }
                 ret.append(varAux(jmmNode, var, isArray));
                 ret.append(assignmentString).append(";\n");
-                if (!assig.getChildren().get(0).getKind().equals("ARRAY"))
+                if (assig.getNumChildren() != 0 && !assig.getChildren().get(0).getKind().equals("ARRAY"))
                     ret.append("\t\tinvokespecial(").append(var.getName()).append(".").append(typesSwap(var.getType().isArray() ? var.getType().getName() + " array" : var.getType().getName()))
                             .append(", \"<init>\").V;\n");
             } else {
+                if (assig.getKind().equals("FunctionCall"))
+                    this.functionRets.put(jmmNode.getJmmChild(0), typesSwap(var.getType().getName()));
                 String assignString = visit(assig, "");
                 if (assig.getKind().equals("SquareBrackets")) {
                     String before;
@@ -155,7 +157,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                             .append("\n");
                 } else if (assig.getKind().equals("FunctionCall")) {
                     this.functionRets.put(jmmNode.getJmmChild(0), typesSwap(var.getType().getName()));
-
                     if (assignString.contains("\n")) {
                         ret.append(assignString, 0, assignString.lastIndexOf("\n"));
                         assignString = assignString.substring(assignString.lastIndexOf("\n") + 1);
@@ -170,11 +171,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 }
 
                 ret.append(varAux(jmmNode, var, isArray))
-                        .append(assignString);
-
-                if (!assig.getKind().equals("FunctionCall"))
-                    ret.append(";");
-                ret.append("\n");
+                        .append(assignString)
+                        .append(";\n");
             }
         }
         return ret.toString();
