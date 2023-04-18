@@ -255,27 +255,23 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     lastString = lines.get(j);
                 }
 
-                String sub;
-                if (lastString.contains(" ") && lastString.contains(".")) {
-                    sub = lastString.substring(lastString.indexOf(".") + 1, lastString.indexOf(" "));
-                } else sub = lastString.substring(lastString.indexOf(".") + 1);
                 ret.append(s)
                         .append("\tt")
                         .append(this.tempCnt)
                         .append(".")
-                        .append(sub)
+                        .append(typesSwap(returnType))
                         .append(" :=.")
-                        .append(sub)
+                        .append(typesSwap(returnType))
                         .append(" ")
                         .append(lastString)
                         .append(";\n")
                         .append(s)
                         .append("\tret.")
-                        .append(sub)
+                        .append(typesSwap(returnType))
                         .append(" t")
                         .append(this.tempCnt)
                         .append(".")
-                        .append(sub)
+                        .append(typesSwap(returnType))
                         .append(";\n\t}\n");
                 this.tempCnt++;
             }
