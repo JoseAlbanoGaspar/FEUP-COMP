@@ -126,12 +126,14 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     }
                 }
             } else if (assig.getKind().equals("NewArray") || assig.getKind().equals("NewClass")) {
-                String assignmentString = visit(assig, "");
+                String txt = var.getType().isArray() ? ".array" : "";
+                String data = var.getName() + txt + "." + typesSwap(var.getType().getName());
+                String assignmentString = visit(assig, data);
+                ret.append(varAux(jmmNode, var, isArray));
                 if (assignmentString.contains("\n")) {
-                    ret.append(assignmentString, 0, assignmentString.indexOf("\n"));
+                    ret.append(assignmentString, 0, assignmentString.indexOf("\n")).append("\n").append(s);
                     assignmentString = assignmentString.substring(assignmentString.indexOf("\n") + 1);
                 }
-                ret.append(varAux(jmmNode, var, isArray));
                 ret.append(assignmentString).append(";\n");
                 if (assig.getNumChildren() != 0 && !assig.getChildren().get(0).getKind().equals("ARRAY"))
                     ret.append("\t\tinvokespecial(").append(var.getName()).append(".").append(typesSwap(var.getType().isArray() ? var.getType().getName() + " array" : var.getType().getName()))
@@ -473,10 +475,14 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithNewClass(JmmNode jmmNode, String s) {
-        return s + "new(" +
+        return "new(" +
                 jmmNode.get("className") +
                 ")." +
-                jmmNode.get("className");
+                jmmNode.get("className") +
+                ";\n" +
+                "invokespecial(" +
+                s +
+                ", \"<init>\").V";
     }
 
     private String dealWithNewArray(JmmNode jmmNode, String s) {
