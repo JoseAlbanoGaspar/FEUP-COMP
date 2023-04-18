@@ -115,7 +115,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     if (i == rows.size() - 1) {
                         ret.append(varAux(jmmNode, var, isArray));
 
-                        ret.append(rows.get(i)).append("\n");
+                        ret.append(rows.get(i)).append(";\n");
                     } else {
                         ret.append(rows.get(i)).append("\n");
                     }
@@ -503,7 +503,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     this.functionRets.put(jmmNode.getJmmChild(i), this.symbolTable.getParameters(jmmNode.get("methodName")).get(i).getType().getName()); //get from list of args
             }
             String childString = visit(jmmNode.getJmmChild(i), "");
-            List<String> nested = getNested(jmmNode.getJmmChild(i), childString);
+            List<String> nested = getNested(jmmNode.getJmmChild(i), childString, s);
 
             if (!nested.get(0).contains("\n")) ret.append(nested.get(0));
             else ret.append(nested.get(0)).append("\n");
@@ -574,7 +574,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         String leftString = visit(left, ""), rightString = visit(right, "");
 
 
-        List<String> nestedLeft = getNested(left, leftString), nestedRight = getNested(right, rightString);
+        List<String> nestedLeft = getNested(left, leftString, s), nestedRight = getNested(right, rightString, s);
 
         if (!nestedLeft.get(0).contains("\n")) ret.append(nestedLeft.get(0));
         else ret.append(nestedLeft.get(0)).append("\n");
@@ -585,7 +585,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         else ret.append(nestedRight.get(0)).append("\n");
         rightString = nestedRight.get(1);
 
-        ret.append("\n").append(leftString)
+        ret.append(leftString)
                 .append(" ")
                 .append(jmmNode.get("op"))
                 .append(".i32 ")
@@ -593,7 +593,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         return ret.toString();
     }
 
-    private List<String> getNested(JmmNode jmmNode, String str) {
+    private List<String> getNested(JmmNode jmmNode, String str, String s) {
         List<String> retList = new ArrayList<>();
         String kind = jmmNode.getKind();
         StringBuilder newStr = new StringBuilder(str);
@@ -608,7 +608,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     before = str.substring(0, lastIndN + 1);
                     newStr = new StringBuilder(str.substring(lastIndN + 1));
                 } else newStr = new StringBuilder(str.substring(str.lastIndexOf(" ")));
-            } else sub = str.substring(lastIndDot, str.length() - 1);
+            } else sub = str.substring(lastIndDot);
 
             if (jmmNode.getKind().equals("SquareBrackets")) {
                 if (newStr.toString().contains(":=."))
@@ -622,8 +622,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                         .append(sub)
                         .append(" ")
                         .append(newStr)
-                        .append("\n");
-                newStr = new StringBuilder("t" +
+                        .append(";\n");
+                newStr = new StringBuilder(s +"t" +
                         this.tempCnt++
                         + sub);
             }
