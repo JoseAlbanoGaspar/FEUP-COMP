@@ -119,7 +119,7 @@ public class Backend implements JasminBackend {
                 buildAssignInstruction((AssignInstruction) instruction, nLocalVars, localVars);
                 break;
             case CALL:
-                buildCallInstruction((CallInstruction) instruction);
+                buildCallInstruction((CallInstruction) instruction, localVars);
                 break;
             case GOTO:
                 buildGotoInstruction((GotoInstruction) instruction);
@@ -167,7 +167,26 @@ public class Backend implements JasminBackend {
                 .append(variable)
                 .append("\n");
     }
-    private void buildCallInstruction(CallInstruction instruction) {}
+    private void buildCallInstruction(CallInstruction instruction, Map<String, Integer> localVariables) {
+        switch(instruction.getInvocationType()) {
+            case NEW:
+                jasminCode.append("\tnew ")
+                        .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("\n");
+                break;
+            case invokespecial:
+                buildLoad(instruction.getFirstArg(), localVariables);
+                jasminCode.append("\tinvokespecial ")
+                        .append(fullClassName(((ClassType) instruction.getFirstArg().getType()).getName())).append("/")
+                        .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
+                jasminCode.append("(");
+                for (Element element : instruction.getListOfOperands()) {
+                    jasminCode.append(typeToString(element.getType()));
+                }
+                jasminCode.append(")")
+                        .append(typeToString(instruction.getReturnType()))
+                        .append("\n");
+        }
+    }
     private void buildGotoInstruction(GotoInstruction instruction) {}
     private void buildNoperInstruction(SingleOpInstruction instruction, Map<String, Integer> localVariables) {
         buildLoad(instruction.getSingleOperand(), localVariables);
@@ -253,7 +272,11 @@ public class Backend implements JasminBackend {
                     .append("load ").append(localVariables.get(((Operand) element).getName()))
                     .append("\n");
         }
+    }
 
+    private void buildStore(String prefix, Map<String, Integer> localVariables, String variableName) {
+        jasminCode.append("\t").append(prefix).append("store ")
+                .append(localVariables.get(variableName)).append("\n");
     }
 
     private String fullClassName(String className) {
