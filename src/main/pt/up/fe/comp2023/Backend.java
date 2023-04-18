@@ -137,7 +137,7 @@ public class Backend implements JasminBackend {
                 buildGetFieldInstruction((GetFieldInstruction) instruction, localVars);
                 break;
             case PUTFIELD:
-                buildPutFieldInstruction((PutFieldInstruction) instruction);
+                buildPutFieldInstruction((PutFieldInstruction) instruction, localVars);
                 break;
             case UNARYOPER:
                 buildUnaryOperInstruction((UnaryOpInstruction) instruction, localVars);
@@ -191,7 +191,15 @@ public class Backend implements JasminBackend {
                 .append("/").append(((Operand) instruction.getSecondOperand()).getName()).append(" ")
                 .append(typeToString(instruction.getSecondOperand().getType())).append("\n");
     }
-    private void buildPutFieldInstruction(PutFieldInstruction instruction) {}
+    private void buildPutFieldInstruction(PutFieldInstruction instruction, Map<String, Integer> localVariables) {
+        buildLoad(instruction.getFirstOperand(), localVariables);
+        buildLoad(instruction.getThirdOperand(), localVariables);
+
+        jasminCode.append("\tputfield ")
+                .append(fullClassName(((Operand) instruction.getFirstOperand()).getName()))
+                .append("/").append(((Operand) instruction.getSecondOperand()).getName()).append(" ")
+                .append(typeToString(instruction.getSecondOperand().getType())).append("\n");
+    }
     private void buildUnaryOperInstruction(UnaryOpInstruction instruction, Map<String, Integer> localVariables) {
         if (instruction.getOperation().getOpType() == OperationType.NOTB) { // Only supported unary operation
             buildLoad(instruction.getOperand(), localVariables);
