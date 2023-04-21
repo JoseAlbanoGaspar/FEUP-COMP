@@ -515,13 +515,21 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             visitedArgs.add(nested.get(1));
         }
 
+        List<String> tmpArgs = new ArrayList<>();
+        for(String arg: visitedArgs){
+            ret.append("t").append(this.tempCnt).append(".").append(arg.split("\\.")[1])
+                    .append(" :=.").append(arg.split("\\.")[1]).append(" ").append(arg).append(";\n\n");
+            tmpArgs.add("t"+this.tempCnt + "." + arg.split("\\.")[1]);
+            this.tempCnt++;
+        }
+
         ret.append(this.symbolTable.getImports().contains(objectString) ? "invokestatic(" : "invokevirtual(")
                 .append(objectString)
                 .append(", \"")
                 .append(name)
                 .append("\"");
 
-        for (String arg : visitedArgs) {
+        for (String arg : tmpArgs) {
             ret.append(", ").append(arg);
         }
         ret.append(").");
