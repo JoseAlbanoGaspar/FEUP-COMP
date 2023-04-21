@@ -118,7 +118,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 List<String> rows = List.of(op.split("\n"));
                 for (int i = 0; i < rows.size(); i++) {
                     if (i == rows.size() - 1) {
-                        ret.append(varAux(jmmNode, var, isArray));
+                        ret.append(s).append(varAux(jmmNode, var, isArray));
 
                         ret.append(rows.get(i)).append(";\n");
                     } else {
@@ -527,11 +527,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         ret.append(").");
 
         //return type
-        /*System.out.println("----------");
-        System.out.println(name);
-        System.out.println(objectString);
-        System.out.println(this.symbolTable.getImports());
-        System.out.println("--------");*/
         String retType = this.symbolTable.getImports().contains(objectString) ? this.functionRets.get(jmmNode)
                 : typesSwap(this.symbolTable.getReturnType(name).getName());
         ret.append(retType);
@@ -608,12 +603,12 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         List<String> retList = new ArrayList<>();
         String kind = jmmNode.getKind();
         StringBuilder newStr = new StringBuilder(str);
-        StringBuilder auxString = new StringBuilder();
+        StringBuilder auxString = new StringBuilder(s);
         if (kind.equals("BinaryOp") || kind.equals("FunctionCall") || kind.equals("SquareBrackets") || kind.equals("Parenthesis")) {
             String sub, before = "";
             int lastIndDot = str.lastIndexOf(".");
             if (str.contains(":=.")) {
-                sub = str.substring(lastIndDot, str.indexOf(" "));
+                sub = str.substring(lastIndDot);
                 if (str.contains("\n")) {
                     int lastIndN = str.lastIndexOf("\n");
                     before = str.substring(0, lastIndN + 1);
@@ -626,7 +621,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     newStr = new StringBuilder(newStr.substring(0, newStr.indexOf(" ")));
                 else newStr = new StringBuilder(newStr.substring(0, newStr.length() - 1));
             } else {
-                auxString.append(before)
+                auxString.append(s).append(before)
                         .append("t").append(this.tempCnt)
                         .append(sub)
                         .append(" :=")
