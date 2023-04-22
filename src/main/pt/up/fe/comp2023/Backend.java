@@ -174,10 +174,10 @@ public class Backend implements JasminBackend {
             case NEW -> jasminCode.append("\tnew ")
                     .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("\n");
             case invokespecial -> {
-                buildLoad(instruction.getFirstArg(), localVariables);
                 for (Element elem : instruction.getListOfOperands()) {
                     buildLoad(elem, localVariables);
                 }
+                buildLoad(instruction.getFirstArg(), localVariables);
                 jasminCode.append("\tinvokespecial ")
                         .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("/")
                         .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
@@ -190,10 +190,10 @@ public class Backend implements JasminBackend {
                         .append("\n");
             }
             case invokevirtual -> {
-                buildLoad(instruction.getFirstArg(), localVariables);
                 for (Element elem : instruction.getListOfOperands()) {
                     buildLoad(elem, localVariables);
                 }
+                buildLoad(instruction.getFirstArg(), localVariables);
                 jasminCode.append("\tinvokevirtual ")
                         .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("/")
                         .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));

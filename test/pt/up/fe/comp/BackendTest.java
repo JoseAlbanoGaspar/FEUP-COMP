@@ -51,4 +51,14 @@ public class BackendTest {
 
         assertEquals("3", output);
     }
+
+    @Test
+    public void testBasic() {
+
+        String jmmCode = SpecsIo.getResource("pt/up/fe/comp/cp2/jasmin/OllirToJasminBasic.jmm");
+        var jasminResult = TestUtils.backend(jmmCode);
+        var output = TestUtils.runJasmin(jasminResult.getJasminCode());
+
+        assertEquals("", output);
+    }
 }
