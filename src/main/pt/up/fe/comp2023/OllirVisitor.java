@@ -532,7 +532,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         ret.append(").");
 
         //return type
-        String retType = this.symbolTable.getImports().contains(objectString) ? this.functionRets.get(jmmNode)
+        String retType = this.symbolTable.getImports().contains(objectString.substring(objectString.indexOf(".")+1)) ? this.functionRets.get(jmmNode)
                 : typesSwap(this.symbolTable.getReturnType(name).getName());
         ret.append(retType);
 
