@@ -116,6 +116,7 @@ public class Backend implements JasminBackend {
     }
 
     private void buildInstruction(Instruction instruction, AtomicInteger nLocalVars, Map<String, Integer> localVars) {
+        instruction.show();
         switch (instruction.getInstType()) {
             case ASSIGN:
                 buildAssignInstruction((AssignInstruction) instruction, nLocalVars, localVars);
@@ -164,7 +165,7 @@ public class Backend implements JasminBackend {
 
         // store top of the stack in the local variable
         jasminCode.append("\t")
-                .append(typePrefix(((Operand) instruction.getDest()).getType()))
+                .append(typePrefix(instruction.getDest().getType()))
                 .append("store ")
                 .append(variable)
                 .append("\n");
@@ -175,11 +176,8 @@ public class Backend implements JasminBackend {
                     .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("\n");
             case invokespecial -> {
                 buildLoad(instruction.getFirstArg(), localVariables);
-                for (Element elem : instruction.getListOfOperands()) {
-                    buildLoad(elem, localVariables);
-                }
                 jasminCode.append("\tinvokespecial ")
-                        .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("/")
+                        .append(fullClassName(((ClassType) instruction.getFirstArg().getType()).getName())).append("/")
                         .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
                 jasminCode.append("(");
                 for (Element element : instruction.getListOfOperands()) {
@@ -210,6 +208,21 @@ public class Backend implements JasminBackend {
                     buildLoad(elem, localVariables);
                 }
                 jasminCode.append("\tinvokestatic ")
+                        .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("/")
+                        .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
+                jasminCode.append("(");
+                for (Element element : instruction.getListOfOperands()) {
+                    jasminCode.append(typeToString(element.getType()));
+                }
+                jasminCode.append(")")
+                        .append(typeToString(instruction.getReturnType()))
+                        .append("\n");
+            }
+            case invokeinterface -> {
+                for (Element elem : instruction.getListOfOperands()) {
+                    buildLoad(elem, localVariables);
+                }
+                jasminCode.append("\tinvokeinterface ")
                         .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("/")
                         .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
                 jasminCode.append("(");
