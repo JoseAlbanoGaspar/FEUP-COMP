@@ -18,8 +18,11 @@ import org.junit.Test;
 
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
+import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.SpecsStrings;
+
+import java.util.HashMap;
 
 public class BackendTest {
 
@@ -39,5 +42,13 @@ public class BackendTest {
         assertEquals("Hello World!\nHello World Again!\n", SpecsStrings.normalizeFileContents(output));
     }
 
+    @Test
+    public void testArithmetics() {
 
+        String jmmCode = SpecsIo.getResource("pt/up/fe/comp/cp2/jasmin/OllirToJasminArithmetics.jmm");
+        var jasminResult = TestUtils.backend(jmmCode);
+        var output = TestUtils.runJasmin(jasminResult.getJasminCode());
+
+        assertEquals("3", output);
+    }
 }

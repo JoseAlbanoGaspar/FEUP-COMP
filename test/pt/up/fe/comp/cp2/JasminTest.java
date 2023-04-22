@@ -51,10 +51,10 @@ public class JasminTest {
 
         var result = TestUtils.backend(ollirResult);
 
-        ProjectTestUtils.runJasmin(result, null);
+        ProjectTestUtils.runJasmin(result, expectedOutput);
     }
 
     public static void testOllirToJasmin(String resource) {
-        testOllirToJasmin(resource, null);
+        testOllirToJasmin(resource, "");
     }
 }

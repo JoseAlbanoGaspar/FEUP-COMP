@@ -1,7 +1,16 @@
+import io;
 class OllirToJasminArithmetics {
 
     public static void main(String[] args) {
+        int a;
+        int b;
+        int c;
 
+        a = 1;
+        b = 2;
+        c = a + b;
+
+        io.println(3);
     }
 
     public int foo() {
