@@ -375,6 +375,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             if (vari.getName().equals(jmmNode.get("value"))) {
                 isField = true;
                 var = vari;
+                break;
             }
         }
         JmmNode parent = jmmNode;
@@ -431,7 +432,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     .append(".")
                     .append(type)
                     .append(";\n");
-            this.tempCnt++;
+
             ret.append(s)
                     .append("t")
                     .append(this.tempCnt++)
@@ -496,10 +497,14 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
     private String dealWithFunctionCall(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
-//
+
         String name = jmmNode.get("methodName");
         //check if method or import
         String objectString = visit(jmmNode.getJmmChild(0), "");
+        List<String> objectStringList = getNested(jmmNode.getJmmChild(0), objectString, s);
+        if (!objectStringList.get(0).contains("\n")) ret.append(objectStringList.get(0));
+        else ret.append(s).append(objectStringList.get(0)).append("\n");
+        objectString = objectStringList.get(1);
 
         List<String> visitedArgs = new ArrayList<>();
         for (int i = 1; i < jmmNode.getNumChildren(); i++) {
@@ -511,7 +516,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             List<String> nested = getNested(jmmNode.getJmmChild(i), childString, s);
 
             if (!nested.get(0).contains("\n")) ret.append(nested.get(0));
-            else ret.append(nested.get(0)).append("\n");
+            else ret.append(s).append(nested.get(0)).append("\n");
             visitedArgs.add(nested.get(1));
         }
 
@@ -603,7 +608,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         List<String> retList = new ArrayList<>();
         String kind = jmmNode.getKind();
         StringBuilder newStr = new StringBuilder(str);
-        StringBuilder auxString = new StringBuilder(s);
+        StringBuilder auxString = new StringBuilder();
         if (kind.equals("BinaryOp") || kind.equals("FunctionCall") || kind.equals("SquareBrackets") || kind.equals("Parenthesis")) {
             String sub, before = "";
             int lastIndDot = str.lastIndexOf(".");
@@ -621,7 +626,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     newStr = new StringBuilder(newStr.substring(0, newStr.indexOf(" ")));
                 else newStr = new StringBuilder(newStr.substring(0, newStr.length() - 1));
             } else {
-                auxString.append(s).append(before)
+                auxString.append(before)
                         .append("t").append(this.tempCnt)
                         .append(sub)
                         .append(" :=")
