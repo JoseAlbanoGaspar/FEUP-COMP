@@ -99,7 +99,7 @@ public class Backend implements JasminBackend {
 
         // If method does not contain return instruction,
         // manually add it, returning void.
-        if (method.getInstructions().get(method.getInstructions().size() - 1).getInstType() != InstructionType.RETURN) {
+        if (method.getInstructions().size() == 0 ||  method.getInstructions().get(method.getInstructions().size() - 1).getInstType() != InstructionType.RETURN) {
             jasminCode.append("\treturn\n");
         }
         jasminCode.append(".end method\n");
@@ -168,12 +168,10 @@ public class Backend implements JasminBackend {
                 .append("\n");
     }
     private void buildCallInstruction(CallInstruction instruction, Map<String, Integer> localVariables) {
-        switch(instruction.getInvocationType()) {
-            case NEW:
-                jasminCode.append("\tnew ")
-                        .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("\n");
-                break;
-            case invokespecial:
+        switch (instruction.getInvocationType()) {
+            case NEW -> jasminCode.append("\tnew ")
+                    .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("\n");
+            case invokespecial -> {
                 buildLoad(instruction.getFirstArg(), localVariables);
                 jasminCode.append("\tinvokespecial ")
                         .append(fullClassName(((ClassType) instruction.getFirstArg().getType()).getName())).append("/")
@@ -185,6 +183,36 @@ public class Backend implements JasminBackend {
                 jasminCode.append(")")
                         .append(typeToString(instruction.getReturnType()))
                         .append("\n");
+            }
+            case invokevirtual -> {
+                buildLoad(instruction.getFirstArg(), localVariables);
+                jasminCode.append("\tinvokevirtual ")
+                        .append(fullClassName(((ClassType) instruction.getFirstArg().getType()).getName())).append("/")
+                        .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
+                jasminCode.append("(");
+                for (Element element : instruction.getListOfOperands()) {
+                    jasminCode.append(typeToString(element.getType()));
+                }
+                jasminCode.append(")")
+                        .append(typeToString(instruction.getReturnType()))
+                        .append("\n");
+            }
+            case invokestatic -> {
+                for (Element elem : instruction.getListOfOperands()) {
+                    buildLoad(elem, localVariables);
+                }
+                System.out.println(((ClassType) instruction.getFirstArg().getType()).getName());
+                jasminCode.append("\tinvokestatic ")
+                        .append(fullClassName(((ClassType) instruction.getFirstArg().getType()).getName())).append("/")
+                        .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
+                jasminCode.append("(");
+                for (Element element : instruction.getListOfOperands()) {
+                    jasminCode.append(typeToString(element.getType()));
+                }
+                jasminCode.append(")")
+                        .append(typeToString(instruction.getReturnType()))
+                        .append("\n");
+            }
         }
     }
     private void buildGotoInstruction(GotoInstruction instruction) {}
