@@ -173,11 +173,11 @@ public class Backend implements JasminBackend {
     private void buildCallInstruction(CallInstruction instruction, Map<String, Integer> localVariables) {
         switch (instruction.getInvocationType()) {
             case NEW -> jasminCode.append("\tnew ")
-                    .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("\n");
+                    .append(fullClassName((Operand) instruction.getFirstArg())).append("\n");
             case invokespecial -> {
                 buildLoad(instruction.getFirstArg(), localVariables);
                 jasminCode.append("\tinvokespecial ")
-                        .append(fullClassName(((ClassType) instruction.getFirstArg().getType()).getName())).append("/")
+                        .append(fullClassName(((Operand) instruction.getFirstArg()))).append("/")
                         .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
                 jasminCode.append("(");
                 for (Element element : instruction.getListOfOperands()) {
@@ -193,7 +193,7 @@ public class Backend implements JasminBackend {
                     buildLoad(elem, localVariables);
                 }
                 jasminCode.append("\tinvokevirtual ")
-                        .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("/")
+                        .append(fullClassName(((Operand) instruction.getFirstArg()))).append("/")
                         .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
                 jasminCode.append("(");
                 for (Element element : instruction.getListOfOperands()) {
@@ -208,7 +208,7 @@ public class Backend implements JasminBackend {
                     buildLoad(elem, localVariables);
                 }
                 jasminCode.append("\tinvokestatic ")
-                        .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("/")
+                        .append(fullClassName(((Operand) instruction.getFirstArg()))).append("/")
                         .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
                 jasminCode.append("(");
                 for (Element element : instruction.getListOfOperands()) {
@@ -223,7 +223,7 @@ public class Backend implements JasminBackend {
                     buildLoad(elem, localVariables);
                 }
                 jasminCode.append("\tinvokeinterface ")
-                        .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("/")
+                        .append(fullClassName(((Operand) instruction.getFirstArg()))).append("/")
                         .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
                 jasminCode.append("(");
                 for (Element element : instruction.getListOfOperands()) {
@@ -325,6 +325,12 @@ public class Backend implements JasminBackend {
     private void buildStore(String prefix, Map<String, Integer> localVariables, String variableName) {
         jasminCode.append("\t").append(prefix).append("store ")
                 .append(localVariables.get(variableName)).append("\n");
+    }
+
+    private String fullClassName(Operand operand) {
+        if (Objects.equals(operand.getName(), "this")) ollirClass.getClassName();
+        if (operand.getType().getTypeOfElement() == ElementType.CLASS) return fullClassName(operand.getName());
+        return fullClassName(((ClassType) operand.getType()).getName());
     }
 
     private String fullClassName(String className) {
