@@ -25,7 +25,6 @@ public class Backend implements JasminBackend {
         buildFields();
         buildMethods();
 
-        System.out.println(jasminCode);
         return new JasminResult(jasminCode.toString());
     }
 

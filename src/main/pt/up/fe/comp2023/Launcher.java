@@ -2,6 +2,8 @@ package pt.up.fe.comp2023;
 
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
+import pt.up.fe.comp.jmm.jasmin.JasminResult;
+import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.SpecsLogs;
@@ -37,15 +39,23 @@ public class Launcher {
 
         // Parse stage
         JmmParserResult parserResult = parser.parse(code, config);
-        System.out.println(parserResult);
 
         // Analysis stage
-        //Analysis analysis = new Analysis();
-        //JmmSemanticsResult semanticsResult = analysis.semanticAnalysis(parserResult);
-        System.out.println(TestUtils.analyse(parserResult).getReports());
+        Analysis analysis = new Analysis();
+        JmmSemanticsResult semanticsResult = analysis.semanticAnalysis(parserResult);
+        //System.out.println(TestUtils.analyse(parserResult).getReports());
+
+        //ollir
+        OllirParser ollir = new OllirParser();
+        OllirResult ollirResult = ollir.toOllir(semanticsResult);
+        System.out.println(ollirResult.getOllirCode());
+
+        //jasmin
+        Backend jasmin = new Backend();
+        JasminResult jasminResult = jasmin.toJasmin(ollirResult);
 
         // ... add remaining stages
-
+        TestUtils.runJasmin(jasminResult.getJasminCode());
     }
 
     private static Map<String, String> parseArgs(String[] args) {

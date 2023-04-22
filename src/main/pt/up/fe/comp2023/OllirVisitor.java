@@ -227,7 +227,10 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             JmmNode child = jmmNode.getChildren().get(i);
             if (child.getKind().equals("MethodArgs")) continue;
             if (child.getKind().equals("Expression")) {
-                ret.append(s).append("\tret.").append(typesSwap(returnType)).append(" ")
+                String lastChild = visit(child, "");
+                List<String> children = getNested(child, lastChild, s);
+
+                ret.append(s).append(typesSwap(returnType)).append(" ")
                         .append(visit(child, ""))
                         .append(";\n");
                 break;
@@ -237,7 +240,14 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         if (!returnType.equals("V")) {
             JmmNode lastNode = jmmNode.getChildren().get(i);
             if (lastNode.getKind().equals("Identifier") || lastNode.getKind().equals("Integer") || lastNode.getKind().equals("BoolLiteral")) {
-                ret.append(s).append("\tret.").append(typesSwap(returnType)).append(" ").append(visit(lastNode, ""))
+                String lastString = visit(lastNode, "");
+                List<String> lasStringList = getNested(lastNode, lastString, s);
+
+                if (!lasStringList.get(0).contains("\n")) ret.append(lasStringList.get(0));
+                else ret.append(s).append(lasStringList.get(0)).append("\n");
+                lastString = lasStringList.get(1);
+
+                ret.append(s).append("\tret.").append(typesSwap(returnType)).append(" ").append(lastString)
                         .append(";\n\t}\n");
             } else { //op, need to make temp
                 String lastString = visit(lastNode, "");
