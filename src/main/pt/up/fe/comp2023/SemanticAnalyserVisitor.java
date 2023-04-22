@@ -75,7 +75,11 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
         // see if it is initialized
         ////////////////////////////////////////
         // see if assigned (left) var is a field!
-
+        for (Symbol field : simpleTable.getFields()){
+            if (field.getName().equals(node.get("value"))){
+                return null;
+            }
+        }
         // else
         JmmNode aux = node;
         while (!aux.getKind().equals("Method") && !aux.getKind().equals("MainMethod")) {
