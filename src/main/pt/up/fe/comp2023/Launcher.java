@@ -43,7 +43,7 @@ public class Launcher {
         // Analysis stage
         Analysis analysis = new Analysis();
         JmmSemanticsResult semanticsResult = analysis.semanticAnalysis(parserResult);
-        //System.out.println(TestUtils.analyse(parserResult).getReports());
+        TestUtils.noErrors(semanticsResult.getReports());
 
         //ollir
         OllirParser ollir = new OllirParser();
