@@ -210,6 +210,11 @@ public class Backend implements JasminBackend {
                 jasminCode.append(")")
                         .append(typeToString(instruction.getReturnType()))
                         .append("\n");
+
+                // deal with pop
+                if (pop && instruction.getReturnType().getTypeOfElement() != ElementType.VOID) {
+                    jasminCode.append("\tpop\n");
+                }
             }
             case invokestatic -> {
                 for (Element elem : instruction.getListOfOperands()) {
@@ -225,6 +230,11 @@ public class Backend implements JasminBackend {
                 jasminCode.append(")")
                         .append(typeToString(instruction.getReturnType()))
                         .append("\n");
+
+                // deal with pop
+                if (pop && instruction.getReturnType().getTypeOfElement() != ElementType.VOID) {
+                    jasminCode.append("\tpop\n");
+                }
             }
             case invokeinterface -> {
                 for (Element elem : instruction.getListOfOperands()) {
@@ -240,6 +250,11 @@ public class Backend implements JasminBackend {
                 jasminCode.append(")")
                         .append(typeToString(instruction.getReturnType()))
                         .append("\n");
+
+                // deal with pop
+                if (pop && instruction.getReturnType().getTypeOfElement() != ElementType.VOID) {
+                    jasminCode.append("\tpop\n");
+                }
             }
         }
     }
