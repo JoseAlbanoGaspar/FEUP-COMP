@@ -1,0 +1,31 @@
+import Class.Fac2;
+
+class Fac9 {
+    public int returnInt(){
+        return 1;
+    }
+    public int[] returnArray(int a){
+        return new int[a];
+    }
+
+
+    public static void main(String[]args){
+        int var1;
+        int var2;
+        int var3;
+        boolean var;
+        int[] array;
+        Fac facTest;
+        Fac2 fac2Test;
+
+        var1 = 0;
+        var2 = var1 + 2;
+        //var1 = var3;
+        array = Fac9.returnArray(var3);
+        fac2Test=Fac2.create();
+
+
+
+
+    }
+}

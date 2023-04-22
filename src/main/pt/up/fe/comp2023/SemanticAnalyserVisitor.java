@@ -13,10 +13,16 @@ import java.util.*;
 public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> implements Reporter{
     protected SimpleTable simpleTable;
     protected SemanticUtils utils;
+    private Map<String, List<String>> assigns = new HashMap<>();
 
     public SemanticAnalyserVisitor(SimpleTable simpleTable){
         this.simpleTable = simpleTable;
         this.utils = new SemanticUtils(simpleTable);
+
+        for (String method : simpleTable.getMethods()) {
+            assigns.put(method, new ArrayList<>());
+        }
+        assigns.put("fields", new ArrayList<>());
     }
 
 
@@ -57,68 +63,69 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
     }
 
     private Void dealWithThis(JmmNode node, Void _void) {
-        /*JmmNode aux = node;
-        while(!aux.getKind().equals("Method") && !aux.getKind().equals("MainMethod") ){
-            aux = aux.getJmmParent();
-        }
-        if(aux.getKind().equals("MainMethod")) {
-            createReport(node, "this cannot be used in static methods");
-        }*/
-
 
         return null;
     }
 
     private Void dealWithIdentifier(JmmNode node, Void _void) {
-
+        // see if it's declared
        Type type = utils.varCheck(node,"value");
         if(type.getName().equals("NotFound"))
             utils.createReport(node, "Variable not declared: " + node.get("value"));
-        /*else if(type.getName().equals("int")) {
-            dealWithInteger(node, _void);
-            if (node.getJmmParent().getKind().equals("If") || node.getJmmParent().getKind().equals("While")) {
-                createReport(node, "Expressions in conditions must return a boolean!");
-            }
+        // see if it is initialized
+        ////////////////////////////////////////
+        // see if assigned (left) var is a field!
+
+        // else
+        JmmNode aux = node;
+        while (!aux.getKind().equals("Method") && !aux.getKind().equals("MainMethod")) {
+            aux = aux.getJmmParent();
         }
-        else if(type.getName().equals("boolean")) {
-            dealWithBool(node, _void);
-            if(node.getJmmParent().getKind().equals("SquareBrackets") ||
-                    (node.getJmmParent().getKind().equals("Array") &&
-                    node.getJmmParent().getJmmChild(0).equals(node))){
-                createReport(node, "Array index expression must be integer!");
-            }
-        }
-        else{ //import or class types
-            if(node.getJmmParent().getKind().equals("BinaryOp")){
-                createReport(node, node.get("value") + " cannot be used in arithmetic operations!");
-            }
-            else if (node.getJmmParent().getKind().equals("LogicalAnd") || node.getJmmParent().getKind().equals("Not")){
-                createReport(node, node.get("value") + " cannot be used in boolean operations!");
-            }
+        String methodName = "main";
+        if (aux.getKind().equals("Method")) {
+            methodName = aux.get("name");
         }
 
-        if(type.isArray())
-            isArrayInBinaryOp(node);*/
+        boolean isParameter = false;
+        for ( Symbol parameter : simpleTable.getParameters(methodName)){
+            if(parameter.getName().equals(node.get("value"))) {
+                isParameter = true;
+                break;
+            }
+        }
+        boolean isClassName = false;
+        if (aux.getJmmParent().get("name").equals(node.get("value")))
+            isClassName = true;
+
+        boolean isSuper = false;
+        if (aux.getJmmParent().hasAttribute("superName") && node.get("value").equals(aux.get("superName")))
+            isSuper = true;
+
+        boolean isImport = false;
+        for (String s : simpleTable.getImports()) {
+            String[] parts = s.split("\\."); // split the string on "." character
+            if(parts[parts.length-1].equals(node.get("value"))) {
+                isImport = true;
+                break;
+            }
+
+        }
+
+        if(!isParameter && !isClassName && !isSuper && !isImport && !assigns.get(methodName).contains(node.get("value"))){
+            utils.createReport(node, "Used uninitialized variable " + node.get("value") + " in expression!");
+        }
+
+
         return null;
     }
 
     private Void dealWithBool(JmmNode node, Void _void) {
 
-        /* JmmNode parent = node.getJmmParent();
-
-        if(parent.getKind().equals("BinaryOp") || parent.getKind().equals("Compare")){
-            createReport(node, "The value < " +node.get("value") + " > is not integer!");
-        }*/
         return null;
     }
 
     private Void dealWithInteger(JmmNode node, Void _void) {
 
-        /*JmmNode parent = node.getJmmParent();
-
-        if(parent.getKind().equals("LogicalAnd"))
-            createReport(node, "The value < " +node.get("value") + " > is not boolean!");
-*/
         return null;
     }
 
@@ -156,14 +163,6 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
     }
 
     private Void dealWithBinaryOp(JmmNode node, Void _void) {
-        for(JmmNode child : node.getChildren()){
-            Type type = utils.getType(child);
-            if(!type.getName().equals("int")){
-                utils.createReport(node, "One of the 2 operands do not evaluate as integer!");
-            }
-
-        }
-
 
         return null;
     }
@@ -179,11 +178,37 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
     }
 
     private Void dealWithArray(JmmNode node, Void _void) {
+        // see if assigned (left) var is a field!
 
+        // else
+        JmmNode aux = node;
+        while (!aux.getKind().equals("Method") && !aux.getKind().equals("MainMethod")) {
+            aux = aux.getJmmParent();
+        }
+        if (aux.getKind().equals("Method")) {
+            assigns.get(aux.get("name")).add(node.get("var"));
+        }
+        else {
+            assigns.get("main").add(node.get("var"));
+        }
         return null;
     }
 
     private Void dealWithAssignment(JmmNode node, Void _void) {
+        // see if assigned (left) var is a field!
+
+        // else
+        JmmNode aux = node;
+        while (!aux.getKind().equals("Method") && !aux.getKind().equals("MainMethod")) {
+            aux = aux.getJmmParent();
+        }
+        if (aux.getKind().equals("Method")) {
+            assigns.get(aux.get("name")).add(node.get("var"));
+        }
+        else {
+            assigns.get("main").add(node.get("var"));
+        }
+
         return null;
     }
 

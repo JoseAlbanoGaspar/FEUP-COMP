@@ -114,9 +114,6 @@ public class OperandsTypeVisitor extends PreorderJmmVisitor<Void, Void> implemen
     private Void dealWithBinaryOp(JmmNode node, Void _void) {
         for(JmmNode child : node.getChildren()){
             Type type = utils.getType(child);
-            System.out.println("-------BinOp-Child------");
-            System.out.println(type);
-            System.out.println("------------------------");
             if(!type.getName().equals("int")){
                 utils.createReport(node, "One of the 2 operands do not evaluate as integer!");
             }
