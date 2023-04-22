@@ -27,10 +27,40 @@ public class SemanticUtils {
     }
 
     public Type varCheck(JmmNode node, String attribute) {
+        // check localVariables and parameters
+        JmmNode aux = node;
+        while(!aux.getKind().equals("Method") && !aux.getKind().equals("MainMethod") ){
+            aux = aux.getJmmParent();
+        }
+        if(aux.getKind().equals("Method")) {
+            for( Symbol symb : simpleTable.getLocalVariables(aux.get("name"))) {
+                if (symb.getName().equals(node.get(attribute))) {
+                    return symb.getType();
+                }
+            }
+            for(Symbol symb : simpleTable.getParameters(aux.get("name"))){
+                if (symb.getName().equals(node.get(attribute))) {
+                    return symb.getType();
+                }
+            }
+        }
+        else{
+            for( Symbol symb : simpleTable.getLocalVariables("main")) {
+                if (symb.getName().equals(node.get(attribute))) {
+                    return symb.getType();
+                }
+            }
+            for(Symbol symb : simpleTable.getParameters("main")){
+                if (symb.getName().equals(node.get(attribute))) {
+                    return symb.getType();
+                }
+            }
+        }
+
         // check if it is in fields
         for(Symbol symb : simpleTable.getFields()){
             if(symb.getName().equals(node.get(attribute))) {
-                JmmNode aux = node;
+                aux = node;
                 while(!aux.getKind().equals("Method") && !aux.getKind().equals("MainMethod") ){
                     aux = aux.getJmmParent();
                 }
@@ -56,35 +86,7 @@ public class SemanticUtils {
         if(node.get(attribute).equals(simpleTable.getClassName())){
             return new Type(simpleTable.getClassName(), false);
         }
-        // check localVariables and parameters
-        JmmNode aux = node;
-        while(!aux.getKind().equals("Method") && !aux.getKind().equals("MainMethod") ){
-            aux = aux.getJmmParent();
-        }
-        if(aux.getKind().equals("Method")) {
-            for(Symbol symb : simpleTable.getParameters(aux.get("name"))){
-                if (symb.getName().equals(node.get(attribute))) {
-                    return symb.getType();
-                }
-            }
-            for( Symbol symb : simpleTable.getLocalVariables(aux.get("name"))) {
-                if (symb.getName().equals(node.get(attribute))) {
-                    return symb.getType();
-                }
-            }
-        }
-        else{
-            for(Symbol symb : simpleTable.getParameters("main")){
-                if (symb.getName().equals(node.get(attribute))) {
-                    return symb.getType();
-                }
-            }
-            for( Symbol symb : simpleTable.getLocalVariables("main")) {
-                if (symb.getName().equals(node.get(attribute))) {
-                    return symb.getType();
-                }
-            }
-        }
+
         return new Type("NotFound", false);
     }
 
