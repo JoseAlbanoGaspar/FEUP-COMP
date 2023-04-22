@@ -96,7 +96,7 @@ public class Backend implements JasminBackend {
             localVars.put(((Operand) elem).getName(), nLocalVars.intValue());
         }
         for (Instruction instruction : method.getInstructions()) {
-            buildInstruction(instruction, nLocalVars, localVars);
+            buildInstruction(instruction, nLocalVars, localVars, true);
         }
 
         // If method does not contain return instruction,
@@ -115,14 +115,14 @@ public class Backend implements JasminBackend {
             .append(".end method\n");
     }
 
-    private void buildInstruction(Instruction instruction, AtomicInteger nLocalVars, Map<String, Integer> localVars) {
+    private void buildInstruction(Instruction instruction, AtomicInteger nLocalVars, Map<String, Integer> localVars, Boolean pop) {
         instruction.show();
         switch (instruction.getInstType()) {
             case ASSIGN:
                 buildAssignInstruction((AssignInstruction) instruction, nLocalVars, localVars);
                 break;
             case CALL:
-                buildCallInstruction((CallInstruction) instruction, localVars);
+                buildCallInstruction((CallInstruction) instruction, localVars, pop);
                 break;
             case GOTO:
                 buildGotoInstruction((GotoInstruction) instruction);
@@ -161,7 +161,7 @@ public class Backend implements JasminBackend {
         // execute right side of assignment,
         // this way the resulting value should
         // be at the top of the stack
-        buildInstruction(instruction.getRhs(), currVars, localVars);
+        buildInstruction(instruction.getRhs(), currVars, localVars, false);
 
         // store top of the stack in the local variable
         jasminCode.append("\t")
@@ -170,12 +170,15 @@ public class Backend implements JasminBackend {
                 .append(variable)
                 .append("\n");
     }
-    private void buildCallInstruction(CallInstruction instruction, Map<String, Integer> localVariables) {
+    private void buildCallInstruction(CallInstruction instruction, Map<String, Integer> localVariables, Boolean pop) {
         switch (instruction.getInvocationType()) {
             case NEW -> jasminCode.append("\tnew ")
                     .append(fullClassName((Operand) instruction.getFirstArg())).append("\n");
             case invokespecial -> {
                 buildLoad(instruction.getFirstArg(), localVariables);
+                for (Element elem : instruction.getListOfOperands()) {
+                    buildLoad(elem, localVariables);
+                }
                 jasminCode.append("\tinvokespecial ")
                         .append(fullClassName(((Operand) instruction.getFirstArg()))).append("/")
                         .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
@@ -186,6 +189,11 @@ public class Backend implements JasminBackend {
                 jasminCode.append(")")
                         .append(typeToString(instruction.getReturnType()))
                         .append("\n");
+
+                // deal with pop
+                if (pop && instruction.getReturnType().getTypeOfElement() != ElementType.VOID) {
+                    jasminCode.append("\tpop\n");
+                }
             }
             case invokevirtual -> {
                 buildLoad(instruction.getFirstArg(), localVariables);
