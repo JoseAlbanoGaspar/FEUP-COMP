@@ -10,7 +10,7 @@ class OllirToJasminArithmetics {
         b = 2;
         c = a + b;
 
-        io.println(3);
+        io.println(c);
     }
 
     public int foo() {

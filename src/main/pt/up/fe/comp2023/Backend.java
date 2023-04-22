@@ -177,7 +177,7 @@ public class Backend implements JasminBackend {
                     buildLoad(elem, localVariables);
                 }
                 jasminCode.append("\tinvokespecial ")
-                        .append(fullClassName(((ClassType) instruction.getFirstArg().getType()).getName())).append("/")
+                        .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("/")
                         .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
                 jasminCode.append("(");
                 for (Element element : instruction.getListOfOperands()) {
@@ -193,7 +193,7 @@ public class Backend implements JasminBackend {
                     buildLoad(elem, localVariables);
                 }
                 jasminCode.append("\tinvokevirtual ")
-                        .append(fullClassName(((ClassType) instruction.getFirstArg().getType()).getName())).append("/")
+                        .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("/")
                         .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
                 jasminCode.append("(");
                 for (Element element : instruction.getListOfOperands()) {
@@ -207,9 +207,8 @@ public class Backend implements JasminBackend {
                 for (Element elem : instruction.getListOfOperands()) {
                     buildLoad(elem, localVariables);
                 }
-                System.out.println(((ClassType) instruction.getFirstArg().getType()).getName());
                 jasminCode.append("\tinvokestatic ")
-                        .append(fullClassName(((ClassType) instruction.getFirstArg().getType()).getName())).append("/")
+                        .append(fullClassName(((Operand) instruction.getFirstArg()).getName())).append("/")
                         .append(((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", ""));
                 jasminCode.append("(");
                 for (Element element : instruction.getListOfOperands()) {
