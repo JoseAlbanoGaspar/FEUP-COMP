@@ -70,11 +70,13 @@ public class Backend implements JasminBackend {
     private void buildMethod(Method method) {
         jasminCode.append(".method ");
 
+        jasminCode.append(accessModifierToString(method.getMethodAccessModifier()))
+            .append(" ");
+
         if (method.isStaticMethod()) jasminCode.append("static ");
         if (method.isFinalMethod()) jasminCode.append("final ");
 
-        jasminCode.append(accessModifierToString(method.getMethodAccessModifier()))
-            .append(" ").append(method.getMethodName()).append("(");
+        jasminCode.append(method.getMethodName()).append("(");
 
         for (Element elem : method.getParams()) {
             jasminCode.append(typeToString(elem.getType()));
