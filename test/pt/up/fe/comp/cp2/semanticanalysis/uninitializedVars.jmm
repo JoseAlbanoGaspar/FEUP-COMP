@@ -1,7 +1,7 @@
 import Class.Fac2;
 
-class Fac9 {
-    public int returnInt(){
+class Fac9 extends Super{
+    public int returnInt() {
         return 1;
     }
     public int[] returnArray(int a){
@@ -17,11 +17,15 @@ class Fac9 {
         int[] array;
         Fac facTest;
         Fac2 fac2Test;
+        Fac9 A;
 
         var1 = 0;
         var2 = var1 + 2;
         //var1 = var3;
-        array = Fac9.returnArray(var3);
+        array = Super.foo();
+
+
+        A = new Fac9();
         fac2Test=Fac2.create();
 
 

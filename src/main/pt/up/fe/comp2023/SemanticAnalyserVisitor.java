@@ -102,7 +102,8 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
             isClassName = true;
 
         boolean isSuper = false;
-        if (aux.getJmmParent().hasAttribute("superName") && node.get("value").equals(aux.get("superName")))
+        System.out.println(aux.getJmmParent().getKind());
+        if (aux.getJmmParent().hasAttribute("superName") && node.get("value").equals(aux.getJmmParent().get("superName")))
             isSuper = true;
 
         boolean isImport = false;
