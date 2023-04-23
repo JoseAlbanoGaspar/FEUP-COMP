@@ -18,7 +18,7 @@ class Fac9 {
 
         //array[0] = Fac2.func();
         //array[Fac2.func()] = var1;
-        array[9] = var2;
+        //array[9] = var2;
         //array[var1 + 2] = var1 + array[0];
 
 

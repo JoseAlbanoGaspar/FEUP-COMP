@@ -152,4 +152,11 @@ public class SemanticAnalysisTest {
         TestUtils.noErrors(result);
     }
 
+    @Test
+    public void testingLookUp(){
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/LookUp.jmm"));
+        TestUtils.noErrors(result);
+    }
+
 }

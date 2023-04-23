@@ -13,16 +13,10 @@ import java.util.*;
 public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> implements Reporter{
     protected SimpleTable simpleTable;
     protected SemanticUtils utils;
-    private Map<String, List<String>> assigns = new HashMap<>();
 
     public SemanticAnalyserVisitor(SimpleTable simpleTable){
         this.simpleTable = simpleTable;
         this.utils = new SemanticUtils(simpleTable);
-
-        for (String method : simpleTable.getMethods()) {
-            assigns.put(method, new ArrayList<>());
-        }
-        assigns.put("fields", new ArrayList<>());
     }
 
 
@@ -72,54 +66,6 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
        Type type = utils.varCheck(node,"value");
         if(type.getName().equals("NotFound"))
             utils.createReport(node, "Variable not declared: " + node.get("value"));
-        // see if it is initialized
-        ////////////////////////////////////////
-        // see if assigned (left) var is a field!
-        for (Symbol field : simpleTable.getFields()){
-            if (field.getName().equals(node.get("value"))){
-                return null;
-            }
-        }
-        // else
-        JmmNode aux = node;
-        while (!aux.getKind().equals("Method") && !aux.getKind().equals("MainMethod")) {
-            aux = aux.getJmmParent();
-        }
-        String methodName = "main";
-        if (aux.getKind().equals("Method")) {
-            methodName = aux.get("name");
-        }
-
-        boolean isParameter = false;
-        for ( Symbol parameter : simpleTable.getParameters(methodName)){
-            if(parameter.getName().equals(node.get("value"))) {
-                isParameter = true;
-                break;
-            }
-        }
-        boolean isClassName = false;
-        if (aux.getJmmParent().get("name").equals(node.get("value")))
-            isClassName = true;
-
-        boolean isSuper = false;
-        System.out.println(aux.getJmmParent().getKind());
-        if (aux.getJmmParent().hasAttribute("superName") && node.get("value").equals(aux.getJmmParent().get("superName")))
-            isSuper = true;
-
-        boolean isImport = false;
-        for (String s : simpleTable.getImports()) {
-            String[] parts = s.split("\\."); // split the string on "." character
-            if(parts[parts.length-1].equals(node.get("value"))) {
-                isImport = true;
-                break;
-            }
-
-        }
-
-        if(!isParameter && !isClassName && !isSuper && !isImport && !assigns.get(methodName).contains(node.get("value"))){
-            utils.createReport(node, "Used uninitialized variable " + node.get("value") + " in expression!");
-        }
-
 
         return null;
     }
@@ -183,37 +129,10 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
     }
 
     private Void dealWithArray(JmmNode node, Void _void) {
-        // see if assigned (left) var is a field!
-
-        // else
-        JmmNode aux = node;
-        while (!aux.getKind().equals("Method") && !aux.getKind().equals("MainMethod")) {
-            aux = aux.getJmmParent();
-        }
-        if (aux.getKind().equals("Method")) {
-            assigns.get(aux.get("name")).add(node.get("var"));
-        }
-        else {
-            assigns.get("main").add(node.get("var"));
-        }
         return null;
     }
 
     private Void dealWithAssignment(JmmNode node, Void _void) {
-        // see if assigned (left) var is a field!
-
-        // else
-        JmmNode aux = node;
-        while (!aux.getKind().equals("Method") && !aux.getKind().equals("MainMethod")) {
-            aux = aux.getJmmParent();
-        }
-        if (aux.getKind().equals("Method")) {
-            assigns.get(aux.get("name")).add(node.get("var"));
-        }
-        else {
-            assigns.get("main").add(node.get("var"));
-        }
-
         return null;
     }
 
