@@ -45,7 +45,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("Program", this::dealWithProgram);
         addVisit("ImportDeclaration", this::dealWithImportDeclaration);
         addVisit("ClassDeclaration", this::dealWithClassDeclaration);
-        addVisit("VarDeclaration", this::dealWithVarDeclaration);
+        addVisit("VarDeclaration", this::dealWithDefault);
         addVisit("MainMethod", this::dealWithMainMethod);
         addVisit("Method", this::dealWithMethod);
         addVisit("Type", this::dealWithDefault);
@@ -55,11 +55,11 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("StatementExpression", this::dealWithStatementExpression);
         addVisit("Assignment", this::dealWithAssignment);
         addVisit("Array", this::dealWithAssignment);
-        addVisit("Not", this::dealWithNegation); //later
+        addVisit("Not", this::dealWithDefault); //later
         addVisit("Parenthesis", this::dealWithParenthesis);
         addVisit("BinaryOp", this::dealWithBinaryOp);
-        addVisit("Compare", this::dealWithCompare); //later
-        addVisit("LogicalAnd", this::dealWithLogicalAnd); //later
+        addVisit("Compare", this::dealWithDefault); //later
+        addVisit("LogicalAnd", this::dealWithDefault); //later
         addVisit("SquareBrackets", this::dealWithSquareBrackets);
         addVisit("Length", this::dealWithLength);
         addVisit("FunctionCall", this::dealWithFunctionCall);
@@ -299,10 +299,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
         ret.append(s).append("}\n");
         return ret.toString();
-    }
-
-    private String dealWithVarDeclaration(JmmNode jmmNode, String s) {
-        return "";
     }
 
     private String dealWithClassDeclaration(JmmNode jmmNode, String s) {
@@ -580,14 +576,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         return ret.toString();
     }
 
-    private String dealWithLogicalAnd(JmmNode jmmNode, String s) {
-        return "";
-    }
-
-    private String dealWithCompare(JmmNode jmmNode, String s) {
-        return "";
-    }
-
     private String dealWithBinaryOp(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
         if (jmmNode.getJmmChild(0).getKind().equals("FunctionCall"))
@@ -676,10 +664,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         if (jmmNode.getJmmChild(0).getKind().equals("FunctionCall"))
             this.functionRets.put(jmmNode.getJmmChild(0), typesSwap("void"));
         return visit(jmmNode.getJmmChild(0), "");
-    }
-
-    private String dealWithNegation(JmmNode jmmNode, String s) {
-        return "";
     }
 
     private String varAux(JmmNode jmmNode, Symbol var, boolean isArray, boolean isParameter, int parNumber) {
