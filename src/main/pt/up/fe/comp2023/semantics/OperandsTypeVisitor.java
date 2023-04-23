@@ -1,17 +1,14 @@
-package pt.up.fe.comp2023;
+package pt.up.fe.comp2023.semantics;
 
-import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
-import pt.up.fe.comp.jmm.report.ReportType;
-import pt.up.fe.comp.jmm.report.Stage;
+import pt.up.fe.comp2023.SimpleTable;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class OperandsTypeVisitor extends PreorderJmmVisitor<Void, Void> implements Reporter{
+public class OperandsTypeVisitor extends PreorderJmmVisitor<Void, Void> implements Reporter {
     protected SimpleTable simpleTable;
     protected SemanticUtils utils;
 

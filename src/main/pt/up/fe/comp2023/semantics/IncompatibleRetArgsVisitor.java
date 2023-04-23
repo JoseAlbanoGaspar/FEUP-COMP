@@ -1,21 +1,19 @@
-package pt.up.fe.comp2023;
+package pt.up.fe.comp2023.semantics;
 
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
-import pt.up.fe.comp.jmm.report.ReportType;
-import pt.up.fe.comp.jmm.report.Stage;
+import pt.up.fe.comp2023.SimpleTable;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> implements Reporter{
+public class IncompatibleRetArgsVisitor extends PreorderJmmVisitor<Void, Void> implements Reporter {
     protected SimpleTable simpleTable;
     protected SemanticUtils utils;
 
-    public AssignmentAndThisVisitor(SimpleTable simpleTable){
+    public IncompatibleRetArgsVisitor(SimpleTable simpleTable){
         this.simpleTable = simpleTable;
         this.utils = new SemanticUtils(simpleTable);
     }
@@ -58,10 +56,6 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
     }
 
     private Void dealWithThis(JmmNode node, Void _void) {
-        while (!node.getKind().equals("Method") && !node.getKind().equals("MainMethod"))
-            node = node.getJmmParent();
-        if(node.getKind().equals("MainMethod"))
-            utils.createReport(node, "Can only use this in static methods");
         return null;
     }
 
@@ -85,6 +79,24 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
     }
 
     private Void dealWithFunctionCall(JmmNode node, Void _void) {
+        //se o metodo existir -> compara
+        if(simpleTable.getMethods().contains(node.get("methodName"))){
+
+            List<Symbol> actualTypes = simpleTable.getParameters(node.get("methodName"));
+            List<JmmNode> insertedTypes = node.getChildren();
+            insertedTypes.remove(0); // don't need 1st element -> it's the callee, not argument
+            if(actualTypes.size() != insertedTypes.size()) {
+                utils.createReport(node, "Incompatible argument types!");
+                return null;
+            }
+            for (int i = 0;  i < actualTypes.size(); i++){
+                if(!utils.getType(insertedTypes.get(i)).equals(actualTypes.get(i).getType())){
+                    utils.createReport(node, "Incompatible argument types!");
+                    return null;
+                }
+            }
+        }
+        //se o método extendido / importado -> ignora -> já visto pelos outros visitors???
         return null;
     }
 
@@ -118,57 +130,10 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
     }
 
     private Void dealWithArray(JmmNode node, Void _void) {
-        Type left = utils.varCheck(node, "var");
-        Type right = utils.getType(node.getJmmChild(1));
-        boolean notImportedOrExtended = true;
-
-        //check if right and left are both imported
-        List<String> importedClasses = new ArrayList<>();
-        for (String s : simpleTable.getImports()) {
-            String[] parts = s.split("\\."); // split the string on "." character
-            importedClasses.add(parts[parts.length - 1]);
-        }
-        if(importedClasses.contains(left.getName()) && importedClasses.contains(right.getName())){
-            notImportedOrExtended = false;
-        }
-        //check if right extends left
-        if(simpleTable.getSuper() != null && left.getName().equals(simpleTable.getSuper()) && importedClasses.contains(left.getName())) {
-            notImportedOrExtended = false;
-        }
-        if(!left.getName().equals(right.getName()) && notImportedOrExtended){
-            utils.createReport(node, "Cannot assign to " + node.get("var") + " the type " + right.getName() + "!");
-        }
-        if(node.getJmmChild(1).getKind().equals("This") && !(left.getName().equals(simpleTable.getClassName()) || (simpleTable.getSuper() != null && simpleTable.getSuper().equals(left.getName())))){
-            utils.createReport(node , "Cannot assign this!");
-        }
         return null;
     }
 
     private Void dealWithAssignment(JmmNode node, Void _void) {
-        Type left = utils.varCheck(node, "var");
-        Type right = utils.getType(node.getJmmChild(0));
-
-        boolean notImportedOrExtended = true;
-
-        //check if right and left are both imported
-        List<String> importedClasses = new ArrayList<>();
-        for (String s : simpleTable.getImports()) {
-            String[] parts = s.split("\\."); // split the string on "." character
-            importedClasses.add(parts[parts.length - 1]);
-        }
-        if(importedClasses.contains(left.getName()) && importedClasses.contains(right.getName())){
-            notImportedOrExtended = false;
-        }
-        //check if right extends left
-        if(simpleTable.getSuper() != null && left.getName().equals(simpleTable.getSuper()) && importedClasses.contains(left.getName())) {
-            notImportedOrExtended = false;
-        }
-        if(!left.equals(right) && notImportedOrExtended){
-            utils.createReport(node, "Cannot assign to " + node.get("var") + " the type " + right.getName() + "!");
-        }
-        if(node.getJmmChild(0).getKind().equals("This") && !(left.getName().equals(simpleTable.getClassName()) || (simpleTable.getSuper() != null && simpleTable.getSuper().equals(left.getName())))){
-            utils.createReport(node , "Cannot assign this!");
-        }
         return null;
     }
 
@@ -189,6 +154,10 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
     }
 
     private Void dealWithMethod(JmmNode node, Void _void) {
+        Type retType = utils.getType(node.getJmmChild(node.getNumChildren() - 1));
+        if(!simpleTable.getReturnType(node.get("name")).equals(retType)){
+            utils.createReport(node, "Return type not compatible!");
+        }
         return null;
     }
     private Void dealWithMethodArgs(JmmNode node, Void unused) {
@@ -221,7 +190,7 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
 
 
     public List<Report> getReports(){
-        return utils.getReports();
+        return this.utils.getReports();
     }
 
     @Override

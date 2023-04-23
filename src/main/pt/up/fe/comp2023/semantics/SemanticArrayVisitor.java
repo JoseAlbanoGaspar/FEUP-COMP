@@ -1,20 +1,18 @@
-package pt.up.fe.comp2023;
+package pt.up.fe.comp2023.semantics;
 
-import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
-import pt.up.fe.comp.jmm.report.ReportType;
-import pt.up.fe.comp.jmm.report.Stage;
+import pt.up.fe.comp2023.SimpleTable;
 
-import java.util.*;
+import java.util.List;
 
-public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> implements Reporter{
+public class SemanticArrayVisitor extends PreorderJmmVisitor<Void, Void> implements Reporter {
     protected SimpleTable simpleTable;
     protected SemanticUtils utils;
 
-    public SemanticAnalyserVisitor(SimpleTable simpleTable){
+    public SemanticArrayVisitor(SimpleTable simpleTable){
         this.simpleTable = simpleTable;
         this.utils = new SemanticUtils(simpleTable);
     }
@@ -57,40 +55,31 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
     }
 
     private Void dealWithThis(JmmNode node, Void _void) {
-
         return null;
     }
 
     private Void dealWithIdentifier(JmmNode node, Void _void) {
-        // see if it's declared
-       Type type = utils.varCheck(node,"value");
-        if(type.getName().equals("NotFound"))
-            utils.createReport(node, "Variable not declared: " + node.get("value"));
-
         return null;
     }
 
     private Void dealWithBool(JmmNode node, Void _void) {
-
         return null;
     }
 
     private Void dealWithInteger(JmmNode node, Void _void) {
-
         return null;
     }
 
     private Void dealWithNewClass(JmmNode node, Void _void) {
-
         return null; }
 
     private Void dealWithNewArray(JmmNode node, Void _void) {
-
+        if(!utils.getType(node.getJmmChild(1)).getName().equals("int"))
+            utils.createReport(node,"Index expression must be an integer");
         return null;
     }
 
     private Void dealWithFunctionCall(JmmNode node, Void _void) {
-        utils.getType(node);
         return null;
     }
 
@@ -100,7 +89,13 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
     }
 
     private Void dealWithSquareBrackets(JmmNode node, Void _void) {
-
+        if(!node.getJmmChild(0).getKind().equals("Identifier")){
+            utils.createReport(node, "Trying to index something that is not an identifier");
+        }
+        else if(!utils.varCheck(node.getJmmChild(0), "value").isArray())
+            utils.createReport(node,"Cannot index a variable that is not an array!");
+        if(!utils.getType(node.getJmmChild(1)).getName().equals("int"))
+            utils.createReport(node,"Index expression must be an integer");
         return null;
     }
 
@@ -109,26 +104,32 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
     }
 
     private Void dealWithCompare(JmmNode node, Void _void) {
-
         return null;
     }
 
     private Void dealWithBinaryOp(JmmNode node, Void _void) {
-
+        for(JmmNode child : node.getChildren()){
+            Type type = utils.getType(child);
+            if(type.isArray()){
+                utils.createReport(node, "Arrays cannot be used in arithmetic operations!");
+            }
+        }
         return null;
     }
 
     private Void dealWithParenthesis(JmmNode node, Void _void) {
-
         return null;
     }
 
     private Void dealWithNegation(JmmNode node, Void _void) {
-
         return null;
     }
 
     private Void dealWithArray(JmmNode node, Void _void) {
+        if(!utils.varCheck(node, "var").isArray())
+            utils.createReport(node,"Cannot index a variable that is not an array!");
+        if(!utils.getType(node.getJmmChild(0)).getName().equals("int"))
+            utils.createReport(node,"Index expression must be an integer");
         return null;
     }
 
@@ -184,7 +185,7 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
     }
 
     public List<Report> getReports(){
-        return utils.getReports();
+        return this.utils.getReports();
     }
 
     @Override
@@ -192,3 +193,4 @@ public class SemanticAnalyserVisitor extends PreorderJmmVisitor<Void, Void> impl
         return super.visit(jmmNode);
     }
 }
+
