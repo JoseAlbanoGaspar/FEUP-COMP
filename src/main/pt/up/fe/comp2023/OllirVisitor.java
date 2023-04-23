@@ -76,25 +76,37 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         StringBuilder ret = new StringBuilder(s);
 
         Symbol var = null;
-        boolean isField = false;
+        int parNum=0;
+        boolean isField = false, isParameter = false;
         if(jmmNode.getJmmParent().getKind().equals("MainMethod")){
             for (Symbol vari : symbolTable.getLocalVariables("main")) { //check if local
                 if (vari.getName().equals(jmmNode.get("var"))) var = vari;
             }
         }else {
             for (Symbol vari : symbolTable.getLocalVariables(jmmNode.getJmmParent().get("name"))) { //check if local
-                if (vari.getName().equals(jmmNode.get("var"))) var = vari;
+                if (vari.getName().equals(jmmNode.get("var"))){
+                    var = vari;
+                    break;
+                }
             }
             if (var == null) {
                 for (Symbol vari : symbolTable.getParameters(jmmNode.getJmmParent().get("name"))) { //check if parameter
-                    if (vari.getName().equals(jmmNode.get("var"))) var = vari;
+                    if (vari.getName().equals(jmmNode.get("var"))){
+                        var = vari;
+                        isParameter = true;
+                        parNum++;
+                        break;
+                    }
                 }
             }
             if (var == null) {
                 for (Symbol symbol1 : this.symbolTable.getFields()) { //check if field
-                    if (symbol1.getName().equals(jmmNode.get("var"))) var = symbol1;
+                    if (symbol1.getName().equals(jmmNode.get("var"))){
+                        var = symbol1;
+                        isField = true;
+                        break;
+                    }
                 }
-                isField = true;
             }
         }
 
@@ -118,7 +130,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 List<String> rows = List.of(op.split("\n"));
                 for (int i = 0; i < rows.size(); i++) {
                     if (i == rows.size() - 1) {
-                        ret.append(s).append(varAux(jmmNode, var, isArray));
+                        ret.append(s).append(varAux(jmmNode, var, isArray, isParameter, parNum));
 
                         ret.append(rows.get(i)).append(";\n");
                     } else {
@@ -129,7 +141,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 String txt = var.getType().isArray() ? ".array" : "";
                 String data = var.getName() + txt + "." + typesSwap(var.getType().getName());
                 String assignmentString = visit(assig, data);
-                ret.append(varAux(jmmNode, var, isArray));
+                ret.append(varAux(jmmNode, var, isArray, isParameter, parNum));
                 if (assignmentString.contains("\n")) {
                     ret.append(assignmentString, 0, assignmentString.indexOf("\n")).append("\n").append(s);
                     assignmentString = assignmentString.substring(assignmentString.indexOf("\n") + 1);
@@ -172,7 +184,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     assignString = assignString.substring(assignString.lastIndexOf("\n") + 1);
                 }
 
-                ret.append(varAux(jmmNode, var, isArray))
+                ret.append(varAux(jmmNode, var, isArray, isParameter, parNum))
                         .append(assignString)
                         .append(";\n");
             }
@@ -227,8 +239,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             JmmNode child = jmmNode.getChildren().get(i);
             if (child.getKind().equals("MethodArgs")) continue;
             if (child.getKind().equals("Expression")) {
-                String lastChild = visit(child, "");
-                List<String> children = getNested(child, lastChild, s);
 
                 ret.append(s).append(typesSwap(returnType)).append(" ")
                         .append(visit(child, ""))
@@ -679,10 +689,11 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         return "";
     }
 
-    private String varAux(JmmNode jmmNode, Symbol var, boolean isArray) {
+    private String varAux(JmmNode jmmNode, Symbol var, boolean isArray, boolean isParameter, int parNumber) {
         if (!isArray) {
             String txt = var.getType().isArray() ? ".array" : "";
-            return var.getName() + txt + "." + typesSwap(var.getType().getName()) + " :=." + typesSwap(var.getType().getName()) + txt + " ";
+            String paramStr = isParameter ? "$"+parNumber+"." : "";
+            return paramStr + var.getName() + txt + "." + typesSwap(var.getType().getName()) + " :=." + typesSwap(var.getType().getName()) + txt + " ";
         }
         String access = visit(jmmNode, "");
         String before = "";
