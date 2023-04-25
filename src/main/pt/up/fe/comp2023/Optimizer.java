@@ -1,7 +1,8 @@
 package pt.up.fe.comp2023;
 
+import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
+import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.ast.JmmNode;
-import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.comp2023.optimization.ConstFoldingVisitor;
 import pt.up.fe.comp2023.optimization.ConstValueVisitor;
 
@@ -10,33 +11,23 @@ import java.util.Map;
 
 
 public class Optimizer {
-    public JmmParserResult optimize(JmmParserResult ast, Map<String, String> config){
+    public JmmSemanticsResult optimize(JmmSemanticsResult ast, Map<String, String> config){
         if (config.get("optimize").equals("true")) {
-            ast = constantsOptimization(ast, config);
-        }
-        if (!config.get("registerAllocation").equals("-1")) {
-            ast = registerAllocationOptimization(ast);
+            return new JmmSemanticsResult(constantsOptimization(ast.getRootNode(), ast.getSymbolTable()), ast.getSymbolTable(), new ArrayList<>(),config);
         }
         return ast;
     }
 
-    private JmmParserResult constantsOptimization(JmmParserResult ast, Map<String, String> config) {
-        ConstValueVisitor constValueVisitor = new ConstValueVisitor();
+    private JmmNode constantsOptimization(JmmNode root, SymbolTable symbolTable) {
+        ConstValueVisitor constValueVisitor = new ConstValueVisitor(symbolTable);
         ConstFoldingVisitor constFoldingVisitor = new ConstFoldingVisitor();
-        JmmNode root = ast.getRootNode();
-        while (constValueVisitor.wasOptimized() || constFoldingVisitor.wasOptimized()) {
-            constValueVisitor.visit(root);
-            root = constValueVisitor.getRootNode();
+        do {
             constFoldingVisitor.visit(root);
-            root = constFoldingVisitor.getRootNode();
-        }
-        return new JmmParserResult(root, new ArrayList<>(), config);
+            constValueVisitor.visit(root);
+            System.out.println("loop");
+        } while (constValueVisitor.wasOptimized() || constFoldingVisitor.wasOptimized());
+
+        return root;
     }
-
-    private JmmParserResult registerAllocationOptimization(JmmParserResult ast) {
-
-        return ast;
-    }
-
 
 }

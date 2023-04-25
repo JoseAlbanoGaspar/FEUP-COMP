@@ -41,14 +41,14 @@ public class Launcher {
         JmmParserResult parserResult = parser.parse(code, config);
         TestUtils.noErrors(parserResult.getReports());
 
-        // Optimization stage
-        Optimizer optimizer = new Optimizer();
-        parserResult = optimizer.optimize(parserResult, config);
-
         // Analysis stage
         Analysis analysis = new Analysis();
         JmmSemanticsResult semanticsResult = analysis.semanticAnalysis(parserResult);
         TestUtils.noErrors(semanticsResult.getReports());
+
+        // Optimization stage
+        Optimizer optimizer = new Optimizer();
+        semanticsResult = optimizer.optimize(semanticsResult, config);
 
         // Ollir
         OllirParser ollir = new OllirParser();
