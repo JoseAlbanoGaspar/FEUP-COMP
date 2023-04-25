@@ -13,12 +13,6 @@ import java.util.List;
 public class Analysis implements JmmAnalysis {
     @Override
     public JmmSemanticsResult semanticAnalysis(JmmParserResult jmmParserResult) {
-        // Check if there are parsing errors
-        for (Report report : jmmParserResult.getReports()) {
-            System.out.println(report.getMessage());
-        }
-        TestUtils.noErrors(jmmParserResult.getReports());
-
         // Generate Symbolic Table
         SymbolTableVisitor visitor = new SymbolTableVisitor();
         visitor.visit(jmmParserResult.getRootNode(), null);

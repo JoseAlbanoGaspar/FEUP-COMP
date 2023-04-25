@@ -39,18 +39,23 @@ public class Launcher {
 
         // Parse stage
         JmmParserResult parserResult = parser.parse(code, config);
+        TestUtils.noErrors(parserResult.getReports());
+
+        // Optimization stage
+        Optimizer optimizer = new Optimizer();
+        parserResult = optimizer.optimize(parserResult, config);
 
         // Analysis stage
         Analysis analysis = new Analysis();
         JmmSemanticsResult semanticsResult = analysis.semanticAnalysis(parserResult);
         TestUtils.noErrors(semanticsResult.getReports());
 
-        //ollir
+        // Ollir
         OllirParser ollir = new OllirParser();
         OllirResult ollirResult = ollir.toOllir(semanticsResult);
         System.out.println(ollirResult.getOllirCode());
 
-        //jasmin
+        // Jasmin
         Backend jasmin = new Backend();
         JasminResult jasminResult = jasmin.toJasmin(ollirResult);
 
