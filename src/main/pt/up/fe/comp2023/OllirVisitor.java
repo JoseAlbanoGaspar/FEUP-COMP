@@ -73,11 +73,14 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String nestedAppend(JmmNode jmmNode, String s, StringBuilder ret){
-        String lastString = visit(jmmNode, "");
+        return nestedAppend(jmmNode, s, ret, "");
+    }
+    private String nestedAppend(JmmNode jmmNode, String s, StringBuilder ret, String data){
+        String lastString = visit(jmmNode, data);
         List<String> lasStringList = getNested(jmmNode, lastString, s);
 
-        if (!lasStringList.get(0).contains("\n")) ret.append(s).append(lasStringList.get(0));
-        else ret.append(s).append(lasStringList.get(0)).append("\n");
+        if (!lasStringList.get(0).contains("\n")) ret.append(lasStringList.get(0));
+        else ret.append(lasStringList.get(0));
         return lasStringList.get(1);
     }
 
@@ -157,53 +160,30 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     }
                 }
             } else if (assig.getKind().equals("NewArray") || assig.getKind().equals("NewClass")) {
-                String txt = var.getType().isArray() ? ".array" : "";
-                String data = var.getName() + txt + "." + typesSwap(var.getType().getName());
-                String assignmentString = visit(assig, data);
+                String txt = var.getType().isArray() ? ".array" : "",
+                        data = var.getName() + txt + "." + typesSwap(var.getType().getName());
                 ret.append(varAux(jmmNode, var, isArray, isParameter, parNum));
-                if (assignmentString.contains("\n")) {
-                    ret.append(assignmentString, 0, assignmentString.indexOf("\n")).append("\n").append(s);
-                    assignmentString = assignmentString.substring(assignmentString.indexOf("\n") + 1);
-                }
-                ret.append(assignmentString).append(";\n");
+
+                String assignmentString = nestedAppend(assig, s, ret, data);
+                ret.append("\n").append(s).append(assignmentString).append(";\n");
+
+                String typeF = typesSwap(var.getType().isArray() ? var.getType().getName() + " array" : var.getType().getName());
                 if (assig.getNumChildren() != 0 && !assig.getChildren().get(0).getKind().equals("ARRAY"))
-                    ret.append("\t\tinvokespecial(").append(var.getName()).append(".").append(typesSwap(var.getType().isArray() ? var.getType().getName() + " array" : var.getType().getName()))
+                    ret.append("\t\tinvokespecial(").append(var.getName()).append(".").append(typeF)
                             .append(", \"<init>\").V;\n");
             } else {
                 if (assig.getKind().equals("FunctionCall"))
                     this.functionRets.put(jmmNode.getJmmChild(0), typesSwap(var.getType().getName()));
                 String assignString = visit(assig, "");
+
                 if (assig.getKind().equals("SquareBrackets")) {
-                    String before;
-                    if (assignString.contains("\n")) {
-                        before = assignString.substring(0, assignString.lastIndexOf("\n"));
-                        if (assignString.lastIndexOf("\n") < assignString.lastIndexOf(":=.")) { //multiple lines
-                            before += assignString.substring(assignString.lastIndexOf("\n"));
-                            assignString = assignString.substring(assignString.lastIndexOf("\n") + 1, assignString.lastIndexOf(" :=."));
-                        } else
-                            assignString = assignString.substring(assignString.lastIndexOf("\n") + 1, assignString.lastIndexOf(";"));
-                    } else {
-                        before = assignString;
-                        assignString = assignString.substring(0, assignString.indexOf(' '));
-                    }
-                    ret.append(before)
-                            .append("\n");
+                    //TODO deal with array assignment
                 } else if (assig.getKind().equals("FunctionCall")) {
                     this.functionRets.put(jmmNode.getJmmChild(0), typesSwap(var.getType().getName()));
-                    if (assignString.contains("\n")) {
-                        ret.append(assignString, 0, assignString.lastIndexOf("\n"));
-                        assignString = assignString.substring(assignString.lastIndexOf("\n") + 1);
-                    } else if (assignString.contains(":=.")) {
-                        ret.append(assignString);
-                        assignString = assignString.substring(0, assignString.indexOf(" ")) + ";";
-                    }
-                }
-                if (assignString.contains("\n")) {
-                    ret.append(assignString, 0, assignString.lastIndexOf("\n") + 1);
-                    assignString = assignString.substring(assignString.lastIndexOf("\n") + 1);
+                    assignString = nestedAppend(assig, s, ret);
                 }
 
-                ret.append(varAux(jmmNode, var, isArray, isParameter, parNum))
+                ret.append(s).append(varAux(jmmNode, var, isArray, isParameter, parNum))
                         .append(assignString)
                         .append(";\n");
             }
@@ -457,7 +437,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     .append(type)
                     .append(";\n");
 
-            ret.append(s)
+            ret
                     .append("t")
                     .append(this.tempCnt++)
                     .append(txt)
