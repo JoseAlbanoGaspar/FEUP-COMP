@@ -72,6 +72,15 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("MethodArgs", this::dealWithMethodArgs);
     }
 
+    private String nestedAppend(JmmNode jmmNode, String s, StringBuilder ret){
+        String lastString = visit(jmmNode, "");
+        List<String> lasStringList = getNested(jmmNode, lastString, s);
+
+        if (!lasStringList.get(0).contains("\n")) ret.append(s).append(lasStringList.get(0));
+        else ret.append(s).append(lasStringList.get(0)).append("\n");
+        return lasStringList.get(1);
+    }
+
     private String dealWithAssignment(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
 
@@ -81,6 +90,16 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         if(jmmNode.getJmmParent().getKind().equals("MainMethod")){
             for (Symbol vari : symbolTable.getLocalVariables("main")) { //check if local
                 if (vari.getName().equals(jmmNode.get("var"))) var = vari;
+            }
+
+            if (var == null) {
+                for (Symbol symbol1 : this.symbolTable.getFields()) { //check if field
+                    if (symbol1.getName().equals(jmmNode.get("var"))){
+                        var = symbol1;
+                        isField = true;
+                        break;
+                    }
+                }
             }
         }else {
             for (Symbol vari : symbolTable.getLocalVariables(jmmNode.getJmmParent().get("name"))) { //check if local
@@ -238,12 +257,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         if (!returnType.equals("V")) {
             JmmNode lastNode = jmmNode.getChildren().get(i);
             if (lastNode.getKind().equals("Identifier") || lastNode.getKind().equals("Integer") || lastNode.getKind().equals("BoolLiteral")) {
-                String lastString = visit(lastNode, "");
-                List<String> lasStringList = getNested(lastNode, lastString, s);
 
-                if (!lasStringList.get(0).contains("\n")) ret.append(s).append(lasStringList.get(0));
-                else ret.append(s).append(lasStringList.get(0)).append("\n");
-                lastString = lasStringList.get(1);
+                String lastString = nestedAppend(lastNode, s, ret);
 
                 ret.append("\n").append(s).append("\tret.").append(typesSwap(returnType)).append(" ").append(lastString)
                         .append(";\n\t}\n");
@@ -409,7 +424,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 }
             }
         }
-        if (var == null) { //chek is improt
+        if (var == null) { //chek is import
             for (String imp : this.symbolTable.getImports()) {
                 if (imp.equals(jmmNode.get("value"))) {
                     isImported = true;
@@ -509,11 +524,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
         String name = jmmNode.get("methodName");
         //check if method or import
-        String objectString = visit(jmmNode.getJmmChild(0), "");
-        List<String> objectStringList = getNested(jmmNode.getJmmChild(0), objectString, s);
-        if (!objectStringList.get(0).contains("\n")) ret.append(objectStringList.get(0));
-        else ret.append(s).append(objectStringList.get(0)).append("\n");
-        objectString = objectStringList.get(1);
+
+        String objectString = nestedAppend(jmmNode.getJmmChild(0), s, ret);
 
         List<String> visitedArgs = new ArrayList<>();
         for (int i = 1; i < jmmNode.getNumChildren(); i++) {
@@ -521,12 +533,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 if (!this.symbolTable.getImports().contains(objectString) && !objectString.equals("this"))
                     this.functionRets.put(jmmNode.getJmmChild(i), this.symbolTable.getParameters(jmmNode.get("methodName")).get(i).getType().getName()); //get from list of args
             }
-            String childString = visit(jmmNode.getJmmChild(i), "");
-            List<String> nested = getNested(jmmNode.getJmmChild(i), childString, s);
 
-            if (!nested.get(0).contains("\n")) ret.append(nested.get(0));
-            else ret.append(s).append(nested.get(0)).append("\n");
-            visitedArgs.add(nested.get(1));
+            visitedArgs.add(nestedAppend(jmmNode.getJmmChild(i), s, ret));
         }
 
         ret.append(this.symbolTable.getImports().contains(objectString) ? "invokestatic(" : "invokevirtual(")
@@ -583,19 +591,9 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         if (jmmNode.getJmmChild(1).getKind().equals("FunctionCall"))
             this.functionRets.put(jmmNode.getJmmChild(1), "i32");
         JmmNode left = jmmNode.getJmmChild(0), right = jmmNode.getJmmChild(1);
-        String leftString = visit(left, ""), rightString = visit(right, "");
 
-
-        List<String> nestedLeft = getNested(left, leftString, s), nestedRight = getNested(right, rightString, s);
-
-        if (!nestedLeft.get(0).contains("\n")) ret.append(nestedLeft.get(0));
-        else ret.append(nestedLeft.get(0)).append("\n");
-        leftString = nestedLeft.get(1);
-
-
-        if (!nestedRight.get(0).contains("\n")) ret.append(nestedRight.get(0));
-        else ret.append(nestedRight.get(0)).append("\n");
-        rightString = nestedRight.get(1);
+        String leftString = nestedAppend(left, s, ret);
+        String rightString = nestedAppend(right, s, ret);
 
         ret.append(leftString)
                 .append(" ")
