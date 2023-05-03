@@ -49,17 +49,17 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("MainMethod", this::dealWithMainMethod);
         addVisit("Method", this::dealWithMethod);
         addVisit("Type", this::dealWithDefault);
-        addVisit("BlockCode", this::dealWithDefault); //later
-        addVisit("If", this::dealWithDefault); //later
-        addVisit("While", this::dealWithDefault); //later
+        addVisit("BlockCode", this::dealWithDefault); //TODO
+        addVisit("If", this::dealWithDefault); //TODO
+        addVisit("While", this::dealWithDefault); //TODO
         addVisit("StatementExpression", this::dealWithStatementExpression);
         addVisit("Assignment", this::dealWithAssignment);
         addVisit("Array", this::dealWithAssignment);
-        addVisit("Not", this::dealWithDefault); //later
+        addVisit("Not", this::dealWithDefault); //TODO
         addVisit("Parenthesis", this::dealWithParenthesis);
         addVisit("BinaryOp", this::dealWithBinaryOp);
-        addVisit("Compare", this::dealWithDefault); //later
-        addVisit("LogicalAnd", this::dealWithDefault); //later
+        addVisit("Compare", this::dealWithDefault); //TODO
+        addVisit("LogicalAnd", this::dealWithDefault); //TODO
         addVisit("SquareBrackets", this::dealWithSquareBrackets);
         addVisit("Length", this::dealWithLength);
         addVisit("FunctionCall", this::dealWithFunctionCall);
@@ -175,16 +175,22 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 if (assig.getKind().equals("FunctionCall"))
                     this.functionRets.put(jmmNode.getJmmChild(0), typesSwap(var.getType().getName()));
                 String assignString = visit(assig, "");
+                String index = "";
 
                 if (assig.getKind().equals("SquareBrackets")) {
-                    //TODO deal with array assignment
+                    assignString = nestedAppend(assig.getJmmChild(0), s, ret);
+                    index = nestedAppend(assig.getJmmChild(1), s, ret);
+
                 } else if (assig.getKind().equals("FunctionCall")) {
                     this.functionRets.put(jmmNode.getJmmChild(0), typesSwap(var.getType().getName()));
                     assignString = nestedAppend(assig, s, ret);
                 }
 
+                String arrayIndex = assig.getKind().equals("SquareBrackets") ? "["+ index + "].i32": "";
+
                 ret.append(s).append(varAux(jmmNode, var, isArray, isParameter, parNum))
                         .append(assignString)
+                        .append(arrayIndex)
                         .append(";\n");
             }
         }
@@ -462,6 +468,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 .append(i + 1)
                 .append(".")
                 .append(var.getName())
+                .append(txt)
                 .append(".")
                 .append(typesSwap(var.getType().getName()))
                 .toString();
@@ -559,7 +566,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 .append("[")
                 .append(right)
                 .append("]")
-                .append(leftSplit.get(1));
+                .append(leftSplit.get(1))
+                .append("\n");
 
         return ret.toString();
     }
