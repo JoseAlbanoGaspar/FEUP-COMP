@@ -683,6 +683,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String getRetType(String name) {
+        if(symbolTable.getReturnType(name).isArray()) return "array.i32";
         return symbolTable.getReturnType(name).getName();
     }
 }
