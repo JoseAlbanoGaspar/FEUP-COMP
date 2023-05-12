@@ -163,11 +163,7 @@ public class Backend implements JasminBackend {
         buildInstruction(instruction.getRhs(), currVars, localVars, false);
 
         // store top of the stack in the local variable
-        jasminCode.append("\t")
-                .append(typePrefix(instruction.getDest().getType()))
-                .append("store ")
-                .append(variable)
-                .append("\n");
+        buildStore(typePrefix(instruction.getDest().getType()), localVars, ((Operand) instruction.getDest()).getName());
     }
     private void buildCallInstruction(CallInstruction instruction, Map<String, Integer> localVariables, Boolean pop) {
         switch (instruction.getInvocationType()) {
@@ -354,9 +350,15 @@ public class Backend implements JasminBackend {
     }
 
     private void buildStore(String prefix, Map<String, Integer> localVariables, String variableName) {
-        jasminCode.append("\t").append(prefix).append("store ")
-                .append(localVariables.get(variableName)).append("\n");
+        int varIndex = localVariables.get(variableName);
+        if (varIndex >= 0 && varIndex <= 3) {
+            // use the low-cost instruction if the variable index is between 0 and 3
+            jasminCode.append("\t").append(prefix).append("store_").append(varIndex).append("\n");
+        } else {
+            jasminCode.append("\t").append(prefix).append("store ").append(varIndex).append("\n");
+        }
     }
+
 
     private String fullClassName(Operand operand) {
         if (Objects.equals(operand.getName(), "this")) ollirClass.getClassName();
