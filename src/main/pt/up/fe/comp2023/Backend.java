@@ -337,10 +337,19 @@ public class Backend implements JasminBackend {
         } else if (element.getType().getTypeOfElement() == ElementType.THIS) { // push this to the stack
             jasminCode.append("\taload_0\n");
         } else { // push local variable value to stack
-            jasminCode.append("\t")
-                    .append(typePrefix(element.getType()))
-                    .append("load ").append(localVariables.get(((Operand) element).getName()))
-                    .append("\n");
+            int varIndex = localVariables.get(((Operand) element).getName());
+            if (varIndex >= 0 && varIndex <= 3) {
+                // use the low-cost instruction if the variable index is between 0 and 3
+                jasminCode.append("\t")
+                        .append(typePrefix(element.getType()))
+                        .append("load_").append(varIndex)
+                        .append("\n");
+            } else {
+                jasminCode.append("\t")
+                        .append(typePrefix(element.getType()))
+                        .append("load ").append(varIndex)
+                        .append("\n");
+            }
         }
     }
 
