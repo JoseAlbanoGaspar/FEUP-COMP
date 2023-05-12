@@ -325,17 +325,25 @@ public class Backend implements JasminBackend {
                 break;
         }
     }
-
     private void buildLoad(Element element, Map<String, Integer> localVariables) {
         if (element.isLiteral()) {
-            // push constant integer to stack
-            jasminCode.append("\tldc ").append(((LiteralElement) element).getLiteral()).append("\n");
-        } else if (element.getType().getTypeOfElement() == ElementType.THIS) { // push this to the stack
+            int literalValue = Integer.parseInt(((LiteralElement) element).getLiteral());
+            if (literalValue == -1) {
+                jasminCode.append("\ticonst_m1\n");
+            } else if (literalValue >= 0 && literalValue <= 5) {
+                jasminCode.append("\ticonst_").append(literalValue).append("\n");
+            } else if (literalValue >= -128 && literalValue <= 127) {
+                jasminCode.append("\tbipush ").append(literalValue).append("\n");
+            } else if (literalValue >= -32768 && literalValue <= 32767) {
+                jasminCode.append("\tsipush ").append(literalValue).append("\n");
+            } else {
+                jasminCode.append("\tldc ").append(literalValue).append("\n");
+            }
+        } else if (element.getType().getTypeOfElement() == ElementType.THIS) {
             jasminCode.append("\taload_0\n");
-        } else { // push local variable value to stack
+        } else {
             int varIndex = localVariables.get(((Operand) element).getName());
             if (varIndex >= 0 && varIndex <= 3) {
-                // use the low-cost instruction if the variable index is between 0 and 3
                 jasminCode.append("\t")
                         .append(typePrefix(element.getType()))
                         .append("load_").append(varIndex)
@@ -348,6 +356,7 @@ public class Backend implements JasminBackend {
             }
         }
     }
+
 
     private void buildStore(String prefix, Map<String, Integer> localVariables, String variableName) {
         int varIndex = localVariables.get(variableName);
