@@ -117,36 +117,16 @@ public class Backend implements JasminBackend {
     private void buildInstruction(Instruction instruction, AtomicInteger nLocalVars, Map<String, Integer> localVars, Boolean pop) {
         instruction.show();
         switch (instruction.getInstType()) {
-            case ASSIGN:
-                buildAssignInstruction((AssignInstruction) instruction, nLocalVars, localVars);
-                break;
-            case CALL:
-                buildCallInstruction((CallInstruction) instruction, localVars, pop);
-                break;
-            case GOTO:
-                buildGotoInstruction((GotoInstruction) instruction);
-                break;
-            case NOPER:
-                buildNoperInstruction((SingleOpInstruction) instruction, localVars);
-                break;
-            case BRANCH:
-                buildBranchInstruction((CondBranchInstruction) instruction);
-                break;
-            case RETURN:
-                buildReturnInstruction((ReturnInstruction) instruction, localVars);
-                break;
-            case GETFIELD:
-                buildGetFieldInstruction((GetFieldInstruction) instruction, localVars);
-                break;
-            case PUTFIELD:
-                buildPutFieldInstruction((PutFieldInstruction) instruction, localVars);
-                break;
-            case UNARYOPER:
-                buildUnaryOperInstruction((UnaryOpInstruction) instruction, localVars);
-                break;
-            case BINARYOPER:
-                buildBinaryOperInstruction((BinaryOpInstruction) instruction, localVars);
-                break;
+            case ASSIGN -> buildAssignInstruction((AssignInstruction) instruction, nLocalVars, localVars);
+            case CALL -> buildCallInstruction((CallInstruction) instruction, localVars, pop);
+            case GOTO -> buildGotoInstruction((GotoInstruction) instruction);
+            case NOPER -> buildNoperInstruction((SingleOpInstruction) instruction, localVars);
+            case BRANCH -> buildBranchInstruction((CondBranchInstruction) instruction);
+            case RETURN -> buildReturnInstruction((ReturnInstruction) instruction, localVars);
+            case GETFIELD -> buildGetFieldInstruction((GetFieldInstruction) instruction, localVars);
+            case PUTFIELD -> buildPutFieldInstruction((PutFieldInstruction) instruction, localVars);
+            case UNARYOPER -> buildUnaryOperInstruction((UnaryOpInstruction) instruction, localVars);
+            case BINARYOPER -> buildBinaryOperInstruction((BinaryOpInstruction) instruction, localVars);
         }
     }
 
@@ -154,7 +134,6 @@ public class Backend implements JasminBackend {
         Integer variable = localVars.get(((Operand) instruction.getDest()).getName());
         if (variable == null) { // variable not previously used
             currVars.set(currVars.intValue() + 1);
-            variable = currVars.intValue();
             localVars.put(((Operand) instruction.getDest()).getName(), currVars.intValue());
         }
         // execute right side of assignment,
@@ -299,19 +278,11 @@ public class Backend implements JasminBackend {
         buildLoad(instruction.getLeftOperand(), localVariables);
         buildLoad(instruction.getRightOperand(), localVariables);
         switch (instruction.getOperation().getOpType()) {
-            case MUL:
-                jasminCode.append("\timul\n");
-                break;
-            case DIV:
-                jasminCode.append("\tidiv\n");
-                break;
-            case ADD:
-                jasminCode.append("\tiadd\n");
-                break;
-            case SUB:
-                jasminCode.append("\tisub\n");
-                break;
-            case LTH:
+            case MUL -> jasminCode.append("\timul\n");
+            case DIV -> jasminCode.append("\tidiv\n");
+            case ADD -> jasminCode.append("\tiadd\n");
+            case SUB -> jasminCode.append("\tisub\n");
+            case LTH -> {
                 jasminCode.append("\tif_icmplt true").append(labelCounter).append("\n")
                         .append("\ticonst_0\n")
                         .append("\tgoto end").append(labelCounter).append("\n")
@@ -319,10 +290,8 @@ public class Backend implements JasminBackend {
                         .append("\ticonst_1\n")
                         .append("end").append(labelCounter).append(":\n");
                 labelCounter++;
-                break;
-            case ANDB:
-                jasminCode.append("\tiand\n");
-                break;
+            }
+            case ANDB -> jasminCode.append("\tiand\n");
         }
     }
     private void buildLoad(Element element, Map<String, Integer> localVariables) {
@@ -388,32 +357,23 @@ public class Backend implements JasminBackend {
     }
 
     private String typeToString(Type type) {
-        switch (type.getTypeOfElement()) {
-            case INT32:
-                return "I";
-            case BOOLEAN:
-                return "Z";
-            case ARRAYREF:
-                return "[" + typeToString(((ArrayType)type).getElementType());
-            case CLASS: case OBJECTREF:
-                return "L" + ((ClassType)type).getName() + ";";
-            case THIS:
-                return "L" + ollirClass.getClassName();
-            case STRING:
-                return "Ljava/lang/String;";
-            case VOID:
-                return "V";
-            default: // Should be unreachable
-                throw new IllegalArgumentException("Unknown type: " + type.getTypeOfElement());
-        }
+        return switch (type.getTypeOfElement()) {
+            case INT32 -> "I";
+            case BOOLEAN -> "Z";
+            case ARRAYREF -> "[" + typeToString(((ArrayType) type).getElementType());
+            case CLASS, OBJECTREF -> "L" + ((ClassType) type).getName() + ";";
+            case THIS -> "L" + ollirClass.getClassName();
+            case STRING -> "Ljava/lang/String;";
+            case VOID -> "V";
+            default -> // Should be unreachable
+                    throw new IllegalArgumentException("Unknown type: " + type.getTypeOfElement());
+        };
     }
 
     private String typePrefix(Type type) {
-        switch (type.getTypeOfElement()) {
-            case INT32: case BOOLEAN:
-                return "i";
-            default:
-                return "a";
-        }
+        return switch (type.getTypeOfElement()) {
+            case INT32, BOOLEAN -> "i";
+            default -> "a";
+        };
     }
 }
