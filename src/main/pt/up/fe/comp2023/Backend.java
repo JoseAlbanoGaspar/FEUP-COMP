@@ -121,7 +121,7 @@ public class Backend implements JasminBackend {
             case CALL -> buildCallInstruction((CallInstruction) instruction, localVars, pop);
             case GOTO -> buildGotoInstruction((GotoInstruction) instruction);
             case NOPER -> buildNoperInstruction((SingleOpInstruction) instruction, localVars);
-            case BRANCH -> buildBranchInstruction((CondBranchInstruction) instruction);
+            case BRANCH -> buildBranchInstruction((CondBranchInstruction) instruction, nLocalVars, localVars);
             case RETURN -> buildReturnInstruction((ReturnInstruction) instruction, localVars);
             case GETFIELD -> buildGetFieldInstruction((GetFieldInstruction) instruction, localVars);
             case PUTFIELD -> buildPutFieldInstruction((PutFieldInstruction) instruction, localVars);
@@ -232,11 +232,20 @@ public class Backend implements JasminBackend {
             }
         }
     }
-    private void buildGotoInstruction(GotoInstruction instruction) {}
+    private void buildGotoInstruction(GotoInstruction instruction) {
+        jasminCode.append("\tgoto ")
+                .append(instruction.getLabel())
+                .append("\n");
+    }
     private void buildNoperInstruction(SingleOpInstruction instruction, Map<String, Integer> localVariables) {
         buildLoad(instruction.getSingleOperand(), localVariables);
     }
-    private void buildBranchInstruction(CondBranchInstruction instruction) {}
+    private void buildBranchInstruction(CondBranchInstruction instruction, AtomicInteger currVars, Map<String, Integer> localVars) {
+        buildInstruction(instruction.getCondition(), currVars, localVars, false);
+        jasminCode.append("\tifne ")
+                .append(instruction.getLabel())
+                .append("\n");
+    }
     private void buildReturnInstruction(ReturnInstruction instruction, Map<String, Integer> localVariables) {
         if (instruction.hasReturnValue()) {
             buildLoad(instruction.getOperand(), localVariables);
@@ -268,7 +277,7 @@ public class Backend implements JasminBackend {
         if (instruction.getOperation().getOpType() == OperationType.NOTB) { // Only supported unary operation
             buildLoad(instruction.getOperand(), localVariables);
             // negate the boolean value by XORing it with 1
-            jasminCode.append("\ticonst_1")
+            jasminCode.append("\ticonst_1\n")
                     .append("\tixor\n");
         } else {
             throw new IllegalArgumentException("Operation type " + instruction.getOperation().getOpType() + " is not supported for unary operation");
@@ -336,7 +345,6 @@ public class Backend implements JasminBackend {
             jasminCode.append("\t").append(prefix).append("store ").append(varIndex).append("\n");
         }
     }
-
 
     private String fullClassName(Operand operand) {
         if (Objects.equals(operand.getName(), "this")) ollirClass.getClassName();
