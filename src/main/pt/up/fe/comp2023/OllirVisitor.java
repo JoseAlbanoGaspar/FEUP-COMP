@@ -72,8 +72,13 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("MethodArgs", this::dealWithMethodArgs);
     }
 
+
     private String nestedAppend(JmmNode jmmNode, String s, StringBuilder ret){
-        String lastString = visit(jmmNode, "");
+        return nestedAppend(jmmNode, s, ret, "");
+    }
+
+    private String nestedAppend(JmmNode jmmNode, String s, StringBuilder ret, String data){
+        String lastString = visit(jmmNode, data);
         List<String> lasStringList = getNested(jmmNode, lastString, s);
 
 
@@ -191,10 +196,14 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     ret.append(rows.get(i)).append("\n");
                 }
             }
-        } else if (assig.getKind().equals("NewArray") || assig.getKind().equals("NewClass")) {
+        }else if(assig.getKind().equals("NewArray")){
             ret.append(varAux(jmmNode, var, isArray, isParameter, parNum));
-
             String assignmentString = nestedAppend(assig, s, ret);
+            ret.append(assignmentString).append(";\n");
+        } else if (assig.getKind().equals("NewClass")) {
+            ret.append(varAux(jmmNode, var, isArray, isParameter, parNum));
+            String data = var.getName() + "." + typesSwap(var.getType().getName());
+            String assignmentString = nestedAppend(assig, s, ret, data);
             ret.append(assignmentString).append(";\n");
         } else {
             if (assig.getKind().equals("FunctionCall"))
@@ -584,9 +593,11 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             this.functionRets.put(jmmNode.getJmmChild(0), "array.i32");
         if (jmmNode.getJmmChild(1).getKind().equals("FunctionCall"))
             this.functionRets.put(jmmNode.getJmmChild(1), typesSwap("i32"));
-        String left = visit(jmmNode.getJmmChild(0), "");
-        String right = visit(jmmNode.getJmmChild(1), "");
+        //String left = visit(jmmNode.getJmmChild(0), "");
+        //String right = visit(jmmNode.getJmmChild(1), "");
 
+        String left = nestedAppend(jmmNode.getJmmChild(0), s, ret);
+        String right = nestedAppend(jmmNode.getJmmChild(1), s, ret);
 
         List<String> leftSplit = List.of(left.split(".array"));
 
