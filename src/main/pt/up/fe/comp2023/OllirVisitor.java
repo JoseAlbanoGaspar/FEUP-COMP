@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static java.lang.Math.max;
+
 public class OllirVisitor extends AJmmVisitor<String, String> {
     private final SymbolTable symbolTable;
     private String ollirString;
@@ -209,7 +211,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             if (assig.getKind().equals("FunctionCall"))
                 this.functionRets.put(jmmNode.getJmmChild(0), typesSwap(var.getType().getName()));
             assignString = visit(assig, "");
-            String index = "";
 
             if (assig.getKind().equals("SquareBrackets")) {
                 assignString = nestedAppend(assig, s, ret);
@@ -599,6 +600,11 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         String left = nestedAppend(jmmNode.getJmmChild(0), s, ret);
         String right = nestedAppend(jmmNode.getJmmChild(1), s, ret);
 
+        if(!(jmmNode.getJmmChild(1).getKind().equals("Identifier") || jmmNode.getJmmChild(1).getKind().equals("Integer"))){
+            ret.append(s).append("t").append(tempCnt).append(".i32 :=.i32 ").append(right).append(";\n");
+            right = "t"+tempCnt++ + ".i32 ";
+        }
+
         List<String> leftSplit = List.of(left.split(".array"));
 
         ret.append(leftSplit.get(0))
@@ -606,7 +612,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 .append(right)
                 .append("]")
                 .append(leftSplit.get(1))
-                .append("\n");
+                .append("§");
 
         return ret.toString();
     }
@@ -635,7 +641,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         String kind = jmmNode.getKind();
         StringBuilder newStr = new StringBuilder(str);
         StringBuilder auxString = new StringBuilder();
-        if (kind.equals("BinaryOp") || kind.equals("FunctionCall") || kind.equals("SquareBrackets") || kind.equals("Parenthesis")) {
+        if (kind.equals("BinaryOp") || kind.equals("FunctionCall") || kind.equals("SquareBrackets") || kind.equals("Parenthesis") || kind.equals("Length")) {
             String sub, before = "";
             int lastIndDot = str.lastIndexOf(".");
             if (str.contains(":=.")) {
@@ -648,9 +654,10 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             } else sub = str.substring(lastIndDot);
 
             if (jmmNode.getKind().equals("SquareBrackets")) {
+                auxString = new StringBuilder(before);
                 if (newStr.toString().contains(":=."))
                     newStr = new StringBuilder(newStr.substring(0, newStr.indexOf(" ")));
-                else newStr = new StringBuilder(newStr.substring(0, newStr.length() - 1));
+                else newStr = new StringBuilder(newStr.substring(0, max(newStr.length() - 1, 0)));
             } else {
                 auxString.append(before)
                         .append("t").append(this.tempCnt)
@@ -692,7 +699,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String varAux(JmmNode jmmNode, Symbol var, boolean isArray, boolean isParameter, int parNumber) {
-
             String txt = var.getType().isArray() ? ".array" : "";
             String paramStr = isParameter ? "$"+parNumber+"." : "";
             return paramStr + var.getName() + txt + "." + typesSwap(var.getType().getName()) + " :=" + txt + "." + typesSwap(var.getType().getName())  + " ";
