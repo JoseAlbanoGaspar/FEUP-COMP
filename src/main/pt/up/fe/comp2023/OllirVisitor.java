@@ -57,7 +57,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("StatementExpression", this::dealWithStatementExpression);
         addVisit("Assignment", this::dealWithAssignment);
         addVisit("Array", this::dealWithAssignment);
-        addVisit("Not", this::dealWithDefault); //TODO
+        addVisit("Not", this::dealWithNot);
         addVisit("Parenthesis", this::dealWithParenthesis);
         addVisit("BinaryOp", this::dealWithBinaryOp);
         addVisit("Compare", this::dealWithBinaryOp);
@@ -72,6 +72,17 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("Identifier", this::dealWithIdentifier);
         addVisit("This", this::dealWithThis); //??
         addVisit("MethodArgs", this::dealWithMethodArgs);
+    }
+
+    private String dealWithNot(JmmNode jmmNode, String s) {
+        StringBuilder ret = new StringBuilder();
+        String expr = nestedAppend(jmmNode.getJmmChild(0), s, ret);
+        if (!(jmmNode.getJmmChild(0).getKind().equals("Identifier") || jmmNode.getJmmChild(0).getKind().equals("BoolLiteral"))){
+            ret.append(s).append("t").append(tempCnt).append(".bool :=.bool ").append(expr).append(";\n");
+            expr = s + "t" + tempCnt++ + ".bool";
+        }
+        ret.append(s).append("!.bool ").append(expr);
+        return ret.toString();
     }
 
 
