@@ -1,6 +1,5 @@
 package pt.up.fe.comp2023;
 
-
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
@@ -18,7 +17,7 @@ import static java.lang.Math.max;
 public class OllirVisitor extends AJmmVisitor<String, String> {
     private final SymbolTable symbolTable;
     private String ollirString;
-    private int tempCnt;
+    private int tempCnt, gotoCnt;
     private final Map<JmmNode, String> functionRets;
     private boolean importsHandled;
 
@@ -27,6 +26,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         this.ollirString = "";
         importsHandled = false;
         this.tempCnt = 1;
+        this.gotoCnt = 1;
         this.functionRets = new HashMap<>();
     }
 
@@ -60,8 +60,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("Not", this::dealWithDefault); //TODO
         addVisit("Parenthesis", this::dealWithParenthesis);
         addVisit("BinaryOp", this::dealWithBinaryOp);
-        addVisit("Compare", this::dealWithDefault); //TODO
-        addVisit("LogicalAnd", this::dealWithDefault); //TODO
+        addVisit("Compare", this::dealWithBinaryOp);
+        addVisit("LogicalAnd", this::dealWithBinaryOp);
         addVisit("SquareBrackets", this::dealWithSquareBrackets);
         addVisit("Length", this::dealWithLength);
         addVisit("FunctionCall", this::dealWithFunctionCall);
@@ -626,10 +626,21 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         String leftString = nestedAppend(left, s, ret);
         String rightString = nestedAppend(right, s, ret);
 
+        String opType = jmmNode.getKind().equals("BinaryOp") ?
+            ".i32 " : ".bool ";
+        String opString;
+
+        switch (jmmNode.getKind()) {
+            case "BinaryOp" -> opString = jmmNode.get("op");
+            case "LogicalAnd" -> opString = "&&";
+            case "Compare" -> opString = "<";
+            default -> opString = "ERROR";
+        }
+
         ret.append(leftString)
                 .append(" ")
-                .append(jmmNode.get("op"))
-                .append(".i32 ")
+                .append(opString)
+                .append(opType)
                 .append(rightString);
         return ret.toString();
     }
