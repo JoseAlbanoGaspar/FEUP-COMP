@@ -51,8 +51,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("MainMethod", this::dealWithMainMethod);
         addVisit("Method", this::dealWithMethod);
         addVisit("Type", this::dealWithDefault);
-        addVisit("BlockCode", this::dealWithDefault); //TODO
-        addVisit("If", this::dealWithDefault); //TODO
+        addVisit("BlockCode", this::dealWithBlockCode); //TODO
+        addVisit("If", this::dealwithIf); //TODO
         addVisit("While", this::dealWithDefault); //TODO
         addVisit("StatementExpression", this::dealWithStatementExpression);
         addVisit("Assignment", this::dealWithAssignment);
@@ -72,6 +72,30 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("Identifier", this::dealWithIdentifier);
         addVisit("This", this::dealWithThis); //??
         addVisit("MethodArgs", this::dealWithMethodArgs);
+    }
+
+    private String dealWithBlockCode(JmmNode jmmNode, String s) {
+        StringBuilder ret = new StringBuilder();
+        for(JmmNode child : jmmNode.getChildren()){
+            ret.append(visit(child, s));
+        }
+        return ret.toString();
+    }
+
+    private String dealwithIf(JmmNode jmmNode, String s) {
+        StringBuilder ret = new StringBuilder(s);
+        JmmNode expr = jmmNode.getJmmChild(0),
+            ifStat = jmmNode.getJmmChild(1),
+            elseStat = jmmNode.getJmmChild(2);
+
+        String exprString = nestedAppend(expr, s, ret);
+        ret.append("if (").append(exprString).append(") goto THEN_").append(gotoCnt).append(";\n")
+                .append(visit(elseStat, s))
+                .append(s).append("goto ENDIF_").append(gotoCnt).append(";\n")
+                .append(s).append("THEN_").append(gotoCnt).append(":\n")
+                .append(visit(ifStat, s))
+                .append(s).append("ENDIF_").append(gotoCnt++).append(":\n");
+        return ret.toString();
     }
 
     private String dealWithNot(JmmNode jmmNode, String s) {
@@ -334,6 +358,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             ret.append(visit(child, s + "\t"));
         }
 
+        ret.append(s).append("\tret.V;\n");
         ret.append(s).append("}\n");
         return ret.toString();
     }
