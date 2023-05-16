@@ -46,10 +46,6 @@ public class Launcher {
         JmmSemanticsResult semanticsResult = analysis.semanticAnalysis(parserResult);
         TestUtils.noErrors(semanticsResult.getReports());
 
-        // Optimization stage
-        Optimizer optimizer = new Optimizer();
-        semanticsResult = optimizer.optimize(semanticsResult, config);
-
         // Ollir
         OllirParser ollir = new OllirParser();
         OllirResult ollirResult = ollir.toOllir(semanticsResult);

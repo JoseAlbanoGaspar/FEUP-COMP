@@ -7,12 +7,19 @@ import pt.up.fe.comp.jmm.ollir.OllirResult;
 public class OllirParser implements JmmOptimization {
     @Override
     public OllirResult toOllir(JmmSemanticsResult jmmSemanticsResult) {
-        //semanticResult -> jmmParserResult(AST), SimbolTable, Reports
-        //getRootNode(), getSymbolTable(), getReports()
 
+        // Optimization stage
+        Optimizer optimizer = new Optimizer();
+        jmmSemanticsResult = optimizer.optimize(jmmSemanticsResult);
+
+        // Ollir parse
         OllirVisitor visitor = new OllirVisitor(jmmSemanticsResult.getSymbolTable());
         visitor.visit(jmmSemanticsResult.getRootNode(), null);
 
-        return new OllirResult(jmmSemanticsResult, visitor.getOllirCode(), jmmSemanticsResult.getReports());
+
+        OllirResult ollirResult = new OllirResult(jmmSemanticsResult, visitor.getOllirCode(), jmmSemanticsResult.getReports());
+
+
+        return ollirResult;
     }
 }
