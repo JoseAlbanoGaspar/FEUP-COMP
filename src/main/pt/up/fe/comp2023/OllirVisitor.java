@@ -51,9 +51,9 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("MainMethod", this::dealWithMainMethod);
         addVisit("Method", this::dealWithMethod);
         addVisit("Type", this::dealWithDefault);
-        addVisit("BlockCode", this::dealWithBlockCode); //TODO
-        addVisit("If", this::dealwithIf); //TODO
-        addVisit("While", this::dealWithDefault); //TODO
+        addVisit("BlockCode", this::dealWithBlockCode);
+        addVisit("If", this::dealwithIf);
+        addVisit("While", this::dealWithWhile); //TODO
         addVisit("StatementExpression", this::dealWithStatementExpression);
         addVisit("Assignment", this::dealWithAssignment);
         addVisit("Array", this::dealWithAssignment);
@@ -72,6 +72,26 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("Identifier", this::dealWithIdentifier);
         addVisit("This", this::dealWithThis); //??
         addVisit("MethodArgs", this::dealWithMethodArgs);
+    }
+
+    private String dealWithWhile(JmmNode jmmNode, String s) {
+        StringBuilder ret = new StringBuilder();
+
+        JmmNode expr = jmmNode.getJmmChild(0),
+                stat = jmmNode.getJmmChild(1);
+
+        String exprString = nestedAppend(expr, s, ret);
+
+        if (!(jmmNode.getJmmChild(0).getKind().equals("Identifier") || jmmNode.getJmmChild(0).getKind().equals("BoolLiteral"))){
+            ret.append(s).append("t").append(tempCnt).append(".bool :=.bool ").append(expr).append(";\n");
+            exprString = s + "t" + tempCnt++ + ".bool";
+        }
+
+        ret.append(s).append("if (").append("!.bool ").append(expr).append(") goto ENDLOOP_").append(gotoCnt).append(";\n")
+                .append(s).append("BODY_").append(gotoCnt).append(":\n")
+                .append(visit(stat, ""));
+
+        return ret.toString();
     }
 
     private String dealWithBlockCode(JmmNode jmmNode, String s) {
