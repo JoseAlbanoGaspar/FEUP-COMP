@@ -4,27 +4,35 @@ import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.JmmNodeImpl;
-import pt.up.fe.comp.jmm.ast.PostorderJmmVisitor;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 
-public class ASToptimization extends PostorderJmmVisitor<Void, Void>{
+public class ASToptimization extends PreorderJmmVisitor<Void, Void>{
     protected boolean isOptimized;
     protected SymbolTable simpleTable;
     protected Map<String, Map<String, String>> assignMap;
+    protected List<Set<String>> whileInvalidProp;
+    protected List<List<Set<String>>> ifInvalidProp;
+    protected int w_idx;
+    protected int if_idx;
+    protected int if_reasign_idx;
+    protected List<List<String>> ifReassign;
 
-    public ASToptimization(SymbolTable symbolTable){
+    public ASToptimization(SymbolTable symbolTable, List<Set<String>> whileInvalidProp, List<List<Set<String>>> ifInvalidProp){
         this.simpleTable = symbolTable;
         this.isOptimized = false;
         this.assignMap = new HashMap<>();
-
+        this.whileInvalidProp = whileInvalidProp;
+        this.ifInvalidProp = ifInvalidProp;
+        this.w_idx = 0;
+        this.if_idx = 0;
+        this.if_reasign_idx = 0;
         for (String method : simpleTable.getMethods()) {
             assignMap.put(method, new HashMap<>());
         }
+        this.ifReassign = new ArrayList<>();
     }
 
     @Override
@@ -37,16 +45,16 @@ public class ASToptimization extends PostorderJmmVisitor<Void, Void>{
         addVisit("Method", this::defaultVisitor);
         addVisit("Type", this::defaultVisitor);
         addVisit("BlockCode", this::defaultVisitor);
-        addVisit("If",this::defaultVisitor);
-        addVisit("While", this::defaultVisitor);
+        addVisit("If",this::dealWithIf);
+        addVisit("While", this::dealWithWhile);
         addVisit("StatementExpression", this::defaultVisitor);
         addVisit("Assignment", this::dealWithAssignment);
         addVisit("Array", this::defaultVisitor);
-        addVisit("Not", this::dealWithNot);
-        addVisit("Parenthesis", this::dealWithParenthesis);
-        addVisit("BinaryOp", this::dealWithBinaryOp);
-        addVisit("Compare", this::dealWithCompare);
-        addVisit("LogicalAnd", this::dealWithLogicalAnd);
+        addVisit("Not", this::defaultVisitor);
+        addVisit("Parenthesis", this::defaultVisitor);
+        addVisit("BinaryOp", this::defaultVisitor);
+        addVisit("Compare", this::defaultVisitor);
+        addVisit("LogicalAnd", this::defaultVisitor);
         addVisit("SquareBrackets", this::defaultVisitor);
         addVisit("Length", this::defaultVisitor);
         addVisit("FunctionCall", this::defaultVisitor);
@@ -63,6 +71,18 @@ public class ASToptimization extends PostorderJmmVisitor<Void, Void>{
         return null;
     }
 
+    private Void dealWithWhile(JmmNode jmmNode, Void unused) {
+        w_idx++;
+        return null;
+    }
+
+    private Void dealWithIf(JmmNode jmmNode, Void unused) {
+        ifReassign.add(new ArrayList<>());
+        if_reasign_idx++;
+        if_idx++;
+        return null;
+    }
+
     private void replace(JmmNode node, String kind, String value){
         JmmNode newNode = new JmmNodeImpl(kind);
         newNode.put("value", value);
@@ -70,6 +90,41 @@ public class ASToptimization extends PostorderJmmVisitor<Void, Void>{
     }
 
     private Void dealWithIdentifier(JmmNode node, Void unused) {
+        // check if it's safe to propagate
+        for (int i = 0; i < this.w_idx; i++) {
+            if (this.whileInvalidProp.get(i).contains(node.get("value"))) {
+                return null;
+            }
+        }
+        Optional<JmmNode> ifAncestor = node.getAncestor("If");
+        Optional<JmmNode> blockCodeAncestor = node.getAncestor("BlockCode");
+        if (ifAncestor.isPresent() && blockCodeAncestor.isPresent() && blockCodeAncestor.get().getJmmParent().getKind().equals("If")) { // condition variables don't enter this if
+
+            System.out.println("------------------------");
+            System.out.println("var not in condition");
+            System.out.println(node.get("value"));
+            System.out.println("------------------------");
+
+            Optional<JmmNode> assign = node.getAncestor("Assignment");
+            if (assign.isPresent()) {
+                System.out.println("assign is present");
+                for (JmmNode child : blockCodeAncestor.get().getChildren()){
+                    System.out.println("child: ");
+                    System.out.println(child);
+                    if (child.getKind().equals("Assignment") && child.get("var").equals(node.get("value")) && child != assign.get()) {
+                        return null;
+                    }
+                    if (child == assign.get()) break;
+                }
+            }
+        }
+        if (!ifAncestor.isPresent()) {
+            for (int i = 0; i < this.if_idx; i++) {
+                if (this.ifInvalidProp.get(i).get(0).contains(node.get("value")) || this.ifInvalidProp.get(i).get(1).contains(node.get("value"))) {
+                    return null;
+                }
+            }
+        }
         Optional<JmmNode> ancestor = node.getAncestor("Method");
         String method = "main";
         if (ancestor.isPresent()) {
@@ -116,83 +171,7 @@ public class ASToptimization extends PostorderJmmVisitor<Void, Void>{
 
         return null;
     }
- // ---------------------- folding ----------------------------
- private Void dealWithLogicalAnd(JmmNode node, Void unused) {
-     if (node.getJmmChild(0).getKind().equals("BoolLiteral") &&
-             node.getJmmChild(1).getKind().equals("BoolLiteral")) {
-         // Compute new value
-         String value = Boolean.toString(Boolean.parseBoolean(node.getJmmChild(0).get("value")) && Boolean.parseBoolean(node.getJmmChild(1).get("value")));
-         // Replaces this node with a new one
-         replace(node, "BoolLiteral", value);
-         isOptimized = true;
-     }
-     return null;
- }
 
-    private Void dealWithCompare(JmmNode node, Void unused) {
-        if (node.getJmmChild(0).getKind().equals("Integer") &&
-                node.getJmmChild(1).getKind().equals("Integer")) {
-            // Compute new value
-            String value = Boolean.toString(Integer.parseInt(node.getJmmChild(0).get("value")) < Integer.parseInt(node.getJmmChild(1).get("value")));
-            // Replaces this node with a new one
-            replace(node, "BoolLiteral", value);
-            isOptimized = true;
-        }
-        return null;
-    }
-
-    private Void dealWithBinaryOp(JmmNode node, Void unused) {
-        if (node.getJmmChild(0).getKind().equals("Integer") &&
-                node.getJmmChild(1).getKind().equals("Integer")) {
-            // Compute new value
-            int left = Integer.parseInt(node.getJmmChild(0).get("value"));
-            int right = Integer.parseInt(node.getJmmChild(1).get("value"));
-            String value = "";
-            switch (node.get("op")) {
-                case "+":
-                    value = String.valueOf(left + right);
-                    break;
-                case "-":
-                    value = String.valueOf(left - right);
-                    break;
-                case "*":
-                    value = String.valueOf(left * right);
-                    break;
-                case "/":
-                    value = String.valueOf(left / right);
-                    break;
-            }
-            // Replaces this node with a new one
-            replace(node, "Integer", value);
-            isOptimized = true;
-            System.out.println("binOp");
-        }
-        return null;
-    }
-
-    private Void dealWithParenthesis(JmmNode node, Void unused) {
-        if (node.getJmmChild(0).getKind().equals("Integer") || node.getJmmChild(0).getKind().equals("BoolLiteral")) {
-            JmmNode parent = node.getJmmParent();
-            int idx = node.getIndexOfSelf();
-            JmmNode expression = node.getJmmChild(0);
-            parent.setChild(expression, idx);
-            node.delete();
-            isOptimized = true;
-            System.out.println("parenthesis");
-        }
-        return null;
-    }
-
-    private Void dealWithNot(JmmNode node, Void unused) {
-        if (node.getJmmChild(0).getKind().equals("BoolLiteral")) {
-            // Compute new value
-            String value = Boolean.toString(!Boolean.parseBoolean(node.getJmmChild(0).get("value")));
-            // Replaces this node with a new one
-            replace(node, "BoolLiteral", value);
-            isOptimized = true;
-        }
-        return null;
-    }
     public boolean wasOptimized(){
         if (isOptimized) {
             isOptimized = false;
@@ -203,6 +182,8 @@ public class ASToptimization extends PostorderJmmVisitor<Void, Void>{
 
     @Override
     public Void visit(JmmNode jmmNode) {
+        this.w_idx = 0;
+        this.if_idx = 0;
         return super.visit(jmmNode);
     }
 
