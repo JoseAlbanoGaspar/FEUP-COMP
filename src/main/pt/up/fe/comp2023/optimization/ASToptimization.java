@@ -100,17 +100,9 @@ public class ASToptimization extends PreorderJmmVisitor<Void, Void>{
         Optional<JmmNode> blockCodeAncestor = node.getAncestor("BlockCode");
         if (ifAncestor.isPresent() && blockCodeAncestor.isPresent() && blockCodeAncestor.get().getJmmParent().getKind().equals("If")) { // condition variables don't enter this if
 
-            System.out.println("------------------------");
-            System.out.println("var not in condition");
-            System.out.println(node.get("value"));
-            System.out.println("------------------------");
-
             Optional<JmmNode> assign = node.getAncestor("Assignment");
             if (assign.isPresent()) {
-                System.out.println("assign is present");
                 for (JmmNode child : blockCodeAncestor.get().getChildren()){
-                    System.out.println("child: ");
-                    System.out.println(child);
                     if (child.getKind().equals("Assignment") && child.get("var").equals(node.get("value")) && child != assign.get()) {
                         return null;
                     }
