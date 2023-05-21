@@ -161,6 +161,17 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         Symbol var = null;
         int parNum=0;
         boolean isField = false, isParameter = false;
+
+        JmmNode parent = jmmNode;
+        String parentName;
+
+        do {
+            parent = parent.getJmmParent();
+            if (parent.getKind().equals("Method") || parent.getKind().equals("MainMethod"))
+                break;
+        } while (!parent.getKind().equals("ClassDeclaration"));
+        parentName = parent.getKind().equals("MainMethod") ? "main" : parent.get("name");
+
         if(jmmNode.getJmmParent().getKind().equals("MainMethod")){
             for (Symbol vari : symbolTable.getLocalVariables("main")) { //check if local
                 if (vari.getName().equals(jmmNode.get("var"))) var = vari;
@@ -176,14 +187,14 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 }
             }
         }else {
-            for (Symbol vari : symbolTable.getLocalVariables(jmmNode.getJmmParent().get("name"))) { //check if local
+            for (Symbol vari : symbolTable.getLocalVariables(parentName)) { //check if local
                 if (vari.getName().equals(jmmNode.get("var"))){
                     var = vari;
                     break;
                 }
             }
             if (var == null) {
-                for (Symbol vari : symbolTable.getParameters(jmmNode.getJmmParent().get("name"))) { //check if parameter
+                for (Symbol vari : symbolTable.getParameters(parentName)) { //check if parameter
                     if (vari.getName().equals(jmmNode.get("var"))){
                         var = vari;
                         isParameter = true;
