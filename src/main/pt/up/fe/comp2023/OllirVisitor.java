@@ -93,6 +93,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         ret.append(s).append("goto BODY_").append(gotoCnt).append(";\n")
                 .append(s).append("ENDLOOP_").append(gotoCnt).append(":\n");
 
+        gotoCnt++;
         return ret.toString();
     }
 
