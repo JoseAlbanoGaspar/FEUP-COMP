@@ -80,16 +80,18 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         JmmNode expr = jmmNode.getJmmChild(0),
                 stat = jmmNode.getJmmChild(1);
 
+        ret.append(s).append("BODY_").append(gotoCnt).append(":\n");
         String exprString = nestedAppend(expr, s, ret);
 
         if (!(jmmNode.getJmmChild(0).getKind().equals("Identifier") || jmmNode.getJmmChild(0).getKind().equals("BoolLiteral"))){
-            ret.append(s).append("t").append(tempCnt).append(".bool :=.bool ").append(expr).append(";\n");
-            exprString = s + "t" + tempCnt++ + ".bool";
+            ret.append(s).append("t").append(tempCnt).append(".bool :=.bool ").append(exprString).append(";\n");
+            exprString ="t" + tempCnt++ + ".bool";
         }
 
-        ret.append(s).append("if (").append("!.bool ").append(expr).append(") goto ENDLOOP_").append(gotoCnt).append(";\n")
-                .append(s).append("BODY_").append(gotoCnt).append(":\n")
+        ret.append(s).append("if (").append("!.bool ").append(exprString).append(") goto ENDLOOP_").append(gotoCnt).append(";\n")
                 .append(visit(stat, ""));
+        ret.append(s).append("goto BODY_").append(gotoCnt).append(";\n")
+                .append(s).append("ENDLOOP_").append(gotoCnt).append(":\n");
 
         return ret.toString();
     }
