@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Backend implements JasminBackend {
     private String superClass = "java/lang/Object";
     private ClassUnit ollirClass = null;
-    private final StringBuilder jasminCode = new StringBuilder();
+    private StringBuilder jasminCode = new StringBuilder();
     private int labelCounter = 0;
 
     @Override
@@ -108,6 +108,8 @@ public class Backend implements JasminBackend {
             jasminCode.append("\treturn\n");
         }
         jasminCode.append(".end method\n");
+
+        jasminCode = new StringBuilder(jasminCode.toString().replace("limit locals 99", "limit locals " + (nLocalVars.intValue() + 1)));
     }
 
     private void buildConstructor() {
