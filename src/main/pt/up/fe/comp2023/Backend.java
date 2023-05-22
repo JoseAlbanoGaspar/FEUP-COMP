@@ -95,6 +95,10 @@ public class Backend implements JasminBackend {
             localVars.put(((Operand) elem).getName(), nLocalVars.intValue());
         }
         for (Instruction instruction : method.getInstructions()) {
+            for (String label : method.getLabels(instruction)) {
+                jasminCode.append(label)
+                        .append(":\n");
+            }
             buildInstruction(instruction, nLocalVars, localVars, true);
         }
 
@@ -373,8 +377,6 @@ public class Backend implements JasminBackend {
             case THIS -> "L" + ollirClass.getClassName();
             case STRING -> "Ljava/lang/String;";
             case VOID -> "V";
-            default -> // Should be unreachable
-                    throw new IllegalArgumentException("Unknown type: " + type.getTypeOfElement());
         };
     }
 
