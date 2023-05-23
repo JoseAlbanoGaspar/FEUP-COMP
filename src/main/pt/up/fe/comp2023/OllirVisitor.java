@@ -255,7 +255,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
     private String assignChildrenCases(JmmNode jmmNode, JmmNode assig, String s, StringBuilder ret, Symbol var, boolean isParameter, int parNum) {
         String assignString="";
-        if (assig.getKind().equals("BinaryOp")) {
+        if (assig.getKind().equals("BinaryOp") ||assig.getKind().equals("Compare") || assig.getKind().equals("LogicalAnd")) {
             String op = visit(assig, "");
             List<String> rows = List.of(op.split("\n"));
             for (int i = 0; i < rows.size(); i++) {
@@ -280,7 +280,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             if (assig.getKind().equals("FunctionCall"))
                 this.functionRets.put(jmmNode.getJmmChild(0), typesSwap(var.getType().getName()));
             assignString = visit(assig, "");
-
             if (assig.getKind().equals("SquareBrackets")) {
                 assignString = nestedAppend(assig, s, ret);
             } else if (assig.getKind().equals("FunctionCall")) {
@@ -720,7 +719,9 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         String kind = jmmNode.getKind();
         StringBuilder newStr = new StringBuilder(str);
         StringBuilder auxString = new StringBuilder();
-        if (kind.equals("BinaryOp") || kind.equals("FunctionCall") || kind.equals("SquareBrackets") || kind.equals("Parenthesis") || kind.equals("Length")) {
+        if (kind.equals("BinaryOp") || kind.equals("FunctionCall")
+                || kind.equals("SquareBrackets") || kind.equals("Parenthesis")
+                || kind.equals("Length") || kind.equals("Compare") || kind.equals("LogicalAnd")) {
             String sub, before = "";
             int lastIndDot = str.lastIndexOf(".");
             if (str.contains(":=.")) {
