@@ -1,17 +1,29 @@
 package pt.up.fe.comp2023.optimization.registerAllocation;
 
+import org.specs.comp.ollir.Method;
+
 import java.util.*;
 
 class IntGraphNode {
     String name;
     int color;
+
     public IntGraphNode(String name) {
         this.color = -1;
         this.name = name;
     }
+    public IntGraphNode(IntGraphNode node) {
+        this.color = node.getColor();
+        this.name = node.getName();
+    }
     public String getName() {
         return name;
     }
+
+    public int getColor() {
+        return color;
+    }
+
     public void setColor(int color) {
         this.color = color;
     }
@@ -32,32 +44,50 @@ class IntGraphNode {
     public int hashCode() {
         return name.hashCode();
     }
-
 }
 
 public class Graph {
-    private HashMap<IntGraphNode, List<IntGraphNode>> adjacencyList;
-    public Graph() {
+    final int FIRST_REG;
+    private final HashMap<IntGraphNode, List<IntGraphNode>> adjacencyList;
+
+    public Graph(Method method) {
         adjacencyList = new HashMap<>();
+        FIRST_REG = getFirstReg(method);
     }
+    public Graph(HashMap<IntGraphNode, List<IntGraphNode>> adjacencyList, Method method) {
+        this.adjacencyList = adjacencyList;
+        FIRST_REG = getFirstReg(method);
+    }
+
+    private int getFirstReg(Method method) {
+        return method.getParams().size() + 1;
+    }
+
     private IntGraphNode makeNode(String name) {
         return new IntGraphNode(name);
     }
+
+    public HashMap<IntGraphNode, List<IntGraphNode>> getAdjacencyList() {
+        return adjacencyList;
+    }
+
     public void addVertex(IntGraphNode vertex) {
         adjacencyList.put(vertex, new ArrayList<>());
     }
 
     public void addVertexes(List<String> vertexes) {
         for (String vertex : vertexes) {
-            if(!vertexExists(vertex)) {
-                adjacencyList.put(makeNode(vertex), new ArrayList<>());
+            IntGraphNode node = makeNode(vertex);
+            if (!vertexExists(vertex)) {
+                addVertex(node);
             }
         }
-
     }
+
     public void addEdge(String source, String destination) {
         IntGraphNode src = makeNode(source);
         IntGraphNode dest = makeNode(destination);
+
         // Add the edge from source to destination
         adjacencyList.get(src).add(dest);
         // Add the edge from destination to source (since it's an undirected graph)
@@ -66,44 +96,47 @@ public class Graph {
 
     public void connectAllNodes(Set<String> nodes) {
         List<String> nodeList = new ArrayList<>(nodes);
-        int size = nodeList.size();
 
-        for (int i = 0; i < size - 1; i++) {
-            IntGraphNode source = makeNode(nodeList.get(i));
-            if (!vertexExists(source.getName())) addVertex(source);
-            for (int j = i + 1; j < size; j++) {
-                IntGraphNode destination = makeNode(nodeList.get(j));
-                if (!vertexExists(destination.getName())) addVertex(destination);
-                if (!hasConnection(source.getName(), destination.getName())) {
-                    addEdge(source.getName(), destination.getName());
+        for (int i = 0; i < nodeList.size(); i++) {
+            String sourceName = nodeList.get(i);
+            IntGraphNode source = makeNode(sourceName);
+            if (!vertexExists(sourceName)) {
+                addVertex(source);
+            }
+
+            for (int j = i + 1; j < nodeList.size(); j++) {
+                String destinationName = nodeList.get(j);
+                IntGraphNode destination = makeNode(destinationName);
+                if (!vertexExists(destinationName)) {
+                    addVertex(destination);
+                }
+
+                if (!hasConnection(sourceName, destinationName)) {
+                    addEdge(sourceName, destinationName);
                 }
             }
         }
     }
 
-    public void removeVertex(String vertex) {
-        // Remove the vertex from the adjacency list
-        adjacencyList.remove(makeNode(vertex));
+    public void removeVertex(IntGraphNode node) {
+        adjacencyList.remove(node);
 
         // Remove any edges containing the removed vertex
         for (List<IntGraphNode> neighbors : adjacencyList.values()) {
-            neighbors.removeIf(n -> n.equals(makeNode(vertex)));
+            neighbors.removeIf(n -> n.equals(node));
         }
     }
 
-    public List<String> getNeighbors(String vertex) {
+    public List<IntGraphNode> getNeighbors(String vertex) {
         IntGraphNode node = makeNode(vertex);
-        List<String> neighbors = new ArrayList<>();
-        for (IntGraphNode nd : adjacencyList.get(node)) {
-            neighbors.add(nd.getName());
-        }
-        return neighbors;
+        return adjacencyList.get(node);
     }
 
     public boolean vertexExists(String vertex) {
-        for (Map.Entry<IntGraphNode, List<IntGraphNode>> entry : adjacencyList.entrySet()) {
-            if (entry.getKey().getName().equals(vertex))
+        for (IntGraphNode node : adjacencyList.keySet()) {
+            if (node.getName().equals(vertex)) {
                 return true;
+            }
         }
         return false;
     }
@@ -127,5 +160,65 @@ public class Graph {
             System.out.println();
         }
         System.out.println("--------------------------");
+    }
+
+    public void printRegisterAllocation() {
+        System.out.println("----Register Allocation----");
+        for (Map.Entry<IntGraphNode, List<IntGraphNode>> entry : adjacencyList.entrySet()) {
+            IntGraphNode vertex = entry.getKey();
+            System.out.print(vertex.getName() + " -> " + vertex.getColor());
+            System.out.println();
+        }
+        System.out.println("Used registers: " + numOfRegisters());
+        System.out.println("--------------------------");
+    }
+    public IntGraphNode getNode(String name) {
+        for (Map.Entry<IntGraphNode, List<IntGraphNode>> entry : adjacencyList.entrySet()) {
+            IntGraphNode node = entry.getKey();
+            if (node.getName().equals(name)) return node;
+        }
+        return null;
+
+    }
+    public List<IntGraphNode> getNodes() {
+        List<IntGraphNode> nodes = new ArrayList<>();
+        for (Map.Entry<IntGraphNode, List<IntGraphNode>> entry : adjacencyList.entrySet()) {
+            nodes.add(entry.getKey());
+        }
+        return nodes;
+    }
+    public void setRegister(String name) {
+        Set<Integer> usedReg = new HashSet<>();
+        for (IntGraphNode nd : getNeighbors(name)) {
+            IntGraphNode node = getNode(nd.getName());
+            int register = node.getColor();
+            if (register != -1) {
+               usedReg.add(register);
+            }
+        }
+        int allocatedReg = -1;
+        IntGraphNode node = getNode(name);
+        if (usedReg.isEmpty()) {
+            node.setColor(FIRST_REG);
+        }
+        else {
+            int i = FIRST_REG;
+            while (allocatedReg == -1) {
+                if(!usedReg.contains(i)) {
+                    allocatedReg = i;
+                    node.setColor(allocatedReg);
+                }
+                i++;
+            }
+        }
+    }
+
+    public int numOfRegisters() {
+        int max = 0;
+        for (Map.Entry<IntGraphNode, List<IntGraphNode>> entry : adjacencyList.entrySet()) {
+            IntGraphNode node = entry.getKey();
+            if (node.getColor() > max) max = node.getColor();
+        }
+        return max - FIRST_REG + 1;
     }
 }

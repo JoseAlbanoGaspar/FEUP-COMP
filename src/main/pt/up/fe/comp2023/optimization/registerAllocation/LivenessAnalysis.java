@@ -1,16 +1,20 @@
 package pt.up.fe.comp2023.optimization.registerAllocation;
 
 import org.specs.comp.ollir.*;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
+import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 
 import java.util.*;
 
 public class LivenessAnalysis {
     protected HashMap<Instruction, LivenessSets> sets;
-    private Method method;
+    private final Method method;
+    private final SymbolTable symbolTable;
 
-    public LivenessAnalysis(Method method) {
+    public LivenessAnalysis(Method method, SymbolTable symbTable) {
         this.sets = new HashMap<>();
         this.method = method;
+        this.symbolTable = symbTable;
         for (Instruction i : method.getInstructions()) {
             System.out.println(i);
             sets.put(i, new LivenessSets());
@@ -23,7 +27,7 @@ public class LivenessAnalysis {
 
     private void print() {
         // print uses/defs for testing
-        System.out.println("|||||LIVENESS FOR METHOD " + this.method.getMethodName() + " |||||||||||||||");
+        System.out.println("|||||  LIVENESS FOR METHOD " + this.method.getMethodName() + "  |||||");
         for (Map.Entry<Instruction, LivenessSets> entry : sets.entrySet()) {
             System.out.println("-----Entry Set-----");
             System.out.println(entry.getKey());
@@ -33,6 +37,7 @@ public class LivenessAnalysis {
             System.out.println("Out: " + entry.getValue().getOut());
             System.out.println("-------------------");
         }
+        System.out.println("|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||");
     }
     private void computeInOut() {
         boolean changed = false;
@@ -53,7 +58,7 @@ public class LivenessAnalysis {
                     sets.get(i).getOut().addAll(sets.get(inst).getIn());
                 }
             }
-            if (!in_aux.equals(sets.get(i).getIn()) || !out_aux.equals(sets.get(i).getOut())){
+            if (!in_aux.equals(sets.get(i).getIn()) || !out_aux.equals(sets.get(i).getOut())) {
                 changed = true;
             }
         } while (changed);
@@ -62,7 +67,6 @@ public class LivenessAnalysis {
         for (Instruction i : method.getInstructions()) {
             computeUsesDefs(i);
         }
-        //print();
         computeInOut();
 
         print();
@@ -70,7 +74,7 @@ public class LivenessAnalysis {
 
     private void computeUsesDefs(Instruction inst) {
         switch (inst.getInstType()) {
-            case ASSIGN: {
+            case ASSIGN -> {
                 AssignInstruction assignInst = (AssignInstruction) inst;
                 System.out.println("----------");
                 System.out.println(assignInst.getDest().toString());
@@ -81,120 +85,131 @@ public class LivenessAnalysis {
                 System.out.println("-----RHS--------");
                 System.out.println(sets.get(inst).getUse());
                 System.out.println("-----------------");
-                break;
             }
-            case CALL: {
-                break;
+            case CALL, UNARYOPER ->
+                sets.get(inst).getUse().addAll(computeUses(inst));
+
+            case BRANCH -> {
+                CondBranchInstruction branch = (CondBranchInstruction) inst;
+                sets.get(inst).getUse().addAll(computeUses(branch.getCondition()));
             }
-            case GOTO: {
-                break;
-            }
-            case BRANCH: {
-                break;
-            }
-            case RETURN: {
+            case RETURN -> {
                 sets.get(inst).getUse().addAll(computeUses(inst));
                 System.out.println("----RETURN SET------");
                 System.out.println(sets.get(inst).getUse());
                 System.out.println("--------------------");
-                break;
             }
-            case GETFIELD: {
-                break;
+            case GETFIELD -> {
+                sets.get(inst).getUse().addAll(computeUses(inst));
             }
-            case PUTFIELD: {
-                break;
+            case PUTFIELD -> {
+                sets.get(inst).getUse().addAll(computeUses(inst));
             }
-            case UNARYOPER: {
-                break;
-            }
-            case BINARYOPER: {
+            case BINARYOPER -> {
                 sets.get(inst).getUse().addAll(computeUses(inst));
                 System.out.println("----BINOP SET------");
                 System.out.println(sets.get(inst).getUse());
                 System.out.println("--------------------");
-                break;
             }
-
-            default: {
-                break;
+            default -> {
             }
         }
 
     }
-
+    private void addElement(Element element, Set<String> uses) {
+        String var = getVar(element);
+        if (var != null) {
+            uses.add(var);
+        }
+    }
     private Set<String> computeUses(Instruction inst) {
         Set<String> uses = new HashSet<>();
         switch (inst.getInstType()) {
-            case CALL: {
-                break;
+            case CALL -> {
+                CallInstruction call = (CallInstruction) inst;
+                String var = getVar(call.getFirstArg());
+                if (var != null) {
+                    uses.add(var);
+                }
+                for (Element e : call.getListOfOperands()) {
+                    var = getVar(e);
+                    if (var != null) {
+                        uses.add(var);
+                    }
+                }
+                return uses;
+
             }
-            case GOTO: {
-                break;
-            }
-            case NOPER:  {
+            case NOPER -> {
                 SingleOpInstruction singleOpInstruction = (SingleOpInstruction) inst;
                 System.out.println("----NOPER------");
                 System.out.println(singleOpInstruction.getSingleOperand());
                 System.out.println("---------------");
-                String var = getVar(singleOpInstruction.getSingleOperand());
-                if (var != null) {
-                    uses.add(var);
-                }
+                addElement(singleOpInstruction.getSingleOperand(), uses);
+
                 return uses;
             }
-            case BRANCH: {
-                break;
+            case BRANCH -> {
+                CondBranchInstruction branch = (CondBranchInstruction) inst;
+                return computeUses(branch.getCondition());
             }
-            case RETURN: {
+            case RETURN -> {
                 ReturnInstruction returnInstruction = (ReturnInstruction) inst;
                 System.out.println("-----RETURN-------");
                 System.out.println(returnInstruction.getOperand());
                 System.out.println("------------------");
-                String var = getVar(returnInstruction.getOperand());
-                if (var != null) {
-                    uses.add(var);
-                }
+                addElement(returnInstruction.getOperand(),uses);
                 return uses;
             }
-            case GETFIELD: {
-                break;
+            case GETFIELD -> {
+                GetFieldInstruction getField = (GetFieldInstruction) inst;
+                addElement(getField.getFirstOperand(), uses);
+                return uses;
             }
-            case PUTFIELD: {
-                break;
+            case PUTFIELD -> {
+                PutFieldInstruction putField = (PutFieldInstruction) inst;
+                addElement(putField.getFirstOperand(), uses);
+                addElement(putField.getThirdOperand(), uses);
+                return uses;
             }
-            case UNARYOPER: {
-                break;
+            case UNARYOPER -> {
+                SingleOpInstruction unaryOp = (SingleOpInstruction) inst;
+                addElement(unaryOp.getSingleOperand(), uses);
+                return uses;
             }
-            case BINARYOPER: {
+            case BINARYOPER -> {
                 BinaryOpInstruction biInst = (BinaryOpInstruction) inst;
-                String var = getVar(biInst.getLeftOperand());
-                String var2 = getVar(biInst.getRightOperand());
                 System.out.println("-----BINOP-------");
                 System.out.println(biInst.getLeftOperand());
                 System.out.println(biInst.getRightOperand());
                 System.out.println("------------------");
-                if (var != null) {
-                    uses.add(var);
-                }
-                if (var2 != null) {
-                    uses.add(var2);
-                }
+                addElement(biInst.getLeftOperand(), uses);
+                addElement(biInst.getRightOperand(), uses);
                 return uses;
             }
-
-            default: {
-                break;
+            default -> {
             }
         }
         return uses;
     }
 
     public String getVar(Element element) {
-        String[] split = element.toString().split("\\.");
-        if (element.toString().contains("Operand"))
-            return split[0].substring(9);
+        if (element.toString().contains("Operand") && isLocal(element)) {
+            return ( (Operand) element ).getName();
+        }
         return null;
+    }
+
+    private boolean isLocal(Element element) {
+        List<Symbol> vars = this.symbolTable.getLocalVariables(method.getMethodName());
+        String name = ((Operand) element).getName();
+        if (vars != null)
+           for (Symbol s : vars)
+               if (s.getName().equals( name )) return true;
+        //check if it's temp register
+        String firstChar = name.substring(0, 1);
+        String remainingChars = name.substring(1);
+        return firstChar.equals("t") && remainingChars.matches("-?\\d+");
     }
 
 }
