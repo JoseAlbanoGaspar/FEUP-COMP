@@ -51,6 +51,8 @@ public class Launcher {
         OllirResult ollirResult = ollir.toOllir(semanticsResult);
         System.out.println(ollirResult.getOllirCode());
 
+        TestUtils.noErrors(ollirResult.getReports());
+
         // Jasmin
         Backend jasmin = new Backend();
         JasminResult jasminResult = jasmin.toJasmin(ollirResult);
