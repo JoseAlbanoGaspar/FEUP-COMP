@@ -53,6 +53,7 @@ public class Launcher {
         //jasmin
         Backend jasmin = new Backend();
         JasminResult jasminResult = jasmin.toJasmin(ollirResult);
+        System.out.println(jasminResult.getJasminCode());
 
         // ... add remaining stages
         TestUtils.runJasmin(jasminResult.getJasminCode());

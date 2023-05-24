@@ -367,8 +367,9 @@ public class Backend implements JasminBackend {
             } else {
                 methodCode.append("\tldc ").append(literalValue).append("\n");
             }
-        } else if (element.getType().getTypeOfElement() == ElementType.OBJECTREF &&
-                ((Operand) element).getName().equals("this")) {
+        } else if (element.getType().getTypeOfElement() == ElementType.THIS ||
+                (element.getType().getTypeOfElement() == ElementType.OBJECTREF &&
+                ((Operand) element).getName().equals("this"))) {
             methodCode.append("\taload_0\n");
         } else {
             int varIndex = localVariables.get(((Operand) element).getName());
