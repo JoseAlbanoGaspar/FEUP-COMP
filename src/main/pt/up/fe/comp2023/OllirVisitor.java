@@ -739,6 +739,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     newStr = new StringBuilder(newStr.substring(0, newStr.indexOf(" ")));
                 else newStr = new StringBuilder(newStr.substring(0, max(newStr.length() - 1, 0)));
             } else {
+                sub = jmmNode.getKind().equals("Compare") || jmmNode.getKind().equals("LogicalAnd") ? ".bool" : sub;
                 auxString.append(before)
                         .append("t").append(this.tempCnt)
                         .append(sub)
