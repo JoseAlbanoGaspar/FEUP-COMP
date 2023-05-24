@@ -1,6 +1,5 @@
 package pt.up.fe.comp2023;
 
-import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
@@ -13,12 +12,6 @@ import java.util.List;
 public class Analysis implements JmmAnalysis {
     @Override
     public JmmSemanticsResult semanticAnalysis(JmmParserResult jmmParserResult) {
-        // Check if there are parsing errors
-        for (Report report : jmmParserResult.getReports()) {
-            System.out.println(report.getMessage());
-        }
-        TestUtils.noErrors(jmmParserResult.getReports());
-
         // Generate Symbolic Table
         SymbolTableVisitor visitor = new SymbolTableVisitor();
         visitor.visit(jmmParserResult.getRootNode(), null);
