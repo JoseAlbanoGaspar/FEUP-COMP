@@ -194,7 +194,7 @@ public class LivenessAnalysis {
     }
 
     public String getVar(Element element) {
-        if (element.toString().contains("Operand") && isLocal(element)) {
+        if (element != null && element.toString().contains("Operand") && isLocal(element)) {
             return ( (Operand) element ).getName();
         }
         return null;
