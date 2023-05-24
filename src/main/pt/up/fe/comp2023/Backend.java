@@ -38,7 +38,7 @@ public class Backend implements JasminBackend {
     }
 
     private void buildSuper() {
-        this.superClass = superClass == null ? "java/lang/Object" : fullClassName(superClass);
+        this.superClass = ollirClass.getSuperClass() == null ? "java/lang/Object" : fullClassName(ollirClass.getSuperClass());
         jasminCode.append(".super ")
             .append(this.superClass)
             .append("\n");
