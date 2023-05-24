@@ -127,15 +127,10 @@ public class LivenessAnalysis {
         switch (inst.getInstType()) {
             case CALL -> {
                 CallInstruction call = (CallInstruction) inst;
-                String var = getVar(call.getFirstArg());
-                if (var != null) {
-                    uses.add(var);
-                }
+                addElement(call.getFirstArg(), uses);
+
                 for (Element e : call.getListOfOperands()) {
-                    var = getVar(e);
-                    if (var != null) {
-                        uses.add(var);
-                    }
+                    addElement(e, uses);
                 }
                 return uses;
 
@@ -173,8 +168,8 @@ public class LivenessAnalysis {
                 return uses;
             }
             case UNARYOPER -> {
-                SingleOpInstruction unaryOp = (SingleOpInstruction) inst;
-                addElement(unaryOp.getSingleOperand(), uses);
+                UnaryOpInstruction unaryOp = (UnaryOpInstruction) inst;
+                addElement(unaryOp.getOperand(), uses);
                 return uses;
             }
             case BINARYOPER -> {

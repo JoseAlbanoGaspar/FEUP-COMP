@@ -28,8 +28,6 @@ public class Optimizer {
         whileInfo.visit(root);
         List<Set<String>> whileData = whileInfo.getWhileData();
         List<List<Set<String>>> ifData = whileInfo.getIfData();
-        System.out.println(whileData);
-        System.out.println(ifData.get(0));
         ASToptimization astOptimizerVisitor = new ASToptimization(symbolTable, whileData, ifData);
         FoldingVisitor foldingVisitor = new FoldingVisitor();
         do {
