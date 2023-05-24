@@ -354,7 +354,6 @@ public class Backend implements JasminBackend {
         stackSize.decreaseSize(1);
     }
     private void buildLoad(StringBuilder methodCode, Element element, Map<String, Integer> localVariables) {
-        System.out.println(element.getType().getTypeOfElement());
         if (element.isLiteral()) {
             int literalValue = Integer.parseInt(((LiteralElement) element).getLiteral());
             if (literalValue == -1) {
