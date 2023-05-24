@@ -462,7 +462,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithThis(JmmNode jmmNode, String s) {
-        return "this";
+
+        return "this."+symbolTable.getClassName();
     }
 
     private String dealWithIdentifier(JmmNode jmmNode, String s) {
