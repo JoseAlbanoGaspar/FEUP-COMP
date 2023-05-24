@@ -4,6 +4,7 @@ import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.jasmin.JasminBackend;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
+import pt.up.fe.comp2023.backend.StackSize;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -89,6 +90,7 @@ public class Backend implements JasminBackend {
         methodCode.append("\t.limit stack 99\n")
             .append("\t.limit locals 99\n");
 
+        StackSize stackSize = new StackSize();
         AtomicInteger nLocalVars = new AtomicInteger(0);
         Map<String, Integer> localVars = new HashMap<>();
         for (Element elem : method.getParams()) {
@@ -100,7 +102,7 @@ public class Backend implements JasminBackend {
                 methodCode.append(label)
                         .append(":\n");
             }
-            buildInstruction(methodCode, instruction, nLocalVars, localVars, true);
+            buildInstruction(methodCode, instruction, nLocalVars, localVars, stackSize, true);
         }
 
         // If method does not contain return instruction,
@@ -110,7 +112,8 @@ public class Backend implements JasminBackend {
         }
         methodCode.append(".end method\n");
 
-        jasminCode.append(methodCode.toString().replace("limit locals 99", "limit locals " + (nLocalVars.intValue() + 1)));
+        jasminCode.append(methodCode.toString().replace("limit locals 99", "limit locals " + (nLocalVars.intValue() + 1))
+                .replace("limit stack 99", "limit stack " + stackSize.getMaxSize()));
     }
 
     private void buildConstructor() {
@@ -121,23 +124,23 @@ public class Backend implements JasminBackend {
             .append(".end method\n");
     }
 
-    private void buildInstruction(StringBuilder methodCode, Instruction instruction, AtomicInteger nLocalVars, Map<String, Integer> localVars, Boolean pop) {
+    private void buildInstruction(StringBuilder methodCode, Instruction instruction, AtomicInteger nLocalVars, Map<String, Integer> localVars, StackSize stackSize, Boolean pop) {
         instruction.show();
         switch (instruction.getInstType()) {
-            case ASSIGN -> buildAssignInstruction(methodCode, (AssignInstruction) instruction, nLocalVars, localVars);
-            case CALL -> buildCallInstruction(methodCode, (CallInstruction) instruction, localVars, pop);
+            case ASSIGN -> buildAssignInstruction(methodCode, (AssignInstruction) instruction, nLocalVars, localVars, stackSize);
+            case CALL -> buildCallInstruction(methodCode, (CallInstruction) instruction, localVars, stackSize, pop);
             case GOTO -> buildGotoInstruction(methodCode, (GotoInstruction) instruction);
-            case NOPER -> buildNoperInstruction(methodCode, (SingleOpInstruction) instruction, localVars);
-            case BRANCH -> buildBranchInstruction(methodCode, (CondBranchInstruction) instruction, nLocalVars, localVars);
-            case RETURN -> buildReturnInstruction(methodCode, (ReturnInstruction) instruction, localVars);
-            case GETFIELD -> buildGetFieldInstruction(methodCode, (GetFieldInstruction) instruction, localVars);
-            case PUTFIELD -> buildPutFieldInstruction(methodCode, (PutFieldInstruction) instruction, localVars);
-            case UNARYOPER -> buildUnaryOperInstruction(methodCode, (UnaryOpInstruction) instruction, localVars);
-            case BINARYOPER -> buildBinaryOperInstruction(methodCode, (BinaryOpInstruction) instruction, localVars);
+            case NOPER -> buildNoperInstruction(methodCode, (SingleOpInstruction) instruction, localVars, stackSize);
+            case BRANCH -> buildBranchInstruction(methodCode, (CondBranchInstruction) instruction, nLocalVars, localVars, stackSize);
+            case RETURN -> buildReturnInstruction(methodCode, (ReturnInstruction) instruction, localVars, stackSize);
+            case GETFIELD -> buildGetFieldInstruction(methodCode, (GetFieldInstruction) instruction, localVars, stackSize);
+            case PUTFIELD -> buildPutFieldInstruction(methodCode, (PutFieldInstruction) instruction, localVars, stackSize);
+            case UNARYOPER -> buildUnaryOperInstruction(methodCode, (UnaryOpInstruction) instruction, localVars, stackSize);
+            case BINARYOPER -> buildBinaryOperInstruction(methodCode, (BinaryOpInstruction) instruction, localVars, stackSize);
         }
     }
 
-    private void buildAssignInstruction(StringBuilder methodCode, AssignInstruction instruction, AtomicInteger currVars, Map<String, Integer> localVars) {
+    private void buildAssignInstruction(StringBuilder methodCode, AssignInstruction instruction, AtomicInteger currVars, Map<String, Integer> localVars, StackSize stackSize) {
         Integer variable = localVars.get(((Operand) instruction.getDest()).getName());
         if (variable == null) { // variable not previously used
             currVars.set(currVars.intValue() + 1);
@@ -146,19 +149,27 @@ public class Backend implements JasminBackend {
         // execute right side of assignment,
         // this way the resulting value should
         // be at the top of the stack
-        buildInstruction(methodCode, instruction.getRhs(), currVars, localVars, false);
+        buildInstruction(methodCode, instruction.getRhs(), currVars, localVars, stackSize, false);
 
         // store top of the stack in the local variable
         buildStore(methodCode, typePrefix(instruction.getDest().getType()), localVars, ((Operand) instruction.getDest()).getName());
+        stackSize.decreaseSize(1);
     }
-    private void buildCallInstruction(StringBuilder methodCode, CallInstruction instruction, Map<String, Integer> localVariables, Boolean pop) {
+    private void buildCallInstruction(StringBuilder methodCode, CallInstruction instruction, Map<String, Integer> localVariables, StackSize stackSize, Boolean pop) {
         switch (instruction.getInvocationType()) {
-            case NEW -> methodCode.append("\tnew ")
-                    .append(fullClassName((Operand) instruction.getFirstArg())).append("\n");
+            case NEW -> {
+                methodCode.append("\tnew ")
+                        .append(fullClassName((Operand) instruction.getFirstArg())).append("\n");
+                stackSize.increaseSize(1);
+            }
             case invokespecial -> {
                 buildLoad(methodCode, instruction.getFirstArg(), localVariables);
+                stackSize.increaseSize(1);
+                int decreaseSize = 1;
                 for (Element elem : instruction.getListOfOperands()) {
                     buildLoad(methodCode, elem, localVariables);
+                    stackSize.increaseSize(1);
+                    decreaseSize++;
                 }
                 methodCode.append("\tinvokespecial ")
                         .append(fullClassName(((Operand) instruction.getFirstArg()))).append("/")
@@ -170,16 +181,23 @@ public class Backend implements JasminBackend {
                 methodCode.append(")")
                         .append(typeToString(instruction.getReturnType()))
                         .append("\n");
+                stackSize.decreaseSize(decreaseSize);
+                stackSize.increaseSize(1);
 
                 // deal with pop
                 if (pop && instruction.getReturnType().getTypeOfElement() != ElementType.VOID) {
                     methodCode.append("\tpop\n");
+                    stackSize.decreaseSize(1);
                 }
             }
             case invokevirtual -> {
                 buildLoad(methodCode, instruction.getFirstArg(), localVariables);
+                stackSize.increaseSize(1);
+                int decreaseSize = 1;
                 for (Element elem : instruction.getListOfOperands()) {
                     buildLoad(methodCode, elem, localVariables);
+                    stackSize.increaseSize(1);
+                    decreaseSize++;
                 }
                 methodCode.append("\tinvokevirtual ")
                         .append(fullClassName(((Operand) instruction.getFirstArg()))).append("/")
@@ -191,15 +209,21 @@ public class Backend implements JasminBackend {
                 methodCode.append(")")
                         .append(typeToString(instruction.getReturnType()))
                         .append("\n");
+                stackSize.decreaseSize(decreaseSize);
+                stackSize.increaseSize(1);
 
                 // deal with pop
                 if (pop && instruction.getReturnType().getTypeOfElement() != ElementType.VOID) {
                     methodCode.append("\tpop\n");
+                    stackSize.decreaseSize(1);
                 }
             }
             case invokestatic -> {
+                int decreaseSize = 0;
                 for (Element elem : instruction.getListOfOperands()) {
                     buildLoad(methodCode, elem, localVariables);
+                    stackSize.increaseSize(1);
+                    decreaseSize++;
                 }
                 methodCode.append("\tinvokestatic ")
                         .append(fullClassName(((Operand) instruction.getFirstArg()))).append("/")
@@ -211,15 +235,21 @@ public class Backend implements JasminBackend {
                 methodCode.append(")")
                         .append(typeToString(instruction.getReturnType()))
                         .append("\n");
+                stackSize.decreaseSize(decreaseSize);
+                stackSize.increaseSize(1);
 
                 // deal with pop
                 if (pop && instruction.getReturnType().getTypeOfElement() != ElementType.VOID) {
                     methodCode.append("\tpop\n");
+                    stackSize.decreaseSize(1);
                 }
             }
             case invokeinterface -> {
+                int decreaseSize = 0;
                 for (Element elem : instruction.getListOfOperands()) {
                     buildLoad(methodCode, elem, localVariables);
+                    stackSize.increaseSize(1);
+                    decreaseSize++;
                 }
                 methodCode.append("\tinvokeinterface ")
                         .append(fullClassName(((Operand) instruction.getFirstArg()))).append("/")
@@ -231,10 +261,13 @@ public class Backend implements JasminBackend {
                 methodCode.append(")")
                         .append(typeToString(instruction.getReturnType()))
                         .append("\n");
+                stackSize.decreaseSize(decreaseSize);
+                stackSize.increaseSize(1);
 
                 // deal with pop
                 if (pop && instruction.getReturnType().getTypeOfElement() != ElementType.VOID) {
                     methodCode.append("\tpop\n");
+                    stackSize.decreaseSize(1);
                 }
             }
         }
@@ -244,18 +277,20 @@ public class Backend implements JasminBackend {
                 .append(instruction.getLabel())
                 .append("\n");
     }
-    private void buildNoperInstruction(StringBuilder methodCode, SingleOpInstruction instruction, Map<String, Integer> localVariables) {
+    private void buildNoperInstruction(StringBuilder methodCode, SingleOpInstruction instruction, Map<String, Integer> localVariables, StackSize stackSize) {
         buildLoad(methodCode, instruction.getSingleOperand(), localVariables);
+        stackSize.increaseSize(1);
     }
-    private void buildBranchInstruction(StringBuilder methodCode, CondBranchInstruction instruction, AtomicInteger currVars, Map<String, Integer> localVars) {
-        buildInstruction(methodCode, instruction.getCondition(), currVars, localVars, false);
+    private void buildBranchInstruction(StringBuilder methodCode, CondBranchInstruction instruction, AtomicInteger currVars, Map<String, Integer> localVars, StackSize stackSize) {
+        buildInstruction(methodCode, instruction.getCondition(), currVars, localVars, stackSize, false);
         methodCode.append("\tifne ")
                 .append(instruction.getLabel())
                 .append("\n");
     }
-    private void buildReturnInstruction(StringBuilder methodCode, ReturnInstruction instruction, Map<String, Integer> localVariables) {
+    private void buildReturnInstruction(StringBuilder methodCode, ReturnInstruction instruction, Map<String, Integer> localVariables, StackSize stackSize) {
         if (instruction.hasReturnValue()) {
             buildLoad(methodCode, instruction.getOperand(), localVariables);
+            stackSize.increaseSize(1);
             methodCode.append("\t")
                     .append(typePrefix(instruction.getOperand().getType()));
         } else {
@@ -263,26 +298,32 @@ public class Backend implements JasminBackend {
         }
         methodCode.append("return\n");
     }
-    private void buildGetFieldInstruction(StringBuilder methodCode, GetFieldInstruction instruction, Map<String, Integer> localVariables) {
+    private void buildGetFieldInstruction(StringBuilder methodCode, GetFieldInstruction instruction, Map<String, Integer> localVariables, StackSize stackSize) {
         buildLoad(methodCode, instruction.getFirstOperand(), localVariables);
+        stackSize.increaseSize(1);
 
         methodCode.append("\tgetfield ")
                 .append(fullClassName(((Operand) instruction.getFirstOperand()).getName()))
                 .append("/").append(((Operand) instruction.getSecondOperand()).getName()).append(" ")
                 .append(typeToString(instruction.getSecondOperand().getType())).append("\n");
+        stackSize.decreaseSize(1);
+        stackSize.increaseSize(1);
     }
-    private void buildPutFieldInstruction(StringBuilder methodCode, PutFieldInstruction instruction, Map<String, Integer> localVariables) {
+    private void buildPutFieldInstruction(StringBuilder methodCode, PutFieldInstruction instruction, Map<String, Integer> localVariables, StackSize stackSize) {
         buildLoad(methodCode, instruction.getFirstOperand(), localVariables);
         buildLoad(methodCode, instruction.getThirdOperand(), localVariables);
+        stackSize.increaseSize(2);
 
         methodCode.append("\tputfield ")
                 .append(fullClassName(((Operand) instruction.getFirstOperand()).getName()))
                 .append("/").append(((Operand) instruction.getSecondOperand()).getName()).append(" ")
                 .append(typeToString(instruction.getSecondOperand().getType())).append("\n");
+        stackSize.decreaseSize(2);
     }
-    private void buildUnaryOperInstruction(StringBuilder methodCode, UnaryOpInstruction instruction, Map<String, Integer> localVariables) {
+    private void buildUnaryOperInstruction(StringBuilder methodCode, UnaryOpInstruction instruction, Map<String, Integer> localVariables, StackSize stackSize) {
         if (instruction.getOperation().getOpType() == OperationType.NOTB) { // Only supported unary operation
             buildLoad(methodCode, instruction.getOperand(), localVariables);
+            stackSize.increaseSize(1);
             // negate the boolean value by XORing it with 1
             methodCode.append("\ticonst_1\n")
                     .append("\tixor\n");
@@ -290,9 +331,10 @@ public class Backend implements JasminBackend {
             throw new IllegalArgumentException("Operation type " + instruction.getOperation().getOpType() + " is not supported for unary operation");
         }
     }
-    private void buildBinaryOperInstruction(StringBuilder methodCode, BinaryOpInstruction instruction, Map<String, Integer> localVariables) {
+    private void buildBinaryOperInstruction(StringBuilder methodCode, BinaryOpInstruction instruction, Map<String, Integer> localVariables, StackSize stackSize) {
         buildLoad(methodCode, instruction.getLeftOperand(), localVariables);
         buildLoad(methodCode, instruction.getRightOperand(), localVariables);
+        stackSize.increaseSize(2);
         switch (instruction.getOperation().getOpType()) {
             case MUL -> methodCode.append("\timul\n");
             case DIV -> methodCode.append("\tidiv\n");
@@ -309,6 +351,7 @@ public class Backend implements JasminBackend {
             }
             case ANDB -> methodCode.append("\tiand\n");
         }
+        stackSize.decreaseSize(1);
     }
     private void buildLoad(StringBuilder methodCode, Element element, Map<String, Integer> localVariables) {
         if (element.isLiteral()) {
