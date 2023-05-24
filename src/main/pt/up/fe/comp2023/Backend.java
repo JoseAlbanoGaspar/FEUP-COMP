@@ -354,6 +354,7 @@ public class Backend implements JasminBackend {
         stackSize.decreaseSize(1);
     }
     private void buildLoad(StringBuilder methodCode, Element element, Map<String, Integer> localVariables) {
+        System.out.println(element.getType().getTypeOfElement());
         if (element.isLiteral()) {
             int literalValue = Integer.parseInt(((LiteralElement) element).getLiteral());
             if (literalValue == -1) {
@@ -367,7 +368,8 @@ public class Backend implements JasminBackend {
             } else {
                 methodCode.append("\tldc ").append(literalValue).append("\n");
             }
-        } else if (element.getType().getTypeOfElement() == ElementType.THIS) {
+        } else if (element.getType().getTypeOfElement() == ElementType.OBJECTREF &&
+                ((Operand) element).getName().equals("this")) {
             methodCode.append("\taload_0\n");
         } else {
             int varIndex = localVariables.get(((Operand) element).getName());
