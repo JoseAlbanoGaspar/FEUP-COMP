@@ -457,7 +457,7 @@ public class Backend implements JasminBackend {
             // check if rhs contains the dest variable and a literal
             if (!rhs.getLeftOperand().isLiteral() && ((Operand) rhs.getLeftOperand()).getName().equals(((Operand) instruction.getDest()).getName()))
                 return rhs.getRightOperand().isLiteral();
-            else if (!rhs.getRightOperand().isLiteral() && ((Operand) rhs.getRightOperand()).getName().equals(((Operand) instruction.getDest()).getName()))
+            else if (rhs.getOperation().getOpType() == OperationType.ADD && !rhs.getRightOperand().isLiteral() && ((Operand) rhs.getRightOperand()).getName().equals(((Operand) instruction.getDest()).getName()))
                 return rhs.getLeftOperand().isLiteral();
             else return false;
         } else return false;
