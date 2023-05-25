@@ -4,6 +4,7 @@ import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.jasmin.JasminBackend;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
+import pt.up.fe.comp2023.backend.RegisterHandler;
 import pt.up.fe.comp2023.backend.StackSize;
 
 import java.util.HashMap;
@@ -91,18 +92,16 @@ public class Backend implements JasminBackend {
             .append("\t.limit locals 99\n");
 
         StackSize stackSize = new StackSize();
-        AtomicInteger nLocalVars = new AtomicInteger(0);
-        Map<String, Integer> localVars = new HashMap<>();
+        RegisterHandler registerHandler = new RegisterHandler(method.getVarTable(), method.isStaticMethod());
         for (Element elem : method.getParams()) {
-            nLocalVars.set(nLocalVars.intValue() + 1);
-            localVars.put(((Operand) elem).getName(), nLocalVars.intValue());
+            registerHandler.loadVariable(((Operand) elem).getName());
         }
         for (Instruction instruction : method.getInstructions()) {
             for (String label : method.getLabels(instruction)) {
                 methodCode.append(label)
                         .append(":\n");
             }
-            buildInstruction(methodCode, instruction, nLocalVars, localVars, stackSize, true);
+            buildInstruction(methodCode, instruction, registerHandler, stackSize, true);
         }
 
         // If method does not contain return instruction,
@@ -112,7 +111,7 @@ public class Backend implements JasminBackend {
         }
         methodCode.append(".end method\n");
 
-        jasminCode.append(methodCode.toString().replace("limit locals 99", "limit locals " + (nLocalVars.intValue() + 1))
+        jasminCode.append(methodCode.toString().replace("limit locals 99", "limit locals " + (registerHandler.getLocalLimits()))
                 .replace("limit stack 99", "limit stack " + stackSize.getMaxSize()));
     }
 
@@ -124,28 +123,24 @@ public class Backend implements JasminBackend {
             .append(".end method\n");
     }
 
-    private void buildInstruction(StringBuilder methodCode, Instruction instruction, AtomicInteger nLocalVars, Map<String, Integer> localVars, StackSize stackSize, Boolean pop) {
+    private void buildInstruction(StringBuilder methodCode, Instruction instruction, RegisterHandler registerHandler, StackSize stackSize, Boolean pop) {
         instruction.show();
         switch (instruction.getInstType()) {
-            case ASSIGN -> buildAssignInstruction(methodCode, (AssignInstruction) instruction, nLocalVars, localVars, stackSize);
-            case CALL -> buildCallInstruction(methodCode, (CallInstruction) instruction, localVars, stackSize, pop);
+            case ASSIGN -> buildAssignInstruction(methodCode, (AssignInstruction) instruction, registerHandler, stackSize);
+            case CALL -> buildCallInstruction(methodCode, (CallInstruction) instruction, registerHandler, stackSize, pop);
             case GOTO -> buildGotoInstruction(methodCode, (GotoInstruction) instruction);
-            case NOPER -> buildNoperInstruction(methodCode, (SingleOpInstruction) instruction, localVars, stackSize);
-            case BRANCH -> buildBranchInstruction(methodCode, (CondBranchInstruction) instruction, nLocalVars, localVars, stackSize);
-            case RETURN -> buildReturnInstruction(methodCode, (ReturnInstruction) instruction, localVars, stackSize);
-            case GETFIELD -> buildGetFieldInstruction(methodCode, (GetFieldInstruction) instruction, localVars, stackSize);
-            case PUTFIELD -> buildPutFieldInstruction(methodCode, (PutFieldInstruction) instruction, localVars, stackSize);
-            case UNARYOPER -> buildUnaryOperInstruction(methodCode, (UnaryOpInstruction) instruction, localVars, stackSize);
-            case BINARYOPER -> buildBinaryOperInstruction(methodCode, (BinaryOpInstruction) instruction, localVars, stackSize);
+            case NOPER -> buildNoperInstruction(methodCode, (SingleOpInstruction) instruction, registerHandler, stackSize);
+            case BRANCH -> buildBranchInstruction(methodCode, (CondBranchInstruction) instruction, registerHandler, stackSize);
+            case RETURN -> buildReturnInstruction(methodCode, (ReturnInstruction) instruction, registerHandler, stackSize);
+            case GETFIELD -> buildGetFieldInstruction(methodCode, (GetFieldInstruction) instruction, registerHandler, stackSize);
+            case PUTFIELD -> buildPutFieldInstruction(methodCode, (PutFieldInstruction) instruction, registerHandler, stackSize);
+            case UNARYOPER -> buildUnaryOperInstruction(methodCode, (UnaryOpInstruction) instruction, registerHandler, stackSize);
+            case BINARYOPER -> buildBinaryOperInstruction(methodCode, (BinaryOpInstruction) instruction, registerHandler, stackSize);
         }
     }
 
-    private void buildAssignInstruction(StringBuilder methodCode, AssignInstruction instruction, AtomicInteger currVars, Map<String, Integer> localVars, StackSize stackSize) {
-        Integer variable = localVars.get(((Operand) instruction.getDest()).getName());
-        if (variable == null) { // variable not previously used
-            currVars.set(currVars.intValue() + 1);
-            localVars.put(((Operand) instruction.getDest()).getName(), currVars.intValue());
-        }
+    private void buildAssignInstruction(StringBuilder methodCode, AssignInstruction instruction, RegisterHandler registerHandler, StackSize stackSize) {
+        Integer variable = registerHandler.getRegisterOf(((Operand) instruction.getDest()).getName());
 
         // checking for iinc
         if (checkIinc(instruction)) {
@@ -160,13 +155,13 @@ public class Backend implements JasminBackend {
         // execute right side of assignment,
         // this way the resulting value should
         // be at the top of the stack
-        buildInstruction(methodCode, instruction.getRhs(), currVars, localVars, stackSize, false);
+        buildInstruction(methodCode, instruction.getRhs(), registerHandler, stackSize, false);
 
         // store top of the stack in the local variable
-        buildStore(methodCode, typePrefix(instruction.getDest().getType()), localVars, ((Operand) instruction.getDest()).getName());
+        buildStore(methodCode, typePrefix(instruction.getDest().getType()), registerHandler, ((Operand) instruction.getDest()).getName());
         stackSize.decreaseSize(1);
     }
-    private void buildCallInstruction(StringBuilder methodCode, CallInstruction instruction, Map<String, Integer> localVariables, StackSize stackSize, Boolean pop) {
+    private void buildCallInstruction(StringBuilder methodCode, CallInstruction instruction, RegisterHandler registerHandler, StackSize stackSize, Boolean pop) {
         switch (instruction.getInvocationType()) {
             case NEW -> {
                 methodCode.append("\tnew ")
@@ -174,11 +169,11 @@ public class Backend implements JasminBackend {
                 stackSize.increaseSize(1);
             }
             case invokespecial -> {
-                buildLoad(methodCode, instruction.getFirstArg(), localVariables);
+                buildLoad(methodCode, instruction.getFirstArg(), registerHandler);
                 stackSize.increaseSize(1);
                 int decreaseSize = 1;
                 for (Element elem : instruction.getListOfOperands()) {
-                    buildLoad(methodCode, elem, localVariables);
+                    buildLoad(methodCode, elem, registerHandler);
                     stackSize.increaseSize(1);
                     decreaseSize++;
                 }
@@ -202,11 +197,11 @@ public class Backend implements JasminBackend {
                 }
             }
             case invokevirtual -> {
-                buildLoad(methodCode, instruction.getFirstArg(), localVariables);
+                buildLoad(methodCode, instruction.getFirstArg(), registerHandler);
                 stackSize.increaseSize(1);
                 int decreaseSize = 1;
                 for (Element elem : instruction.getListOfOperands()) {
-                    buildLoad(methodCode, elem, localVariables);
+                    buildLoad(methodCode, elem, registerHandler);
                     stackSize.increaseSize(1);
                     decreaseSize++;
                 }
@@ -232,7 +227,7 @@ public class Backend implements JasminBackend {
             case invokestatic -> {
                 int decreaseSize = 0;
                 for (Element elem : instruction.getListOfOperands()) {
-                    buildLoad(methodCode, elem, localVariables);
+                    buildLoad(methodCode, elem, registerHandler);
                     stackSize.increaseSize(1);
                     decreaseSize++;
                 }
@@ -258,7 +253,7 @@ public class Backend implements JasminBackend {
             case invokeinterface -> {
                 int decreaseSize = 0;
                 for (Element elem : instruction.getListOfOperands()) {
-                    buildLoad(methodCode, elem, localVariables);
+                    buildLoad(methodCode, elem, registerHandler);
                     stackSize.increaseSize(1);
                     decreaseSize++;
                 }
@@ -288,19 +283,19 @@ public class Backend implements JasminBackend {
                 .append(instruction.getLabel())
                 .append("\n");
     }
-    private void buildNoperInstruction(StringBuilder methodCode, SingleOpInstruction instruction, Map<String, Integer> localVariables, StackSize stackSize) {
-        buildLoad(methodCode, instruction.getSingleOperand(), localVariables);
+    private void buildNoperInstruction(StringBuilder methodCode, SingleOpInstruction instruction, RegisterHandler registerHandler, StackSize stackSize) {
+        buildLoad(methodCode, instruction.getSingleOperand(), registerHandler);
         stackSize.increaseSize(1);
     }
-    private void buildBranchInstruction(StringBuilder methodCode, CondBranchInstruction instruction, AtomicInteger currVars, Map<String, Integer> localVars, StackSize stackSize) {
-        buildInstruction(methodCode, instruction.getCondition(), currVars, localVars, stackSize, false);
+    private void buildBranchInstruction(StringBuilder methodCode, CondBranchInstruction instruction, RegisterHandler registerHandler, StackSize stackSize) {
+        buildInstruction(methodCode, instruction.getCondition(), registerHandler, stackSize, false);
         methodCode.append("\tifne ")
                 .append(instruction.getLabel())
                 .append("\n");
     }
-    private void buildReturnInstruction(StringBuilder methodCode, ReturnInstruction instruction, Map<String, Integer> localVariables, StackSize stackSize) {
+    private void buildReturnInstruction(StringBuilder methodCode, ReturnInstruction instruction, RegisterHandler registerHandler, StackSize stackSize) {
         if (instruction.hasReturnValue()) {
-            buildLoad(methodCode, instruction.getOperand(), localVariables);
+            buildLoad(methodCode, instruction.getOperand(), registerHandler);
             stackSize.increaseSize(1);
             methodCode.append("\t")
                     .append(typePrefix(instruction.getOperand().getType()));
@@ -309,8 +304,8 @@ public class Backend implements JasminBackend {
         }
         methodCode.append("return\n");
     }
-    private void buildGetFieldInstruction(StringBuilder methodCode, GetFieldInstruction instruction, Map<String, Integer> localVariables, StackSize stackSize) {
-        buildLoad(methodCode, instruction.getFirstOperand(), localVariables);
+    private void buildGetFieldInstruction(StringBuilder methodCode, GetFieldInstruction instruction, RegisterHandler registerHandler, StackSize stackSize) {
+        buildLoad(methodCode, instruction.getFirstOperand(), registerHandler);
         stackSize.increaseSize(1);
 
         methodCode.append("\tgetfield ")
@@ -320,9 +315,9 @@ public class Backend implements JasminBackend {
         stackSize.decreaseSize(1);
         stackSize.increaseSize(1);
     }
-    private void buildPutFieldInstruction(StringBuilder methodCode, PutFieldInstruction instruction, Map<String, Integer> localVariables, StackSize stackSize) {
-        buildLoad(methodCode, instruction.getFirstOperand(), localVariables);
-        buildLoad(methodCode, instruction.getThirdOperand(), localVariables);
+    private void buildPutFieldInstruction(StringBuilder methodCode, PutFieldInstruction instruction, RegisterHandler registerHandler, StackSize stackSize) {
+        buildLoad(methodCode, instruction.getFirstOperand(), registerHandler);
+        buildLoad(methodCode, instruction.getThirdOperand(), registerHandler);
         stackSize.increaseSize(2);
 
         methodCode.append("\tputfield ")
@@ -331,9 +326,9 @@ public class Backend implements JasminBackend {
                 .append(typeToString(instruction.getSecondOperand().getType())).append("\n");
         stackSize.decreaseSize(2);
     }
-    private void buildUnaryOperInstruction(StringBuilder methodCode, UnaryOpInstruction instruction, Map<String, Integer> localVariables, StackSize stackSize) {
+    private void buildUnaryOperInstruction(StringBuilder methodCode, UnaryOpInstruction instruction, RegisterHandler registerHandler, StackSize stackSize) {
         if (instruction.getOperation().getOpType() == OperationType.NOTB) { // Only supported unary operation
-            buildLoad(methodCode, instruction.getOperand(), localVariables);
+            buildLoad(methodCode, instruction.getOperand(), registerHandler);
             stackSize.increaseSize(1);
             // negate the boolean value by XORing it with 1
             methodCode.append("\ticonst_1\n")
@@ -342,9 +337,9 @@ public class Backend implements JasminBackend {
             throw new IllegalArgumentException("Operation type " + instruction.getOperation().getOpType() + " is not supported for unary operation");
         }
     }
-    private void buildBinaryOperInstruction(StringBuilder methodCode, BinaryOpInstruction instruction, Map<String, Integer> localVariables, StackSize stackSize) {
-        buildLoad(methodCode, instruction.getLeftOperand(), localVariables);
-        buildLoad(methodCode, instruction.getRightOperand(), localVariables);
+    private void buildBinaryOperInstruction(StringBuilder methodCode, BinaryOpInstruction instruction, RegisterHandler registerHandler, StackSize stackSize) {
+        buildLoad(methodCode, instruction.getLeftOperand(), registerHandler);
+        buildLoad(methodCode, instruction.getRightOperand(), registerHandler);
         stackSize.increaseSize(2);
         switch (instruction.getOperation().getOpType()) {
             case MUL -> methodCode.append("\timul\n");
@@ -364,7 +359,7 @@ public class Backend implements JasminBackend {
         }
         stackSize.decreaseSize(1);
     }
-    private void buildLoad(StringBuilder methodCode, Element element, Map<String, Integer> localVariables) {
+    private void buildLoad(StringBuilder methodCode, Element element, RegisterHandler registerHandler) {
         if (element.isLiteral()) {
             int literalValue = Integer.parseInt(((LiteralElement) element).getLiteral());
             if (literalValue == -1) {
@@ -383,7 +378,7 @@ public class Backend implements JasminBackend {
                 ((Operand) element).getName().equals("this"))) {
             methodCode.append("\taload_0\n");
         } else {
-            int varIndex = localVariables.get(((Operand) element).getName());
+            int varIndex = registerHandler.getRegisterOf(((Operand) element).getName());
             if (varIndex >= 0 && varIndex <= 3) {
                 methodCode.append("\t")
                         .append(typePrefix(element.getType()))
@@ -399,8 +394,8 @@ public class Backend implements JasminBackend {
     }
 
 
-    private void buildStore(StringBuilder methodCode, String prefix, Map<String, Integer> localVariables, String variableName) {
-        int varIndex = localVariables.get(variableName);
+    private void buildStore(StringBuilder methodCode, String prefix, RegisterHandler registerHandler, String variableName) {
+        int varIndex = registerHandler.getRegisterOf(variableName);
         if (varIndex >= 0 && varIndex <= 3) {
             // use the low-cost instruction if the variable index is between 0 and 3
             methodCode.append("\t").append(prefix).append("store_").append(varIndex).append("\n");
