@@ -146,17 +146,6 @@ public class Backend implements JasminBackend {
             currVars.set(currVars.intValue() + 1);
             localVars.put(((Operand) instruction.getDest()).getName(), currVars.intValue());
         }
-
-        // checking for iinc
-        if (checkIinc(instruction)) {
-            methodCode.append("\tiinc ")
-                    .append(variable)
-                    .append(" ")
-                    .append(getIinc(instruction))
-                    .append("\n");
-            return;
-        }
-
         // execute right side of assignment,
         // this way the resulting value should
         // be at the top of the stack
@@ -444,31 +433,5 @@ public class Backend implements JasminBackend {
             case INT32, BOOLEAN -> "i";
             default -> "a";
         };
-    }
-
-    private boolean checkIinc(AssignInstruction instruction) {
-        if (instruction.getRhs().getInstType() == InstructionType.BINARYOPER) {
-
-            BinaryOpInstruction rhs = (BinaryOpInstruction) instruction.getRhs();
-
-            // check if operation is either an add or sub
-            if (rhs.getOperation().getOpType() != OperationType.ADD && rhs.getOperation().getOpType() != OperationType.SUB) return false;
-
-            // check if rhs contains the dest variable and a literal
-            if (!rhs.getLeftOperand().isLiteral() && ((Operand) rhs.getLeftOperand()).getName().equals(((Operand) instruction.getDest()).getName()))
-                return rhs.getRightOperand().isLiteral() && (Integer.parseInt(((LiteralElement) rhs.getRightOperand()).getLiteral()) >> 15) == 0;
-            else if (rhs.getOperation().getOpType() == OperationType.ADD && !rhs.getRightOperand().isLiteral() && ((Operand) rhs.getRightOperand()).getName().equals(((Operand) instruction.getDest()).getName()))
-                return rhs.getLeftOperand().isLiteral() && (Integer.parseInt(((LiteralElement) rhs.getLeftOperand()).getLiteral()) >> 15) == 0;
-            else return false;
-        } else return false;
-    }
-
-    private String getIinc(AssignInstruction instruction) {
-        BinaryOpInstruction rhs = (BinaryOpInstruction) instruction.getRhs();
-        String sign = rhs.getOperation().getOpType() == OperationType.ADD ? "" : "-";
-        if (!rhs.getLeftOperand().isLiteral() && ((Operand) rhs.getLeftOperand()).getName().equals(((Operand) instruction.getDest()).getName()))
-            return sign + ((LiteralElement) rhs.getRightOperand()).getLiteral();
-        else
-            return sign + ((LiteralElement) rhs.getLeftOperand()).getLiteral();
     }
 }
