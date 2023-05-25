@@ -280,6 +280,11 @@ public class Backend implements JasminBackend {
                     stackSize.decreaseSize(1);
                 }
             }
+            case arraylength -> {
+                buildLoad(methodCode, instruction.getFirstArg(), registerHandler);
+                methodCode.append("\tarraylength\n");
+                stackSize.increaseSize(1);
+            }
         }
     }
     private void buildGotoInstruction(StringBuilder methodCode, GotoInstruction instruction) {
