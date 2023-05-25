@@ -466,7 +466,7 @@ public class Backend implements JasminBackend {
     private String getIinc(AssignInstruction instruction) {
         BinaryOpInstruction rhs = (BinaryOpInstruction) instruction.getRhs();
         String sign = rhs.getOperation().getOpType() == OperationType.ADD ? "" : "-";
-        if (((Operand) rhs.getLeftOperand()).getName().equals(((Operand) instruction.getDest()).getName()))
+        if (!rhs.getLeftOperand().isLiteral() && ((Operand) rhs.getLeftOperand()).getName().equals(((Operand) instruction.getDest()).getName()))
             return sign + ((LiteralElement) rhs.getRightOperand()).getLiteral();
         else
             return sign + ((LiteralElement) rhs.getLeftOperand()).getLiteral();
