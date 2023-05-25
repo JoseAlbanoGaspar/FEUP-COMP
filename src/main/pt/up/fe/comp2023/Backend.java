@@ -139,7 +139,7 @@ public class Backend implements JasminBackend {
     private void buildAssignInstruction(StringBuilder methodCode, AssignInstruction instruction, RegisterHandler registerHandler, StackSize stackSize) {
         if (instruction.getDest() instanceof ArrayOperand) {
 
-            buildLoad(methodCode, instruction.getDest(), registerHandler);
+            buildLoadArray(methodCode, instruction.getDest(), registerHandler);
             buildLoad(methodCode, ((ArrayOperand) instruction.getDest()).getIndexOperands().get(0), registerHandler);
             stackSize.increaseSize(2);
 
@@ -409,20 +409,40 @@ public class Backend implements JasminBackend {
                 (element.getType().getTypeOfElement() == ElementType.OBJECTREF &&
                 ((Operand) element).getName().equals("this"))) {
             methodCode.append("\taload_0\n");
+        } else if (element instanceof ArrayOperand) {
+            ArrayOperand arrayOperand = (ArrayOperand) element;
+            if (arrayOperand.getIndexOperands().isEmpty()) buildLoadArray(methodCode, element, registerHandler);
+            else {
+                buildLoadArray(methodCode, element, registerHandler);
+                buildLoad(methodCode, arrayOperand.getIndexOperands().get(0), registerHandler);
+                methodCode.append("\tiaload\n");
+            }
         } else {
             int varIndex = registerHandler.getRegisterOf(((Operand) element).getName());
-            String prefix = element instanceof ArrayOperand ? "a" : typePrefix(element.getType());
             if (varIndex >= 0 && varIndex <= 3) {
                 methodCode.append("\t")
-                        .append(prefix)
+                        .append(typePrefix(element.getType()))
                         .append("load_").append(varIndex)
                         .append("\n");
             } else {
                 methodCode.append("\t")
-                        .append(prefix)
+                        .append(typePrefix(element.getType()))
                         .append("load ").append(varIndex)
                         .append("\n");
             }
+        }
+    }
+
+    private void buildLoadArray(StringBuilder methodCode, Element element, RegisterHandler registerHandler) {
+        int varIndex = registerHandler.getRegisterOf(((Operand) element).getName());
+        if (varIndex >= 0 && varIndex <= 3) {
+            methodCode.append("\t")
+                    .append("aload_").append(varIndex)
+                    .append("\n");
+        } else {
+            methodCode.append("\t")
+                    .append("aload ").append(varIndex)
+                    .append("\n");
         }
     }
 
