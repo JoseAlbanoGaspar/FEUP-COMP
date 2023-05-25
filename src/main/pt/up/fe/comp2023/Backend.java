@@ -347,7 +347,18 @@ public class Backend implements JasminBackend {
             case ADD -> methodCode.append("\tiadd\n");
             case SUB -> methodCode.append("\tisub\n");
             case LTH -> {
-                methodCode.append("\tif_icmplt true").append(labelCounter).append("\n")
+                methodCode.append("\tisub\n")
+                        .append("\tiflt true").append(labelCounter).append("\n")
+                        .append("\ticonst_0\n")
+                        .append("\tgoto end").append(labelCounter).append("\n")
+                        .append("true").append(labelCounter).append(":\n")
+                        .append("\ticonst_1\n")
+                        .append("end").append(labelCounter).append(":\n");
+                labelCounter++;
+            }
+            case GTE -> {
+                methodCode.append("\tisub\n")
+                        .append("\tifge true").append(labelCounter).append("\n")
                         .append("\ticonst_0\n")
                         .append("\tgoto end").append(labelCounter).append("\n")
                         .append("true").append(labelCounter).append(":\n")
