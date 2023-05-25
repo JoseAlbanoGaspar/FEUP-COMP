@@ -682,7 +682,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                 .append(right)
                 .append("]")
                 .append(leftSplit.get(1))
-                .append("§");
+                .append(" ");
 
         return ret.toString();
     }
