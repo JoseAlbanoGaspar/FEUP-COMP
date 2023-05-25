@@ -609,10 +609,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         Map<JmmNode, String> visitedArgs = new HashMap<>();
         for (int i = 1; i < jmmNode.getNumChildren(); i++) {
             if (jmmNode.getJmmChild(i).getKind().equals("FunctionCall")) {
-                if (!this.symbolTable.getImports().contains(objectString) && !objectString.equals("this")){
-                    String typeName = this.symbolTable.getReturnType(jmmNode.get("methodName")).getName();
-                    this.functionRets.put(jmmNode.getJmmChild(i), typeName); //get from list of args
-                }
+                if (!this.symbolTable.getImports().contains(objectString) && !objectString.equals("this"))
+                    this.functionRets.put(jmmNode.getJmmChild(i), this.symbolTable.getParameters(jmmNode.get("methodName")).get(i).getType().getName()); //get from list of args
             }
 
             visitedArgs.put(jmmNode.getJmmChild(i) ,nestedAppend(jmmNode.getJmmChild(i), s, ret));
@@ -625,8 +623,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             }
             else if(entry.getKey().getKind().equals("FunctionCall")){
                 String typeF = typesSwap(this.functionRets.get(entry.getKey()));
-                ret.append("\n").append(s).append("t").append(tempCnt).append(".").append(typeF).append(" :=.").append(typeF).append(" ").append(entry.getValue()).append(";\n");
-                entry.setValue("t"+tempCnt++ +"."+typeF);
+                ret.append("\n").append(s).append("t").append(tempCnt).append(typeF).append(":=").append(typeF).append(entry.getValue()).append(";\n");
+                entry.setValue("t"+tempCnt++ +typeF);
             }
         }
 
