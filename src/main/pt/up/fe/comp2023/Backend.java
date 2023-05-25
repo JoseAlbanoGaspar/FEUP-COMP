@@ -453,12 +453,13 @@ public class Backend implements JasminBackend {
 
             // check if operation is either an add or sub
             if (rhs.getOperation().getOpType() != OperationType.ADD && rhs.getOperation().getOpType() != OperationType.SUB) return false;
+            int mult = rhs.getOperation().getOpType() == OperationType.ADD ? 1 : -1;
 
             // check if rhs contains the dest variable and a literal
             if (!rhs.getLeftOperand().isLiteral() && ((Operand) rhs.getLeftOperand()).getName().equals(((Operand) instruction.getDest()).getName()))
-                return rhs.getRightOperand().isLiteral() && (Integer.parseInt(((LiteralElement) rhs.getRightOperand()).getLiteral()) >> 8) == 0;
+                return rhs.getRightOperand().isLiteral() && Integer.parseInt(((LiteralElement) rhs.getRightOperand()).getLiteral()) * mult >= -128 && Integer.parseInt(((LiteralElement) rhs.getRightOperand()).getLiteral()) * mult <= 127;
             else if (rhs.getOperation().getOpType() == OperationType.ADD && !rhs.getRightOperand().isLiteral() && ((Operand) rhs.getRightOperand()).getName().equals(((Operand) instruction.getDest()).getName()))
-                return rhs.getLeftOperand().isLiteral() && (Integer.parseInt(((LiteralElement) rhs.getLeftOperand()).getLiteral()) >> 8) == 0;
+                return rhs.getLeftOperand().isLiteral() && Integer.parseInt(((LiteralElement) rhs.getLeftOperand()).getLiteral()) * mult >= -128 && Integer.parseInt(((LiteralElement) rhs.getLeftOperand()).getLiteral()) * mult <= 127;
             else return false;
         } else return false;
     }
