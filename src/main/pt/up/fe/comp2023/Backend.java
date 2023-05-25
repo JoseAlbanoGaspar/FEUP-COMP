@@ -7,10 +7,7 @@ import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp2023.backend.RegisterHandler;
 import pt.up.fe.comp2023.backend.StackSize;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Backend implements JasminBackend {
     private String superClass = "java/lang/Object";
@@ -164,9 +161,16 @@ public class Backend implements JasminBackend {
     private void buildCallInstruction(StringBuilder methodCode, CallInstruction instruction, RegisterHandler registerHandler, StackSize stackSize, Boolean pop) {
         switch (instruction.getInvocationType()) {
             case NEW -> {
-                methodCode.append("\tnew ")
-                        .append(fullClassName((Operand) instruction.getFirstArg())).append("\n");
-                stackSize.increaseSize(1);
+                if (instruction.getFirstArg().getType().getTypeOfElement() == ElementType.ARRAYREF) {
+                    buildLoad(methodCode, instruction.getListOfOperands().get(0), registerHandler);
+                    methodCode.append("\tnewarray int\n");
+                    stackSize.increaseSize(1);
+                } else {
+
+                    methodCode.append("\tnew ")
+                            .append(fullClassName((Operand) instruction.getFirstArg())).append("\n");
+                    stackSize.increaseSize(1);
+                }
             }
             case invokespecial -> {
                 buildLoad(methodCode, instruction.getFirstArg(), registerHandler);
@@ -416,7 +420,8 @@ public class Backend implements JasminBackend {
     }
 
     private String fullClassName(Operand operand) {
-        if (Objects.equals(operand.getName(), "this")) ollirClass.getClassName();
+        System.out.println(operand.getName());
+        if (Objects.equals(operand.getName(), "this")) return ollirClass.getClassName();
         if (operand.getType().getTypeOfElement() == ElementType.CLASS) return fullClassName(operand.getName());
         return fullClassName(((ClassType) operand.getType()).getName());
     }
