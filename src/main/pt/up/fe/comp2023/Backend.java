@@ -137,6 +137,18 @@ public class Backend implements JasminBackend {
     }
 
     private void buildAssignInstruction(StringBuilder methodCode, AssignInstruction instruction, RegisterHandler registerHandler, StackSize stackSize) {
+        if (instruction.getDest() instanceof ArrayOperand) {
+
+            buildLoad(methodCode, instruction.getDest(), registerHandler);
+            buildLoad(methodCode, ((ArrayOperand) instruction.getDest()).getIndexOperands().get(0), registerHandler);
+            stackSize.increaseSize(2);
+
+            buildInstruction(methodCode, instruction.getRhs(), registerHandler, stackSize, false);
+
+            methodCode.append("\tiastore\n");
+            return;
+        }
+
         Integer variable = registerHandler.getRegisterOf(((Operand) instruction.getDest()).getName());
 
         // checking for iinc
@@ -399,20 +411,20 @@ public class Backend implements JasminBackend {
             methodCode.append("\taload_0\n");
         } else {
             int varIndex = registerHandler.getRegisterOf(((Operand) element).getName());
+            String prefix = element instanceof ArrayOperand ? "a" : typePrefix(element.getType());
             if (varIndex >= 0 && varIndex <= 3) {
                 methodCode.append("\t")
-                        .append(typePrefix(element.getType()))
+                        .append(prefix)
                         .append("load_").append(varIndex)
                         .append("\n");
             } else {
                 methodCode.append("\t")
-                        .append(typePrefix(element.getType()))
+                        .append(prefix)
                         .append("load ").append(varIndex)
                         .append("\n");
             }
         }
     }
-
 
     private void buildStore(StringBuilder methodCode, String prefix, RegisterHandler registerHandler, String variableName) {
         int varIndex = registerHandler.getRegisterOf(variableName);
