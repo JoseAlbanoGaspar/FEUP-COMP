@@ -148,12 +148,12 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
         lastString = lasStringList.get(1);
 
-        /*if(jmmNode.getKind().equals("SquareBrackets")){
+        if(jmmNode.getKind().equals("SquareBrackets")){
             ret.append("t").append(tempCnt).append(".i32 :=.i32 ")
                     .append(lastString)
                     .append(";\n").append(s);
             return "t" + tempCnt++ + ".i32";
-        }*/
+        }
 
         return lastString;
     }
@@ -701,20 +701,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         String opType = jmmNode.getKind().equals("BinaryOp") ?
             ".i32 " : ".bool ";
         String opString;
-
-        if(left.getKind().equals("SquareBrackets")){
-            ret.append("t").append(tempCnt).append(".i32 :=.i32 ")
-                    .append(leftString)
-                    .append(";\n").append(s);
-            leftString = "t" + tempCnt++ + ".i32";
-        }
-
-        if(right.getKind().equals("SquareBrackets")){
-            ret.append("t").append(tempCnt).append(".i32 :=.i32 ")
-                    .append(rightString)
-                    .append(";\n").append(s);
-            rightString = "t" + tempCnt++ + ".i32";
-        }
 
         switch (jmmNode.getKind()) {
             case "BinaryOp" -> opString = jmmNode.get("op");
