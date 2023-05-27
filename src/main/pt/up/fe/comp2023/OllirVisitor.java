@@ -53,7 +53,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("Type", this::dealWithDefault);
         addVisit("BlockCode", this::dealWithBlockCode);
         addVisit("If", this::dealwithIf);
-        addVisit("While", this::dealWithWhile); //TODO
+        addVisit("While", this::dealWithWhile);
         addVisit("StatementExpression", this::dealWithStatementExpression);
         addVisit("Assignment", this::dealWithAssignment);
         addVisit("Array", this::dealWithAssignment);
@@ -145,6 +145,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
         if (!lasStringList.get(0).contains("\n")) ret.append(lasStringList.get(0));
         else ret.append(lasStringList.get(0));
+
 
         lastString = lasStringList.get(1);
 
@@ -611,7 +612,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             if (jmmNode.getJmmChild(i).getKind().equals("FunctionCall")) {
                 if (!this.symbolTable.getImports().contains(objectString) && !objectString.equals("this")){
                     String typeName = this.symbolTable.getReturnType(jmmNode.get("methodName")).getName();
-                    this.functionRets.put(jmmNode.getJmmChild(i), typeName); //get from list of args
+                    this.functionRets.put(jmmNode.getJmmChild(i), typesSwap(typeName)); //get from list of args
                 }
             }
 
@@ -723,7 +724,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         StringBuilder newStr = new StringBuilder(str);
         StringBuilder auxString = new StringBuilder();
         if (kind.equals("BinaryOp") || kind.equals("FunctionCall")
-                || kind.equals("SquareBrackets") || kind.equals("Parenthesis")
+                || kind.equals("SquareBrackets")
                 || kind.equals("Length") || kind.equals("Compare") || kind.equals("LogicalAnd")) {
             String sub, before = "";
             int lastIndDot = str.lastIndexOf(".");
@@ -751,10 +752,16 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                         .append(" ")
                         .append(newStr)
                         .append(";\n");
-                newStr = new StringBuilder(s +"t" +
+                newStr = new StringBuilder(s + "t" +
                         this.tempCnt++
                         + sub);
             }
+        }
+        else if(kind.equals("Parenthesis")){
+            auxString = newStr;
+            auxString.append(";\n");
+            int index = newStr.indexOf(":=.");
+            newStr = new StringBuilder(newStr.substring(0, index));
         } else { //not operation, array, functioncall or parenthesis
             if (str.contains("\n")) {
                 List<String> strings = List.of(str.split("\n"));
@@ -777,9 +784,27 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithParenthesis(JmmNode jmmNode, String s) {
-        if (jmmNode.getJmmChild(0).getKind().equals("FunctionCall"))
-            this.functionRets.put(jmmNode.getJmmChild(0), typesSwap("void"));
-        return visit(jmmNode.getJmmChild(0), "");
+        StringBuilder ret = new StringBuilder(s);
+        String data = "";
+
+        if (jmmNode.getJmmChild(0).getKind().equals("FunctionCall")){
+            JmmNode objGrandChild = jmmNode.getJmmChild(0).getJmmChild(0);
+            if(objGrandChild.getKind().equals("NewClass")){
+                this.functionRets.put(jmmNode.getJmmChild(0), objGrandChild.get("className"));
+            }
+            else{
+                this.functionRets.put(jmmNode.getJmmChild(0), typesSwap("void"));
+            }
+        }
+        else if(jmmNode.getJmmChild(0).getKind().equals("NewClass")){
+            ret.append("t").append(tempCnt).append(".")
+                    .append(jmmNode.getJmmChild(0).get("className"))
+                    .append(" :=.")
+                    .append(jmmNode.getJmmChild(0).get("className"))
+                    .append(" ");
+            data = "t"+tempCnt++ + "." + jmmNode.getJmmChild(0).get("className");
+        }
+        return ret.append(visit(jmmNode.getJmmChild(0), data)).toString();
     }
 
     private String varAux(Symbol var, boolean isParameter, int parNumber) {
