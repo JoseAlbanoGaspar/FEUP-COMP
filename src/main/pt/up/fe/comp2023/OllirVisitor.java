@@ -32,12 +32,13 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
     private String typesSwap(String str) {
         return switch (str) {
-            case "int", "int array" -> "i32";
+            case "int" -> "i32";
             case "boolean" -> "bool";
             case "void" -> "V";
             case "false" -> "0.bool";
             case "true" -> "1.bool";
             case "import" -> "";
+            case "int array" -> "array.i32";
             default -> str;
         };
     }
@@ -284,13 +285,14 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             String assignmentString = nestedAppend(assig, s, ret, data);
             ret.append(assignmentString).append(";\n");
         } else {
-            if (assig.getKind().equals("FunctionCall"))
-                this.functionRets.put(jmmNode.getJmmChild(0), typesSwap(var.getType().getName()));
+            if (assig.getKind().equals("FunctionCall")){
+                String varToSwap = var.getType().isArray() ? "int array" : var.getType().getName();
+                this.functionRets.put(jmmNode.getJmmChild(0), typesSwap(varToSwap));
+            }
             assignString = visit(assig, "");
             if (assig.getKind().equals("SquareBrackets")) {
                 assignString = nestedAppend(assig, s, ret);
             } else if (assig.getKind().equals("FunctionCall")) {
-                this.functionRets.put(jmmNode.getJmmChild(0), typesSwap(var.getType().getName()));
                 assignString = nestedAppend(assig, s, ret);
             }
         }
@@ -651,8 +653,15 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         ret.append(").");
 
         //return type
-        String retType = this.symbolTable.getImports().contains(objectString.substring(objectString.indexOf(".")+1)) ? this.functionRets.get(jmmNode)
-                : typesSwap(this.symbolTable.getReturnType(name).getName());
+        String retType;
+        if(this.symbolTable.getImports().contains(objectString.substring(objectString.indexOf(".")+1)))
+            retType= this.functionRets.get(jmmNode);
+        else{
+            String typeToSwap = this.symbolTable.getReturnType(name).isArray() ?
+                    "int array" :
+                    this.symbolTable.getReturnType(name).getName();
+            retType = typesSwap(typeToSwap);
+        }
         ret.append(retType);
 
         return ret.toString();
@@ -737,6 +746,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             int lastIndDot = str.lastIndexOf(".");
             if (str.contains(":=.")) {
                 sub = str.substring(lastIndDot);
+                if(kind.equals("FunctionCall"))
+                    sub = ".array"+sub;
                 if (str.contains("\n")) {
                     int lastIndN = str.lastIndexOf("\n");
                     before = str.substring(0, lastIndN + 1);
