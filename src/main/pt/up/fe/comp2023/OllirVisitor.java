@@ -141,7 +141,9 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         String lastString = visit(jmmNode, data);
         List<String> lasStringList = getNested(jmmNode, lastString, s);
 
-
+        if(!(lasStringList.get(0).equals("") || lasStringList.get(0).contains("\n"))){
+            lasStringList.set(0, lasStringList.get(0)+"\n");
+        }
 
         if (!lasStringList.get(0).contains("\n")) ret.append(lasStringList.get(0));
         else ret.append(lasStringList.get(0));
@@ -758,8 +760,13 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             }
         }
         else if(kind.equals("Parenthesis")){
+            if(newStr.toString().contains("\n")){
+                String[] strings = newStr.toString().split("\n");
+                newStr = new StringBuilder(strings[0]);
+            }
             auxString = newStr;
-            auxString.append(";\n");
+            if(!auxString.toString().endsWith(";"))
+                auxString.append(";\n");
             int index = newStr.indexOf(":=.");
             newStr = new StringBuilder(newStr.substring(0, index));
         } else { //not operation, array, functioncall or parenthesis
@@ -804,7 +811,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                     .append(" ");
             data = "t"+tempCnt++ + "." + jmmNode.getJmmChild(0).get("className");
         }
-        return ret.append(visit(jmmNode.getJmmChild(0), data)).toString();
+        String nestedString = nestedAppend(jmmNode.getJmmChild(0), s, ret, data);
+        return ret.append(nestedString).toString();
     }
 
     private String varAux(Symbol var, boolean isParameter, int parNumber) {
