@@ -239,7 +239,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
 
             if(isArray){
-                String assing2String = assignChildrenCases(jmmNode, jmmNode.getJmmChild(1), s, ret, var, isParameter, parNum);
+                String assing2String = nestedAppend(jmmNode.getJmmChild(1), s, ret);
+                //String assing2String = assignChildrenCases(jmmNode, jmmNode.getJmmChild(1), s, ret, var, isParameter, parNum);
                 String aux = varAux(var, isParameter, parNum);
                 aux = aux.substring(0, aux.indexOf(".array"));
                 ret.append(s).append(aux).append("[")
@@ -680,7 +681,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
 
         List<String> leftSplit = List.of(left.split(".array"));
 
-        ret.append(leftSplit.get(0))
+        ret.append(leftSplit.get(0)).append(".array").append(leftSplit.get(1))
                 .append("[")
                 .append(right)
                 .append("]")
