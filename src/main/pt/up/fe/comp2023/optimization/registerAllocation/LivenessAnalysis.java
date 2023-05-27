@@ -129,12 +129,10 @@ public class LivenessAnalysis {
             }
             case BRANCH -> {
                 CondBranchInstruction branch = (CondBranchInstruction) inst;
-                //branch.getCondition();
-                //System.out.println("----BRANCH-------");
                 for (Element e : branch.getOperands()) {
                     addElement(e, uses);
                 }
-                return computeUses(branch.getCondition());
+                return uses;
             }
             case RETURN -> {
                 ReturnInstruction returnInstruction = (ReturnInstruction) inst;
