@@ -746,8 +746,9 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             int lastIndDot = str.lastIndexOf(".");
             if (str.contains(":=.")) {
                 sub = str.substring(lastIndDot);
-                if(kind.equals("FunctionCall"))
-                    sub = ".array"+sub;
+                if(kind.equals("FunctionCall")){
+                    sub = str.substring(str.lastIndexOf(").")+1);
+                }
                 if (str.contains("\n")) {
                     int lastIndN = str.lastIndexOf("\n");
                     before = str.substring(0, lastIndN + 1);
