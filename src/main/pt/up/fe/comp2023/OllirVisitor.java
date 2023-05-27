@@ -111,13 +111,15 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             ifStat = jmmNode.getJmmChild(1),
             elseStat = jmmNode.getJmmChild(2);
 
+        int gto = gotoCnt++;
+
         String exprString = nestedAppend(expr, s, ret);
-        ret.append("if (").append(exprString).append(") goto THEN_").append(gotoCnt).append(";\n")
+        ret.append("if (").append(exprString).append(") goto THEN_").append(gto).append(";\n")
                 .append(visit(elseStat, s))
-                .append(s).append("goto ENDIF_").append(gotoCnt).append(";\n")
-                .append(s).append("THEN_").append(gotoCnt).append(":\n")
+                .append(s).append("goto ENDIF_").append(gto).append(";\n")
+                .append(s).append("THEN_").append(gto).append(":\n")
                 .append(visit(ifStat, s))
-                .append(s).append("ENDIF_").append(gotoCnt++).append(":\n");
+                .append(s).append("ENDIF_").append(gto).append(":\n");
         return ret.toString();
     }
 
