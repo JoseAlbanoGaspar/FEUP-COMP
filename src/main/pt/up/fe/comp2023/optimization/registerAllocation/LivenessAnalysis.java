@@ -9,12 +9,10 @@ import java.util.*;
 public class LivenessAnalysis {
     protected HashMap<Instruction, LivenessSets> sets;
     private final Method method;
-    private final SymbolTable symbolTable;
 
-    public LivenessAnalysis(Method method, SymbolTable symbTable) {
+    public LivenessAnalysis(Method method) {
         this.sets = new HashMap<>();
         this.method = method;
-        this.symbolTable = symbTable;
         for (Instruction i : method.getInstructions()) {
             System.out.println(i);
             sets.put(i, new LivenessSets());
@@ -186,10 +184,6 @@ public class LivenessAnalysis {
         if (varTable.containsKey(name))
             return varTable.get(name).getScope().equals(VarScope.LOCAL);
         return false;
-        //check if it's temp register
-        //String firstChar = name.substring(0, 1);
-        //String remainingChars = name.substring(1);
-        //return firstChar.equals("t") && remainingChars.matches("-?\\d+");
     }
 
 }
