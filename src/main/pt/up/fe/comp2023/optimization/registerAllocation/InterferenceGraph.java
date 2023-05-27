@@ -25,10 +25,11 @@ public class InterferenceGraph {
             out.addAll(livenessSet.getDef());
             graph.addVertexes(new ArrayList<>(livenessSet.getUse()));
             graph.addVertexes(new ArrayList<>(livenessSet.getDef()));
-            graph.connectAllNodes(livenessSet.getIn());
-            graph.connectAllNodes(out);
+            Set<String> interferences = new HashSet<>(livenessSet.getIn());
+            interferences.addAll(out);
+            graph.connectAllNodes(interferences);
         }
-        //graph.printGraph();
+        graph.printGraph();
 
     }
     private static HashMap<IntGraphNode, List<IntGraphNode>> deepCopyHashMap(HashMap<IntGraphNode, List<IntGraphNode>> original) {
@@ -71,7 +72,7 @@ public class InterferenceGraph {
             graph.setRegister(node.getName());
         }
 
-        //graph.printRegisterAllocation();
+        graph.printRegisterAllocation();
         System.out.println("Allocated with " + k + " registers!");
         return true;
     }
