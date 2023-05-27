@@ -40,26 +40,37 @@ public class LivenessAnalysis {
         System.out.println("|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||");
     }
     private void computeInOut() {
-        boolean changed = false;
-        do for (Instruction i : method.getInstructions()) {
+        boolean changed;
+        ArrayList<Instruction> reversedList = new ArrayList<>(method.getInstructions().size());
+
+        // Iterate over the original ArrayList in reverse order
+        for (int i = method.getInstructions().size() - 1; i >= 0; i--) {
+            reversedList.add(method.getInstructions().get(i));
+        }
+        do {
+            System.out.println("----new iteration------");
             changed = false;
-            Set<String> in_aux = sets.get(i).getIn();
-            Set<String> out_aux = sets.get(i).getOut();
-            // Compute IN set
-            Set<String> difference = new HashSet<>(sets.get(i).getOut());
-            difference.removeAll(sets.get(i).getDef());
-            Set<String> union = new HashSet<>(sets.get(i).getUse());
-            union.addAll(difference);
-            sets.get(i).setIn(union);
-            // Compute OUT set
-            for (Node node : i.getSuccessors()) {
-                if (node.getNodeType().equals(NodeType.INSTRUCTION)) {
-                    final Instruction inst = (Instruction) node;
-                    sets.get(i).getOut().addAll(sets.get(inst).getIn());
+            for (Instruction i : reversedList) {
+                Set<String> in_aux = new HashSet<>(sets.get(i).getIn());
+                Set<String> out_aux = new HashSet<>(sets.get(i).getOut());
+                // Compute IN set
+                Set<String> difference = new HashSet<>(sets.get(i).getOut());
+                difference.removeAll(sets.get(i).getDef());
+                Set<String> union = new HashSet<>(sets.get(i).getUse());
+                union.addAll(difference);
+                sets.get(i).getIn().addAll(union);
+
+                //if (i.getSuccessors().size() > 1) System.out.println("THERE ARE MORE THAN 1 SUCCESSOR " + i);
+                // Compute OUT set
+                for (Node node : i.getSuccessors()) {
+                    if (node.getNodeType().equals(NodeType.INSTRUCTION)) {
+                        final Instruction inst = (Instruction) node;
+                        sets.get(i).getOut().addAll(sets.get(inst).getIn());
+                    }
                 }
-            }
-            if (!in_aux.equals(sets.get(i).getIn()) || !out_aux.equals(sets.get(i).getOut())) {
-                changed = true;
+                if (!in_aux.equals(sets.get(i).getIn()) || !out_aux.equals(sets.get(i).getOut())) {
+                    changed = true;
+                }
             }
         } while (changed);
     }
@@ -76,15 +87,10 @@ public class LivenessAnalysis {
         switch (inst.getInstType()) {
             case ASSIGN -> {
                 AssignInstruction assignInst = (AssignInstruction) inst;
-                System.out.println("----------");
-                System.out.println(assignInst.getDest().toString());
-                System.out.println("----------");
-                sets.get(inst).getDef().add(getVar(assignInst.getDest()));
+                addElement(assignInst.getDest(), sets.get(inst).getDef());
+                addElement(assignInst.getDest(), sets.get(inst).getOut());
                 // uses ...
                 sets.get(inst).getUse().addAll(computeUses(assignInst.getRhs()));
-                System.out.println("-----RHS--------");
-                System.out.println(sets.get(inst).getUse());
-                System.out.println("-----------------");
             }
             case CALL, UNARYOPER ->
                 sets.get(inst).getUse().addAll(computeUses(inst));
@@ -95,9 +101,7 @@ public class LivenessAnalysis {
             }
             case RETURN -> {
                 sets.get(inst).getUse().addAll(computeUses(inst));
-                System.out.println("----RETURN SET------");
-                System.out.println(sets.get(inst).getUse());
-                System.out.println("--------------------");
+
             }
             case GETFIELD -> {
                 sets.get(inst).getUse().addAll(computeUses(inst));
@@ -107,9 +111,7 @@ public class LivenessAnalysis {
             }
             case BINARYOPER -> {
                 sets.get(inst).getUse().addAll(computeUses(inst));
-                System.out.println("----BINOP SET------");
-                System.out.println(sets.get(inst).getUse());
-                System.out.println("--------------------");
+
             }
             default -> {
             }
@@ -137,22 +139,21 @@ public class LivenessAnalysis {
             }
             case NOPER -> {
                 SingleOpInstruction singleOpInstruction = (SingleOpInstruction) inst;
-                System.out.println("----NOPER------");
-                System.out.println(singleOpInstruction.getSingleOperand());
-                System.out.println("---------------");
                 addElement(singleOpInstruction.getSingleOperand(), uses);
 
                 return uses;
             }
             case BRANCH -> {
                 CondBranchInstruction branch = (CondBranchInstruction) inst;
+                //branch.getCondition();
+                //System.out.println("----BRANCH-------");
+                for (Element e : branch.getOperands()) {
+                    addElement(e, uses);
+                }
                 return computeUses(branch.getCondition());
             }
             case RETURN -> {
                 ReturnInstruction returnInstruction = (ReturnInstruction) inst;
-                System.out.println("-----RETURN-------");
-                System.out.println(returnInstruction.getOperand());
-                System.out.println("------------------");
                 addElement(returnInstruction.getOperand(),uses);
                 return uses;
             }
@@ -174,10 +175,6 @@ public class LivenessAnalysis {
             }
             case BINARYOPER -> {
                 BinaryOpInstruction biInst = (BinaryOpInstruction) inst;
-                System.out.println("-----BINOP-------");
-                System.out.println(biInst.getLeftOperand());
-                System.out.println(biInst.getRightOperand());
-                System.out.println("------------------");
                 addElement(biInst.getLeftOperand(), uses);
                 addElement(biInst.getRightOperand(), uses);
                 return uses;
@@ -189,8 +186,12 @@ public class LivenessAnalysis {
     }
 
     public String getVar(Element element) {
-        if (element != null && element.toString().contains("Operand") && isLocal(element)) {
+        if (element == null) return null;
+        if (element.toString().contains("Operand") && !element.toString().contains("Array") && isLocal(element)) {
             return ( (Operand) element ).getName();
+        }
+        if (element.toString().contains("Array") && isLocal(element)) {
+            return ( (ArrayOperand) element).getName();
         }
         return null;
     }
@@ -198,6 +199,8 @@ public class LivenessAnalysis {
     private boolean isLocal(Element element) {
         List<Symbol> vars = this.symbolTable.getLocalVariables(method.getMethodName());
         String name = ((Operand) element).getName();
+        //if ((element.toString().contains("Array"))) name = ((ArrayOperand) element).getName();
+        //else name =
         if (vars != null)
            for (Symbol s : vars)
                if (s.getName().equals( name )) return true;
