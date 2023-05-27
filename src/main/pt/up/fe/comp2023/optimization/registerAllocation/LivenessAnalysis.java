@@ -181,8 +181,6 @@ public class LivenessAnalysis {
     private boolean isLocal(Element element) {
         List<Symbol> vars = this.symbolTable.getLocalVariables(method.getMethodName());
         String name = ((Operand) element).getName();
-        //if ((element.toString().contains("Array"))) name = ((ArrayOperand) element).getName();
-        //else name =
         if (vars != null)
            for (Symbol s : vars)
                if (s.getName().equals( name )) return true;

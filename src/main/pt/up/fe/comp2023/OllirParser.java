@@ -38,11 +38,6 @@ public class OllirParser implements JmmOptimization {
         if (! ollirResult.getConfig().getOrDefault("registerAllocation", "-1").equals("-1")) {
 
             for (Method method : ollirClass.getMethods()) {
-                try {
-                    method.outputCFG();
-                } catch (OllirErrorException e) {
-                    e.printStackTrace();
-                }
                 // in-out algorithm
                 LivenessAnalysis livenessAnalysis = new LivenessAnalysis(method, ollirResult.getSymbolTable());
                 livenessAnalysis.execute();
