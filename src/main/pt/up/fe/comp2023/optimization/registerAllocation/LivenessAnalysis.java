@@ -102,12 +102,14 @@ public class LivenessAnalysis {
         }
 
     }
+
     private void addElement(Element element, Set<String> uses) {
         String var = getVar(element);
         if (var != null) {
             uses.add(var);
         }
     }
+
     private Set<String> computeUses(Instruction inst) {
         Set<String> uses = new HashSet<>();
         switch (inst.getInstType()) {
@@ -179,15 +181,15 @@ public class LivenessAnalysis {
     }
 
     private boolean isLocal(Element element) {
-        List<Symbol> vars = this.symbolTable.getLocalVariables(method.getMethodName());
+        final HashMap<String, Descriptor> varTable = this.method.getVarTable();
         String name = ((Operand) element).getName();
-        if (vars != null)
-           for (Symbol s : vars)
-               if (s.getName().equals( name )) return true;
+        if (varTable.containsKey(name))
+            return varTable.get(name).getScope().equals(VarScope.LOCAL);
+        return false;
         //check if it's temp register
-        String firstChar = name.substring(0, 1);
-        String remainingChars = name.substring(1);
-        return firstChar.equals("t") && remainingChars.matches("-?\\d+");
+        //String firstChar = name.substring(0, 1);
+        //String remainingChars = name.substring(1);
+        //return firstChar.equals("t") && remainingChars.matches("-?\\d+");
     }
 
 }
