@@ -114,10 +114,10 @@ public class LivenessAnalysis {
             case CALL -> {
                 CallInstruction call = (CallInstruction) inst;
                 addElement(call.getFirstArg(), uses);
-
-                for (Element e : call.getListOfOperands()) {
-                    addElement(e, uses);
-                }
+                if (call.getListOfOperands() != null)
+                    for (Element e : call.getListOfOperands()) {
+                        addElement(e, uses);
+                    }
                 return uses;
 
             }
