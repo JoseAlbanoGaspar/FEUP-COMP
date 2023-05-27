@@ -162,6 +162,43 @@ public class Cpf5_Optimizations {
 
 
     @Test
+    public void section2_RegAlloc_IfElse_Works() {
+
+        String filename = "reg_alloc/regalloc_if.jmm";
+
+        JasminResult original = getJasminResult(filename);
+        JasminResult optimized = getJasminResultReg(filename, 0);
+
+        CpUtils.assertNotEquals("Expected code to change with -r flag\n\nOriginal code:\n" + original.getJasminCode(),
+                original.getJasminCode(), optimized.getJasminCode(),
+                optimized);
+
+        String method = CpUtils.getJasminMethod(optimized, "soManyRegisters");
+        Pattern pattern = Pattern.compile("\\.limit\\s+locals\\s+(\\d+)\\s+");
+        Matcher matcher = pattern.matcher(method);
+        CpUtils.assertTrue("Expected to find correct .limit locals directive",
+                matcher.find(),
+                optimized);
+
+        String captured = matcher.group(1);
+        CpUtils.assertNotNull("Expected to find correct .limit locals directive",
+                captured,
+                optimized);
+
+        Integer actualNumReg = SpecsStrings.decodeInteger(captured);
+        CpUtils.assertNotNull("Could not convert locals limit to integer",
+                actualNumReg,
+                optimized);
+
+        CpUtils.runJasmin(original,
+                "5\n8");
+
+        CpUtils.runJasmin(optimized,
+                "5\n8");
+    }
+
+
+    @Test
     public void section3_ConstProp_Simple() {
 
         String filename = "const_prop/PropSimple.jmm";

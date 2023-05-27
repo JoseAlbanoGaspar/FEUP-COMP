@@ -152,6 +152,7 @@ public class Cpf4_Jasmin {
     /*checks if an addition is correct (more than 2 values)*/
     @Test
     public void section3_ControlFlow_Inverted() {
+        System.out.println(getJasminResult("control_flow/SimpleControlFlow.ollir").getJasminCode());
         CpUtils.runJasmin(getJasminResult("control_flow/SimpleControlFlow.ollir"), "Result: 3");
     }
 

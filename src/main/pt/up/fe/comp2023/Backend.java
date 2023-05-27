@@ -7,10 +7,7 @@ import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp2023.backend.RegisterHandler;
 import pt.up.fe.comp2023.backend.StackSize;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Backend implements JasminBackend {
     private String superClass = "java/lang/Object";
@@ -140,6 +137,18 @@ public class Backend implements JasminBackend {
     }
 
     private void buildAssignInstruction(StringBuilder methodCode, AssignInstruction instruction, RegisterHandler registerHandler, StackSize stackSize) {
+        if (instruction.getDest() instanceof ArrayOperand) {
+
+            buildLoadArray(methodCode, instruction.getDest(), registerHandler);
+            buildLoad(methodCode, ((ArrayOperand) instruction.getDest()).getIndexOperands().get(0), registerHandler);
+            stackSize.increaseSize(2);
+
+            buildInstruction(methodCode, instruction.getRhs(), registerHandler, stackSize, false);
+
+            methodCode.append("\tiastore\n");
+            return;
+        }
+
         Integer variable = registerHandler.getRegisterOf(((Operand) instruction.getDest()).getName());
 
         // checking for iinc
@@ -164,9 +173,16 @@ public class Backend implements JasminBackend {
     private void buildCallInstruction(StringBuilder methodCode, CallInstruction instruction, RegisterHandler registerHandler, StackSize stackSize, Boolean pop) {
         switch (instruction.getInvocationType()) {
             case NEW -> {
-                methodCode.append("\tnew ")
-                        .append(fullClassName((Operand) instruction.getFirstArg())).append("\n");
-                stackSize.increaseSize(1);
+                if (instruction.getFirstArg().getType().getTypeOfElement() == ElementType.ARRAYREF) {
+                    buildLoad(methodCode, instruction.getListOfOperands().get(0), registerHandler);
+                    methodCode.append("\tnewarray int\n");
+                    stackSize.increaseSize(1);
+                } else {
+
+                    methodCode.append("\tnew ")
+                            .append(fullClassName((Operand) instruction.getFirstArg())).append("\n");
+                    stackSize.increaseSize(1);
+                }
             }
             case invokespecial -> {
                 buildLoad(methodCode, instruction.getFirstArg(), registerHandler);
@@ -276,6 +292,11 @@ public class Backend implements JasminBackend {
                     stackSize.decreaseSize(1);
                 }
             }
+            case arraylength -> {
+                buildLoad(methodCode, instruction.getFirstArg(), registerHandler);
+                methodCode.append("\tarraylength\n");
+                stackSize.increaseSize(1);
+            }
         }
     }
     private void buildGotoInstruction(StringBuilder methodCode, GotoInstruction instruction) {
@@ -347,7 +368,18 @@ public class Backend implements JasminBackend {
             case ADD -> methodCode.append("\tiadd\n");
             case SUB -> methodCode.append("\tisub\n");
             case LTH -> {
-                methodCode.append("\tif_icmplt true").append(labelCounter).append("\n")
+                methodCode.append("\tisub\n")
+                        .append("\tiflt true").append(labelCounter).append("\n")
+                        .append("\ticonst_0\n")
+                        .append("\tgoto end").append(labelCounter).append("\n")
+                        .append("true").append(labelCounter).append(":\n")
+                        .append("\ticonst_1\n")
+                        .append("end").append(labelCounter).append(":\n");
+                labelCounter++;
+            }
+            case GTE -> {
+                methodCode.append("\tisub\n")
+                        .append("\tifge true").append(labelCounter).append("\n")
                         .append("\ticonst_0\n")
                         .append("\tgoto end").append(labelCounter).append("\n")
                         .append("true").append(labelCounter).append(":\n")
@@ -377,6 +409,14 @@ public class Backend implements JasminBackend {
                 (element.getType().getTypeOfElement() == ElementType.OBJECTREF &&
                 ((Operand) element).getName().equals("this"))) {
             methodCode.append("\taload_0\n");
+        } else if (element instanceof ArrayOperand) {
+            ArrayOperand arrayOperand = (ArrayOperand) element;
+            if (arrayOperand.getIndexOperands().isEmpty()) buildLoadArray(methodCode, element, registerHandler);
+            else {
+                buildLoadArray(methodCode, element, registerHandler);
+                buildLoad(methodCode, arrayOperand.getIndexOperands().get(0), registerHandler);
+                methodCode.append("\tiaload\n");
+            }
         } else {
             int varIndex = registerHandler.getRegisterOf(((Operand) element).getName());
             if (varIndex >= 0 && varIndex <= 3) {
@@ -393,6 +433,18 @@ public class Backend implements JasminBackend {
         }
     }
 
+    private void buildLoadArray(StringBuilder methodCode, Element element, RegisterHandler registerHandler) {
+        int varIndex = registerHandler.getRegisterOf(((Operand) element).getName());
+        if (varIndex >= 0 && varIndex <= 3) {
+            methodCode.append("\t")
+                    .append("aload_").append(varIndex)
+                    .append("\n");
+        } else {
+            methodCode.append("\t")
+                    .append("aload ").append(varIndex)
+                    .append("\n");
+        }
+    }
 
     private void buildStore(StringBuilder methodCode, String prefix, RegisterHandler registerHandler, String variableName) {
         int varIndex = registerHandler.getRegisterOf(variableName);
@@ -405,7 +457,8 @@ public class Backend implements JasminBackend {
     }
 
     private String fullClassName(Operand operand) {
-        if (Objects.equals(operand.getName(), "this")) ollirClass.getClassName();
+        System.out.println(operand.getName());
+        if (Objects.equals(operand.getName(), "this")) return ollirClass.getClassName();
         if (operand.getType().getTypeOfElement() == ElementType.CLASS) return fullClassName(operand.getName());
         return fullClassName(((ClassType) operand.getType()).getName());
     }

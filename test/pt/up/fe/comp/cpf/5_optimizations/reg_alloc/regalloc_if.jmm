@@ -1,0 +1,33 @@
+import io;
+class IfElseRegAlloc {
+	public int soManyRegisters() {
+		int a;
+		int b;
+		int c;
+		int d;
+
+		a = 5;
+		b = 10;
+
+        if(a < b){
+          io.println(a);
+        } else {
+          io.println(b);
+        }
+
+		c = 10;
+		d = 8;
+
+        if(c < d){
+          io.println(c);
+        } else {
+          io.println(d);
+        }
+        return 0;
+	}
+	public static void main(String[] args) {
+	    IfElseRegAlloc run;
+	    run = new IfElseRegAlloc();
+	    run.soManyRegisters();
+	}
+}
