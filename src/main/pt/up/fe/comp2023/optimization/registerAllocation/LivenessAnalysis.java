@@ -51,8 +51,8 @@ public class LivenessAnalysis {
             System.out.println("----new iteration------");
             changed = false;
             for (Instruction i : reversedList) {
-                Set<String> in_aux = sets.get(i).getIn();
-                Set<String> out_aux = sets.get(i).getOut();
+                Set<String> in_aux = new HashSet<>(sets.get(i).getIn());
+                Set<String> out_aux = new HashSet<>(sets.get(i).getOut());
                 // Compute IN set
                 Set<String> difference = new HashSet<>(sets.get(i).getOut());
                 difference.removeAll(sets.get(i).getDef());

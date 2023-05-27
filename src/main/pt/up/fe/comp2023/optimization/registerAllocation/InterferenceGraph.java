@@ -25,9 +25,8 @@ public class InterferenceGraph {
             out.addAll(livenessSet.getDef());
             graph.addVertexes(new ArrayList<>(livenessSet.getUse()));
             graph.addVertexes(new ArrayList<>(livenessSet.getDef()));
-            Set<String> interferences = new HashSet<>(livenessSet.getIn());
-            interferences.addAll(out);
-            graph.connectAllNodes(interferences);
+            graph.connectAllNodes(livenessSet.getIn());
+            graph.connectAllNodes(out);
         }
         graph.printGraph();
 
