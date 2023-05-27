@@ -759,8 +759,14 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
                         this.tempCnt++
                         + sub);
             }
-        }
-        else if(kind.equals("Parenthesis")){
+        } else if (kind.equals("Parenthesis") &&
+                (jmmNode.getJmmChild(0).getKind().equals("NewClass") || jmmNode.getJmmChild(0).getKind().equals("NewArray"))) {
+            auxString = newStr;
+            auxString.append(";\n");
+            int index = newStr.indexOf(":=.");
+            newStr = new StringBuilder(newStr.substring(0, index));
+
+        } else if(kind.equals("Parenthesis")){
             if(newStr.toString().contains("\n")){
                 String[] strings = newStr.toString().split("\n");
                 newStr = new StringBuilder(strings[0]);
