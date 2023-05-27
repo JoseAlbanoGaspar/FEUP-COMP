@@ -76,10 +76,10 @@ public class LivenessAnalysis {
         switch (inst.getInstType()) {
             case ASSIGN -> {
                 AssignInstruction assignInst = (AssignInstruction) inst;
-                System.out.println("----------");
+                System.out.println("-----HERE!!!!-----");
                 System.out.println(assignInst.getDest().toString());
                 System.out.println("----------");
-                sets.get(inst).getDef().add(getVar(assignInst.getDest()));
+                addElement(assignInst.getDest(), sets.get(inst).getDef());
                 // uses ...
                 sets.get(inst).getUse().addAll(computeUses(assignInst.getRhs()));
                 System.out.println("-----RHS--------");
@@ -146,6 +146,9 @@ public class LivenessAnalysis {
             }
             case BRANCH -> {
                 CondBranchInstruction branch = (CondBranchInstruction) inst;
+                for (Element e : branch.getOperands()) {
+                    addElement(e, uses);
+                }
                 return computeUses(branch.getCondition());
             }
             case RETURN -> {
@@ -189,8 +192,12 @@ public class LivenessAnalysis {
     }
 
     public String getVar(Element element) {
-        if (element != null && element.toString().contains("Operand") && isLocal(element)) {
+        if (element == null) return null;
+        if (element.toString().contains("Operand") && !element.toString().contains("Array") && isLocal(element)) {
             return ( (Operand) element ).getName();
+        }
+        if (element.toString().contains("Array") && isLocal(element)) {
+            return ( (ArrayOperand) element).getName();
         }
         return null;
     }
@@ -198,6 +205,8 @@ public class LivenessAnalysis {
     private boolean isLocal(Element element) {
         List<Symbol> vars = this.symbolTable.getLocalVariables(method.getMethodName());
         String name = ((Operand) element).getName();
+        //if ((element.toString().contains("Array"))) name = ((ArrayOperand) element).getName();
+        //else name =
         if (vars != null)
            for (Symbol s : vars)
                if (s.getName().equals( name )) return true;

@@ -3,7 +3,6 @@ package pt.up.fe.comp2023;
 import org.specs.comp.ollir.ClassUnit;
 import org.specs.comp.ollir.Method;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
-import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.ollir.JmmOptimization;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.report.Report;
@@ -23,8 +22,8 @@ public class OllirParser implements JmmOptimization {
         // Ollir parse
         OllirVisitor visitor = new OllirVisitor(jmmSemanticsResult.getSymbolTable());
         visitor.visit(jmmSemanticsResult.getRootNode(), null);
-        
-        
+
+        System.out.println(visitor.getOllirCode());
         OllirResult ollirResult = new OllirResult(jmmSemanticsResult, visitor.getOllirCode(), jmmSemanticsResult.getReports());
 
         // register allocation
@@ -54,7 +53,6 @@ public class OllirParser implements JmmOptimization {
                 interferenceGraph.allocate();
                 if ( k > reg && reg != 0) {
                     ollirResult.getReports().add(new Report(ReportType.ERROR, Stage.OPTIMIZATION, -1, -1, "Could not allocate method " + method.getMethodName() + " with " + reg + " registers!\n" + k + " registers required!"));
-                    //return new OllirResult(ollirResult.getOllirCode(), ollirResult.getOllirClass(), ollirResult.getSymbolTable(), reports);
                 }
             }
         }
