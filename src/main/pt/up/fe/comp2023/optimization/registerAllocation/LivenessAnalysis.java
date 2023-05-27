@@ -48,7 +48,6 @@ public class LivenessAnalysis {
             reversedList.add(method.getInstructions().get(i));
         }
         do {
-            System.out.println("----new iteration------");
             changed = false;
             for (Instruction i : reversedList) {
                 Set<String> in_aux = new HashSet<>(sets.get(i).getIn());
@@ -59,8 +58,6 @@ public class LivenessAnalysis {
                 Set<String> union = new HashSet<>(sets.get(i).getUse());
                 union.addAll(difference);
                 sets.get(i).getIn().addAll(union);
-
-                //if (i.getSuccessors().size() > 1) System.out.println("THERE ARE MORE THAN 1 SUCCESSOR " + i);
                 // Compute OUT set
                 for (Node node : i.getSuccessors()) {
                     if (node.getNodeType().equals(NodeType.INSTRUCTION)) {
@@ -92,27 +89,14 @@ public class LivenessAnalysis {
                 // uses ...
                 sets.get(inst).getUse().addAll(computeUses(assignInst.getRhs()));
             }
-            case CALL, UNARYOPER ->
+            case NOPER, CALL, UNARYOPER, RETURN, GETFIELD, PUTFIELD, BINARYOPER ->
                 sets.get(inst).getUse().addAll(computeUses(inst));
 
             case BRANCH -> {
                 CondBranchInstruction branch = (CondBranchInstruction) inst;
                 sets.get(inst).getUse().addAll(computeUses(branch.getCondition()));
             }
-            case RETURN -> {
-                sets.get(inst).getUse().addAll(computeUses(inst));
 
-            }
-            case GETFIELD -> {
-                sets.get(inst).getUse().addAll(computeUses(inst));
-            }
-            case PUTFIELD -> {
-                sets.get(inst).getUse().addAll(computeUses(inst));
-            }
-            case BINARYOPER -> {
-                sets.get(inst).getUse().addAll(computeUses(inst));
-
-            }
             default -> {
             }
         }

@@ -15,7 +15,6 @@ import pt.up.fe.comp2023.optimization.registerAllocation.LivenessAnalysis;
 public class OllirParser implements JmmOptimization {
     @Override
     public OllirResult toOllir(JmmSemanticsResult jmmSemanticsResult) {
-
         // Optimization stage
         Optimizer optimizer = new Optimizer();
         jmmSemanticsResult = optimizer.optimize(jmmSemanticsResult);
