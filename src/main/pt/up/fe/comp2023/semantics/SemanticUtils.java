@@ -91,69 +91,55 @@ public class SemanticUtils {
     }
 
     public Type getType(JmmNode node){
+        Type type = new Type("", false);
         switch (node.getKind()) {
-            case "Not", "Compare", "LogicalAnd", "BoolLiteral" -> {
-                return new Type("boolean", false);
-            }
-            case "BinaryOp", "Length", "Integer" -> {
-                return new Type("int", false);
-            }
-            case "Parenthesis", "SquareBrackets" -> {
-                return getType(node.getJmmChild(0));
-            }
-            case "NewArray" -> {
-                return new Type(node.getJmmChild(0).get("typeName"), true);
-            }
-            case "NewClass" -> {
-                return new Type(node.get("className"), false);
-            }
+            case "Not", "Compare", "LogicalAnd", "BoolLiteral" -> type = new Type("boolean", false);
+            case "BinaryOp", "Length", "Integer" -> type = new Type("int", false);
+            case "Parenthesis", "SquareBrackets" -> type = getType(node.getJmmChild(0));
+            case "NewArray" -> type = new Type(node.getJmmChild(0).get("typeName"), true);
+            case "NewClass" -> type = new Type(node.get("className"), false);
             case "Identifier" -> {
-                Type type = varCheck(node, "value");
+                type = varCheck(node, "value");
                 if(node.getJmmParent().getKind().equals("SquareBrackets")){
-                    return new Type(type.getName(), false);
+                    type = new Type(type.getName(), false);
                 }
-                return type;
             }
             case "This" -> {
                 while (!node.getKind().equals("ClassDeclaration"))
                     node = node.getJmmParent();
-                return new Type(node.get("name"), false);
+                type = new Type(node.get("name"), false);
             }
             case "FunctionCall" -> {
-                return dealWithFuncCall(node);
-            }
-            default -> {
-                return new Type("", false);
-            }
-        }
-    }
-
-    private Type dealWithFuncCall(JmmNode node){
-        Type calleeType = getType(node.getJmmChild(0));
-        if(calleeType.getName().equals("NotFound")) {
-            System.out.println("not exists");
-            return calleeType;
-        }
-        if (!(simpleTable.getMethods().contains(node.get("methodName")) && calleeType.getName().equals(simpleTable.getClassName()))) {
-            // check imports
-            for (String s : simpleTable.getImports()) {
-                String[] parts = s.split("\\."); // split the string on "." character
-                if (parts[parts.length - 1].equals(calleeType.getName())) {
-                    return getInferedFuncType(node);
+                Type calleeType = getType(node.getJmmChild(0));
+                if(calleeType.getName().equals("NotFound")) {
+                    System.out.println("not exists");
+                    return calleeType;
+                }
+                if (simpleTable.getMethods().contains(node.get("methodName")) && calleeType.getName().equals(simpleTable.getClassName())) {
+                    type = simpleTable.getReturnType(node.get("methodName"));
+                } else {
+                    // check imports
+                    for (String s : simpleTable.getImports()) {
+                        String[] parts = s.split("\\."); // split the string on "." character
+                        if (parts[parts.length - 1].equals(calleeType.getName())) {
+                            return getInferedFuncType(node);
+                        }
+                    }
+                    if (simpleTable.getSuper() != null && calleeType.getName().equals(simpleTable.getSuper())) {
+                        return getInferedFuncType(node);
+                    }
+                    else if(simpleTable.getSuper() != null && calleeType.getName().equals(simpleTable.getClassName())){
+                        return getInferedFuncType(node);
+                    }
+                    else {
+                        createReport(node, "Method " + node.get(("methodName")) + " does not exist!");
+                    }
                 }
             }
-            if (simpleTable.getSuper() != null && calleeType.getName().equals(simpleTable.getSuper())) {
-                return getInferedFuncType(node);
-            }
-            else if(simpleTable.getSuper() != null && calleeType.getName().equals(simpleTable.getClassName())){
-                return getInferedFuncType(node);
-            }
-            else {
-                createReport(node, "Method " + node.get(("methodName")) + " does not exist!");
-            }
         }
-        return new Type("", false);
+        return type;
     }
+
     private Type getInferedFuncType(JmmNode node){
         if(node.getJmmParent().getKind().equals("StatementExpression"))
             return new Type("void", false);
