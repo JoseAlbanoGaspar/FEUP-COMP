@@ -227,13 +227,13 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         assert var != null;
         if (isField) { //class variable
             String txt = var.getType().isArray() ? ".array" : "";
-
+            String assigString = nestedAppend(jmmNode.getChildren().get(0), s, ret);
             ret.append("putfield(this, ")
                     .append(jmmNode.get("var"))
                     .append(".")
                     .append(txt)
                     .append(typesSwap(var.getType().getName())).append(", ")
-                    .append(visit(jmmNode.getChildren().get(0), ""))
+                    .append(assigString)
                     .append(").V;\n");
         } else {
             boolean isArray = jmmNode.getKind().equals("Array");
