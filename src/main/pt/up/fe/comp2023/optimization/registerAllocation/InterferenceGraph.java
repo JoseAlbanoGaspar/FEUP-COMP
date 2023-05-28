@@ -28,9 +28,8 @@ public class InterferenceGraph {
             graph.connectAllNodes(livenessSet.getIn());
             graph.connectAllNodes(out);
         }
-        graph.printGraph();
-
     }
+
     private static HashMap<IntGraphNode, List<IntGraphNode>> deepCopyHashMap(HashMap<IntGraphNode, List<IntGraphNode>> original) {
         HashMap<IntGraphNode, List<IntGraphNode>> copy = new HashMap<>();
         for (Map.Entry<IntGraphNode, List<IntGraphNode>> entry : original.entrySet()) {

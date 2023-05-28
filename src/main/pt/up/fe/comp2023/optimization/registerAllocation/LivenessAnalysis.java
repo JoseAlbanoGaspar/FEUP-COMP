@@ -41,7 +41,6 @@ public class LivenessAnalysis {
         boolean changed;
         ArrayList<Instruction> reversedList = new ArrayList<>(method.getInstructions().size());
 
-        // Iterate over the original ArrayList in reverse order
         for (int i = method.getInstructions().size() - 1; i >= 0; i--) {
             reversedList.add(method.getInstructions().get(i));
         }
@@ -74,8 +73,6 @@ public class LivenessAnalysis {
             computeUsesDefs(i);
         }
         computeInOut();
-
-        print();
     }
 
     private void computeUsesDefs(Instruction inst) {
