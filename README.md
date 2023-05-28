@@ -2,9 +2,9 @@
 
 | name | number | contribution |
 | --- | --- | --- |
-| Emanuel Gestosa |  202005485 | 33% |
-| José Gaspar | 202008561 | 33% |
-| Lucas Sousa | 202004682 | 33% |
+| Emanuel Gestosa |  202005485 | 33.33% |
+| José Gaspar | 202008561 | 33.33% |
+| Lucas Sousa | 202004682 | 33.33% |
 
 Self-Assessment: 19
 
