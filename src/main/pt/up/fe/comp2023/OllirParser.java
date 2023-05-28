@@ -15,9 +15,8 @@ import pt.up.fe.comp2023.optimization.registerAllocation.LivenessAnalysis;
 public class OllirParser implements JmmOptimization {
     @Override
     public OllirResult toOllir(JmmSemanticsResult jmmSemanticsResult) {
-        // Optimization stage
-        Optimizer optimizer = new Optimizer();
-        jmmSemanticsResult = optimizer.optimize(jmmSemanticsResult);
+        // AST optimization
+        optimize(jmmSemanticsResult);
         
         // Ollir parse
         OllirVisitor visitor = new OllirVisitor(jmmSemanticsResult.getSymbolTable());
@@ -29,6 +28,13 @@ public class OllirParser implements JmmOptimization {
         // register allocation
         return optimize(ollirResult);
     }
+
+    @Override
+    public JmmSemanticsResult optimize(JmmSemanticsResult jmmSemanticsResult){
+        Optimizer optimizer = new Optimizer();
+        return optimizer.optimize(jmmSemanticsResult);
+    }
+
 
     @Override
     public OllirResult optimize(OllirResult ollirResult){
