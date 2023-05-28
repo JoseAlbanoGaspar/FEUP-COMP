@@ -1,6 +1,7 @@
 package pt.up.fe.comp2023.ollir;
 
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 
 import java.util.ArrayList;
@@ -176,5 +177,79 @@ public class OllirUtils {
     public String getRetType(String name) {
         if(visitor.symbolTable.getReturnType(name).isArray()) return "array.i32";
         return visitor.symbolTable.getReturnType(name).getName();
+    }
+
+    public String findParentName(JmmNode jmmNode) {
+        JmmNode parent = jmmNode;
+        String parentName;
+
+        do {
+            parent = parent.getJmmParent();
+            if (parent.getKind().equals("Method") || parent.getKind().equals("MainMethod"))
+                break;
+        } while (!parent.getKind().equals("ClassDeclaration"));
+        parentName = parent.getKind().equals("MainMethod") ? "main" : parent.get("name");
+        return parentName;
+    }
+
+    public VarRecord findVar(JmmNode jmmNode, String parentName, String searchString){
+        Symbol var = null;
+        int parNum=0;
+        boolean isField = false, isParameter = false, isImported = false, isInMethod = false;
+
+        if(jmmNode.getJmmParent().getKind().equals("MainMethod")){
+            for (Symbol vari : visitor.symbolTable.getLocalVariables("main")) { //check if local
+                if (vari.getName().equals(jmmNode.get(searchString))){
+                    var = vari;
+                    return new VarRecord(var, parNum, isField, isParameter, isImported, isInMethod);
+                }
+            }
+
+            for (Symbol symbol1 : visitor.symbolTable.getFields()) { //check if field
+                if (symbol1.getName().equals(jmmNode.get(searchString))){
+                    var = symbol1;
+                    isField = true;
+                    return new VarRecord(var, parNum, isField, isParameter, isImported, isInMethod);
+                }
+            }
+
+        }
+
+        //check local
+        for (Symbol vari : visitor.symbolTable.getLocalVariables(parentName)) { //check if local
+            if (vari.getName().equals(jmmNode.get(searchString))){
+                var = vari;
+                isInMethod = true;
+                return new VarRecord(var, parNum, isField, isParameter, isImported, isInMethod);
+            }
+        }
+
+        //check parameter
+        for (Symbol vari : visitor.symbolTable.getParameters(parentName)) { //check if parameter
+            if (vari.getName().equals(jmmNode.get(searchString))){
+                var = vari;
+                isParameter = true;
+                parNum++;
+                return new VarRecord(var, parNum, isField, isParameter, isImported, isInMethod);
+            }
+        }
+
+        //check field
+        for (Symbol symbol1 : visitor.symbolTable.getFields()) { //check if field
+            if (symbol1.getName().equals(jmmNode.get(searchString))){
+                var = symbol1;
+                isField = true;
+                return new VarRecord(var, parNum, isField, isParameter, isImported, isInMethod);
+            }
+        }
+
+        //chek is import
+        for (String imp : visitor.symbolTable.getImports()) {
+            if (imp.equals(jmmNode.get(searchString))) {
+                isImported = true;
+                var = new Symbol(new Type("import", false), jmmNode.get("value"));
+            }
+        }
+        return new VarRecord(var, parNum, isField, isParameter, isImported, isInMethod);
     }
 }

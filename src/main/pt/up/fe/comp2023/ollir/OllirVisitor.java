@@ -2,7 +2,6 @@ package pt.up.fe.comp2023.ollir;
 
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
-import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 
@@ -61,6 +60,9 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         addVisit("This", this::dealWithThis);
         addVisit("MethodArgs", this::dealWithMethodArgs);
     }
+    private String dealWithDefault(JmmNode jmmNode, String s) {
+        return "";
+    }
 
     private String dealWithWhile(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder();
@@ -73,11 +75,13 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         ret.append(s).append("BODY_").append(gto).append(":\n");
         String exprString = utils.nestedAppend(expr, s, ret);
 
+        //temp for negation
         if (!(jmmNode.getJmmChild(0).getKind().equals("Identifier") || jmmNode.getJmmChild(0).getKind().equals("BoolLiteral"))){
             ret.append(s).append("t").append(tempCnt).append(".bool :=.bool ").append(exprString).append(";\n");
             exprString ="t" + tempCnt++ + ".bool";
         }
 
+        //negate conditional expression
         ret.append(s).append("if (").append("!.bool ").append(exprString).append(") goto ENDLOOP_").append(gto).append(";\n")
                 .append(visit(stat, ""));
         ret.append(s).append("goto BODY_").append(gto).append(";\n")
@@ -115,6 +119,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     private String dealWithNot(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder();
         String expr = utils.nestedAppend(jmmNode.getJmmChild(0), s, ret);
+
+        //temp
         if (!(jmmNode.getJmmChild(0).getKind().equals("Identifier") || jmmNode.getJmmChild(0).getKind().equals("BoolLiteral"))){
             ret.append(s).append("t").append(tempCnt).append(".bool :=.bool ").append(expr).append(";\n");
             expr = s + "t" + tempCnt++ + ".bool";
@@ -123,67 +129,15 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         return ret.toString();
     }
 
-
-
-
     private String dealWithAssignment(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
 
-        Symbol var = null;
-        int parNum=0;
-        boolean isField = false, isParameter = false;
-
-        JmmNode parent = jmmNode;
-        String parentName;
-
-        do {
-            parent = parent.getJmmParent();
-            if (parent.getKind().equals("Method") || parent.getKind().equals("MainMethod"))
-                break;
-        } while (!parent.getKind().equals("ClassDeclaration"));
-        parentName = parent.getKind().equals("MainMethod") ? "main" : parent.get("name");
-
-        if(jmmNode.getJmmParent().getKind().equals("MainMethod")){
-            for (Symbol vari : symbolTable.getLocalVariables("main")) { //check if local
-                if (vari.getName().equals(jmmNode.get("var"))) var = vari;
-            }
-
-            if (var == null) {
-                for (Symbol symbol1 : this.symbolTable.getFields()) { //check if field
-                    if (symbol1.getName().equals(jmmNode.get("var"))){
-                        var = symbol1;
-                        isField = true;
-                        break;
-                    }
-                }
-            }
-        }else {
-            for (Symbol vari : symbolTable.getLocalVariables(parentName)) { //check if local
-                if (vari.getName().equals(jmmNode.get("var"))){
-                    var = vari;
-                    break;
-                }
-            }
-            if (var == null) {
-                for (Symbol vari : symbolTable.getParameters(parentName)) { //check if parameter
-                    if (vari.getName().equals(jmmNode.get("var"))){
-                        var = vari;
-                        isParameter = true;
-                        parNum++;
-                        break;
-                    }
-                }
-            }
-            if (var == null) {
-                for (Symbol symbol1 : this.symbolTable.getFields()) { //check if field
-                    if (symbol1.getName().equals(jmmNode.get("var"))){
-                        var = symbol1;
-                        isField = true;
-                        break;
-                    }
-                }
-            }
-        }
+        String parentName = utils.findParentName(jmmNode);
+        VarRecord varRecord = utils.findVar(jmmNode, parentName, "var");
+        Symbol var = varRecord.var();
+        boolean isField = varRecord.isField();
+        boolean isParameter = varRecord.isParameter();
+        int parNum = varRecord.parNum();
 
         assert var != null;
         if (isField) { //class variable
@@ -222,16 +176,10 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         return ret.toString();
     }
 
-
-
     private String dealWithStatementExpression(JmmNode jmmNode, String s) {
         if (jmmNode.getJmmChild(0).getKind().equals("FunctionCall"))
             this.functionRets.put(jmmNode.getJmmChild(0), utils.typesSwap("void"));
         return visit(jmmNode.getJmmChild(0), s) + ";\n";
-    }
-
-    private String dealWithDefault(JmmNode jmmNode, String s) {
-        return "";
     }
 
     private String dealWithMethod(JmmNode jmmNode, String s) {
@@ -402,51 +350,13 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
     private String dealWithIdentifier(JmmNode jmmNode, String s) {
         if(s==null) s = "";
         StringBuilder ret = new StringBuilder(s);
-        Symbol var = null;
-        boolean isField = false, isInMethod = false, isImported = false;
+        String parentName = utils.findParentName(jmmNode);
+        VarRecord varRecord = utils.findVar(jmmNode, parentName, "value");
+        Symbol var = varRecord.var();
+        boolean isField = varRecord.isField();
+        boolean isImported = varRecord.isImported();
+        boolean isInMethod = varRecord.isInMethod();
 
-
-        JmmNode parent = jmmNode;
-        String parentName;
-
-        do {
-            parent = parent.getJmmParent();
-            if (parent.getKind().equals("Method") || parent.getKind().equals("MainMethod"))
-                break;
-        } while (!parent.getKind().equals("ClassDeclaration"));
-        parentName = parent.getKind().equals("MainMethod") ? "main" : parent.get("name");
-
-        //check if local
-        for (Symbol vari : symbolTable.getLocalVariables(parentName))
-            if (vari.getName().equals(jmmNode.get("value"))) {
-                var = vari;
-                isInMethod = true;
-            }
-        if (var == null) {
-            //check if parameter
-            for (Symbol vari : symbolTable.getParameters(parentName))
-                if (vari.getName().equals(jmmNode.get("value"))){
-                    var = vari;
-                }
-        }
-        if (var == null) {
-            //check if field
-            for (Symbol vari : symbolTable.getFields()) {
-                if (vari.getName().equals(jmmNode.get("value"))) {
-                    isField = true;
-                    var = vari;
-                    break;
-                }
-            }
-        }
-        if (var == null) { //chek is import
-            for (String imp : this.symbolTable.getImports()) {
-                if (imp.equals(jmmNode.get("value"))) {
-                    isImported = true;
-                    var = new Symbol(new Type("import", false), jmmNode.get("value"));
-                }
-            }
-        }
         assert var != null;
 
         String txt = var.getType().isArray() ? ".array" : "";
@@ -535,8 +445,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         StringBuilder ret = new StringBuilder(s);
 
         String name = jmmNode.get("methodName");
-        //check if method or import
 
+        //check if local method or import
         String objectString = utils.nestedAppend(jmmNode.getJmmChild(0), s, ret);
 
         Map<JmmNode, String> visitedArgs = new HashMap<>();
@@ -544,7 +454,7 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
             if (jmmNode.getJmmChild(i).getKind().equals("FunctionCall")) {
                 if (!this.symbolTable.getImports().contains(objectString) && !objectString.equals("this")){
                     String typeName = this.symbolTable.getReturnType(jmmNode.get("methodName")).getName();
-                    this.functionRets.put(jmmNode.getJmmChild(i), utils.typesSwap(typeName)); //get from list of args
+                    this.functionRets.put(jmmNode.getJmmChild(i), utils.typesSwap(typeName));
                 }
             }
 
@@ -660,8 +570,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         return ret.toString();
     }
 
-
-
     private String dealWithParenthesis(JmmNode jmmNode, String s) {
         StringBuilder ret = new StringBuilder(s);
         String data = "";
@@ -686,7 +594,6 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         String nestedString = utils.nestedAppend(jmmNode.getJmmChild(0), s, ret, data);
         return ret.append(nestedString).toString();
     }
-
 
     public String getOllirCode() {
         return ollirString;
