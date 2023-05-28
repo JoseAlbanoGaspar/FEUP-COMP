@@ -1,14 +1,14 @@
-package pt.up.fe.comp2023;
+package pt.up.fe.comp2023.ollir;
 
 import org.specs.comp.ollir.ClassUnit;
 import org.specs.comp.ollir.Method;
-import org.specs.comp.ollir.OllirErrorException;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.ollir.JmmOptimization;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
+import pt.up.fe.comp2023.Optimizer;
 import pt.up.fe.comp2023.optimization.registerAllocation.InterferenceGraph;
 import pt.up.fe.comp2023.optimization.registerAllocation.LivenessAnalysis;
 
