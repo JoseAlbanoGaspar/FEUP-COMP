@@ -8,6 +8,11 @@
 
 Self-Assessment: 19
 
+# Implemented Optimization
+
+- AST optimizations (-o option)
+- Register Allocation (-r option)
+
 # Compilers Project
 
 For this project, you need to install [Java](https://jdk.java.net/), [Gradle](https://gradle.org/install/), and [Git](https://git-scm.com/downloads/) (and optionally, a [Git GUI client](https://git-scm.com/downloads/guis), such as TortoiseGit or GitHub Desktop). Please check the [compatibility matrix](https://docs.gradle.org/current/userguide/compatibility.html) for Java and Gradle versions.
