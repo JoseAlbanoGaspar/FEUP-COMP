@@ -22,9 +22,8 @@ public class SemanticUtils {
 
     public List<Report> getReports(){ return this.reports;}
 
-    public Void createReport(JmmNode node, String message){
+    public void createReport(JmmNode node, String message){
         reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,Integer.parseInt(node.get("lineStart")),Integer.parseInt(node.get("colStart")), message));
-        return null;
     }
 
     public Type varCheck(JmmNode node, String attribute) {

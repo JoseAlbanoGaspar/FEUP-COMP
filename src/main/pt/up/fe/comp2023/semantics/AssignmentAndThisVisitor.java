@@ -20,34 +20,10 @@ public class AssignmentAndThisVisitor extends PreorderJmmVisitor<Void, Void> imp
 
     @Override
     protected void buildVisitor() {
-        addVisit("Program", this::defaultVisitor);
-        addVisit("ImportDeclaration", this::defaultVisitor);
-        addVisit("ClassDeclaration", this::defaultVisitor);
-        addVisit("VarDeclaration", this::defaultVisitor);
-        addVisit("MainMethod",this::defaultVisitor);
-        addVisit("Method", this::defaultVisitor);
-        addVisit("Type", this::defaultVisitor);
-        addVisit("BlockCode", this::defaultVisitor);
-        addVisit("If",this::defaultVisitor);
-        addVisit("While", this::defaultVisitor);
-        addVisit("StatementExpression", this::defaultVisitor);
+        setDefaultVisit(this::defaultVisitor);
         addVisit("Assignment", this::dealWithAssignment);
         addVisit("Array", this::dealWithArray);
-        addVisit("Not",this::defaultVisitor);
-        addVisit("Parenthesis", this::defaultVisitor);
-        addVisit("BinaryOp", this::defaultVisitor);
-        addVisit("Compare", this::defaultVisitor);
-        addVisit("LogicalAnd", this::defaultVisitor);
-        addVisit("SquareBrackets", this::defaultVisitor);
-        addVisit("Length", this::defaultVisitor);
-        addVisit("FunctionCall", this::defaultVisitor);
-        addVisit("NewArray", this::defaultVisitor);
-        addVisit("NewClass", this::defaultVisitor);
-        addVisit("Integer", this::defaultVisitor);
-        addVisit("BoolLiteral", this::defaultVisitor);
-        addVisit("Identifier", this::defaultVisitor);
         addVisit("This", this::dealWithThis);
-        addVisit("MethodArgs", this::defaultVisitor);
     }
     private Void defaultVisitor(JmmNode jmmNode, Void _void){
         return null;

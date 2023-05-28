@@ -19,34 +19,12 @@ public class SemanticArrayVisitor extends PreorderJmmVisitor<Void, Void> impleme
 
     @Override
     protected void buildVisitor() {
+        setDefaultVisit(this::defaultVisitor);
         addVisit("Program", this::defaultVisitor);
-        addVisit("ImportDeclaration", this::defaultVisitor);
-        addVisit("ClassDeclaration", this::defaultVisitor);
-        addVisit("VarDeclaration", this::defaultVisitor);
-        addVisit("MainMethod", this::defaultVisitor);
-        addVisit("Method", this::defaultVisitor);
-        addVisit("Type", this::defaultVisitor);
-        addVisit("BlockCode", this::defaultVisitor);
-        addVisit("If",this::defaultVisitor);
-        addVisit("While", this::defaultVisitor);
-        addVisit("StatementExpression", this::defaultVisitor);
-        addVisit("Assignment", this::defaultVisitor);
         addVisit("Array", this::dealWithArray);
-        addVisit("Not", this::defaultVisitor);
-        addVisit("Parenthesis", this::defaultVisitor);
         addVisit("BinaryOp", this::dealWithBinaryOp);
-        addVisit("Compare", this::defaultVisitor);
-        addVisit("LogicalAnd", this::defaultVisitor);
         addVisit("SquareBrackets", this::dealWithSquareBrackets);
-        addVisit("Length", this::defaultVisitor);
-        addVisit("FunctionCall", this::defaultVisitor);
         addVisit("NewArray", this::dealWithNewArray);
-        addVisit("NewClass", this::defaultVisitor);
-        addVisit("Integer", this::defaultVisitor);
-        addVisit("BoolLiteral", this::defaultVisitor);
-        addVisit("Identifier", this::defaultVisitor);
-        addVisit("This", this::defaultVisitor);
-        addVisit("MethodArgs", this::defaultVisitor);
     }
 
     private Void defaultVisitor(JmmNode jmmNode, Void _void){
