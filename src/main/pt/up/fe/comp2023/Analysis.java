@@ -4,6 +4,7 @@ import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp2023.semantics.*;
 
 import java.util.ArrayList;
@@ -36,7 +37,10 @@ public class Analysis implements JmmAnalysis {
                 System.out.println(report.getMessage());
             }
             if(!semVisitor.getReports().isEmpty()) {
-                return new JmmSemanticsResult(jmmParserResult, table, semVisitor.getReports());
+                // check if reports are from type ERROR
+                for (Report report : semVisitor.getReports())
+                    if(report.getType().equals(ReportType.ERROR))
+                        return new JmmSemanticsResult(jmmParserResult, table, semVisitor.getReports());
             }
         }
 
