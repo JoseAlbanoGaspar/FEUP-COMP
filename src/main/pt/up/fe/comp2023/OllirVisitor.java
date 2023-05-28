@@ -741,7 +741,8 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         if (kind.equals("BinaryOp") || kind.equals("FunctionCall")
                 || kind.equals("SquareBrackets")
                 || kind.equals("Length") || kind.equals("Compare") || kind.equals("LogicalAnd")
-                || kind.equals("Not")) {
+                || kind.equals("Not")
+                || (kind.equals("Parenthesis") && jmmNode.getJmmChild(0).getKind().equals("FunctionCall"))){
             String sub, before = "";
             int lastIndDot = str.lastIndexOf(".");
             if (str.contains(":=.")) {
