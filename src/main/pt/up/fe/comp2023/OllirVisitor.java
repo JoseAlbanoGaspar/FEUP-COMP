@@ -656,11 +656,14 @@ public class OllirVisitor extends AJmmVisitor<String, String> {
         String retType;
         if(this.symbolTable.getImports().contains(objectString.substring(objectString.indexOf(".")+1)))
             retType= this.functionRets.get(jmmNode);
-        else{
+        else if(this.symbolTable.getMethods().contains(name)){
             String typeToSwap = this.symbolTable.getReturnType(name).isArray() ?
                     "int array" :
                     this.symbolTable.getReturnType(name).getName();
             retType = typesSwap(typeToSwap);
+        }
+        else{
+            retType= this.functionRets.get(jmmNode);
         }
         ret.append(retType);
 
